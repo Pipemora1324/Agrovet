@@ -41,7 +41,7 @@ suele haber señales sutiles: sube un poco la temperatura, baja la leche y la va
                                                    ▼ HTTPS + JWT
                          ┌──────────── Servidor ────────────┐
                          │ Spring Boot 3 ─► PostgreSQL 15   │
-                         │ /api/auth  /api/bovinos  /api/sync│
+                         │ /api/auth  /api/cows  /api/sync  │
                          └──────────────────────────────────┘
 
  ml/ (Python): dataset ─► entrenamiento LSTM ─► .tflite + model_config.json ─► app
