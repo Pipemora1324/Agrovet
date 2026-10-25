@@ -2,11 +2,14 @@ name: ml
 
 on:
   push:
-    branches: [main, develop, "feature/ml-**"]
+    branches: [main, develop]
     paths: ["ml/**", ".github/workflows/ml.yml"]
   pull_request:
     branches: [main, develop]
     paths: ["ml/**", ".github/workflows/ml.yml"]
+
+permissions:
+  contents: read
 
 jobs:
   test:

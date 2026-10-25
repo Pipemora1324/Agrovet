@@ -2,11 +2,14 @@ name: mobile
 
 on:
   push:
-    branches: [main, develop, "feature/mobile-**"]
+    branches: [main, develop]
     paths: ["mobile/**", "ml/models/**", ".github/workflows/mobile.yml"]
   pull_request:
     branches: [main, develop]
     paths: ["mobile/**", "ml/models/**", ".github/workflows/mobile.yml"]
+
+permissions:
+  contents: read
 
 jobs:
   build:
