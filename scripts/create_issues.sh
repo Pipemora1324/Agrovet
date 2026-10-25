@@ -60,7 +60,8 @@ issue "RF-01" "Registro e inicio de sesión" "requerimiento,backend,mobile,prior
 "Como ganadero, quiero crear una cuenta e iniciar sesión para que mis datos queden asociados a mí.
 
 - [ ] Registro con nombre, correo y contraseña (guardada con BCrypt)
-- [ ] Login que devuelve un token JWT con expiración
+- [ ] Login que devuelve un token de acceso de vida corta y un refresh token
+- [ ] Renovación de sesión con rotación del refresh token
 - [ ] La app guarda la sesión y funciona offline después del primer ingreso"
 
 issue "RF-02" "Registro y edición de bovinos" "requerimiento,backend,mobile,prioridad:alta" \
@@ -74,6 +75,7 @@ issue "RF-03" "Captura diaria con validación de rangos" "requerimiento,mobile,p
 "Como ganadero, quiero registrar cada día temperatura, leche y alimento de cada vaca.
 
 - [ ] Temperatura (°C), leche (L) y alimento (kg) con rangos válidos
+- [ ] Checklist de síntomas visibles (ubre inflamada, leche con grumos, dolor al ordeño, etc.)
 - [ ] Mensajes claros cuando un valor está fuera de rango
 - [ ] Un registro por vaca y día (editar si ya existe)"
 
@@ -152,12 +154,23 @@ issue "RNF-01" "Funcionamiento sin conexión" "requerimiento,no-funcional,mobile
 issue "RNF-02" "Interfaz apta para trabajo de campo" "requerimiento,no-funcional,mobile,prioridad:alta" \
 "- [ ] Botones grandes y alto contraste (legible a pleno sol)
 - [ ] Poco texto, íconos claros
+- [ ] Diseño adaptable a celulares y tablets
 - [ ] Probado en un celular de gama baja"
 
 issue "RNF-03" "Seguridad de la API" "requerimiento,no-funcional,backend,prioridad:alta" \
-"- [ ] JWT con secreto y expiración por variables de entorno
+"- [ ] Token de acceso de vida corta y refresh token con rotación
 - [ ] Contraseñas con BCrypt
-- [ ] Cada usuario solo accede a sus propios bovinos"
+- [ ] Límite de intentos en el login
+- [ ] CORS restringido a orígenes configurados
+- [ ] Validación de toda entrada (Bean Validation)
+- [ ] Solo consultas parametrizadas
+- [ ] Cada usuario solo accede a sus propios datos, con pruebas que lo demuestren
+- [ ] Secretos y URL de la base solo por variables de entorno"
+
+issue "RNF-08" "Protección de los datos en el celular" "requerimiento,no-funcional,mobile,prioridad:alta" \
+"- [ ] Base local cifrada (SQLCipher)
+- [ ] Tokens en almacenamiento seguro del sistema
+- [ ] La clave de la base no queda en el código"
 
 issue "RNF-04" "Paridad del preprocesamiento Python / Dart" "requerimiento,no-funcional,ml,mobile,prioridad:alta" \
 "- [ ] La app reproduce test_vectors.json con tolerancia 1e-4
@@ -169,7 +182,9 @@ issue "RNF-05" "Compatibilidad Android" "requerimiento,no-funcional,mobile,prior
 
 issue "RNF-06" "Integración continua por módulo" "requerimiento,no-funcional,docs,prioridad:media" \
 "- [ ] Un workflow por módulo (ml, backend, mobile)
-- [ ] Las pruebas deben pasar antes de integrar a develop"
+- [ ] Las pruebas deben pasar antes de integrar a develop
+- [ ] Dependabot y revisión de dependencias en los pull requests
+- [ ] Actions fijadas por SHA"
 
 issue "RNF-07" "Documentación de la API" "requerimiento,no-funcional,backend,docs,prioridad:baja" \
 "- [ ] Swagger / OpenAPI disponible en el backend
