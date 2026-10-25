@@ -1,0 +1,33 @@
+version: 2
+
+# Las actualizaciones se proponen sobre develop; main solo recibe merges desde develop.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: pip
+    directory: /ml
+    target-branch: develop
+    schedule:
+      interval: weekly
+    labels: [ml]
+
+  - package-ecosystem: maven
+    directory: /backend
+    target-branch: develop
+    schedule:
+      interval: weekly
+    labels: [backend]
+
+  - package-ecosystem: pub
+    directory: /mobile
+    target-branch: develop
+    schedule:
+      interval: weekly
+    labels: [mobile]
