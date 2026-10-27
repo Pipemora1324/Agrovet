@@ -33,9 +33,10 @@ SYNTHETIC_NOTE = ("Métricas obtenidas con un dataset sintético. Sirven para co
                   "NO validan la hipótesis del proyecto (F1 >= 0,80).")
 
 
-def build_model(batch_size=None):
+def build_model(batch_size=None, unroll=False):
+    """unroll=True solo para exportar: mismo cálculo, sin bucle WHILE en el grafo de TFLite."""
     inputs = tf.keras.Input(shape=(WINDOW_DAYS, len(FEATURES)), batch_size=batch_size, name="window")
-    x = tf.keras.layers.LSTM(32, name="lstm")(inputs)
+    x = tf.keras.layers.LSTM(32, unroll=unroll, name="lstm")(inputs)
     x = tf.keras.layers.Dropout(0.3, name="dropout")(x)
     x = tf.keras.layers.Dense(16, activation="relu", name="dense")(x)
     outputs = tf.keras.layers.Dense(1, activation="sigmoid", name="probability")(x)
