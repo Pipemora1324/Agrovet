@@ -77,6 +77,21 @@ lib/
 - Al cerrar sesión se borran los tokens, pero los datos cifrados se conservan para no perder lo que
   falte sincronizar.
 
+## Sincronización
+
+Todo se guarda primero en el celular; cada cambio queda marcado como pendiente.
+
+- **Cuándo**: al abrir la sesión, al recuperar la conexión (`connectivity_plus`), cuando el ganadero
+  toca la nube de la barra superior y cada 15 minutos en segundo plano con `workmanager` (solo con
+  red; si falla, Android reintenta con espera exponencial).
+- **Cómo**: `POST /api/sync` en lotes de hasta 200 elementos por tipo, primero las vacas. Ante fallas
+  de red o del servidor se reintenta con espera exponencial (2, 4 y 8 s, con variación).
+- **Confirmación**: solo se marca como sincronizado lo que el servidor confirma, y solo si la fila no
+  cambió mientras se enviaba. Nunca se borra nada local.
+- **Rechazos**: si el servidor rechaza un elemento (por ejemplo, otro registro para el mismo día), se
+  guarda el motivo y no se reintenta hasta que el ganadero lo corrija.
+- La nube muestra cuántos cambios faltan por subir. La sesión de demostración no sincroniza.
+
 ## Decisiones de diseño (para revisión)
 
 - **Semáforo**: verde < 0,427; amarillo de 0,427 a < 0,854; rojo ≥ 0,854. Sale de `model_config.json`
