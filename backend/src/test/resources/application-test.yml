@@ -10,3 +10,6 @@ agrovet:
     secret: dGVzdC1zZWNyZXQtc29sby1wYXJhLXBydWViYXMtMDEyMzQ1Njc4OWFiY2RlZg==
   cors:
     allowed-origins: http://localhost:3000
+  login-rate-limit:
+    # MockMvc siempre usa 127.0.0.1: el límite por IP se prueba en LoginRateLimiterTest
+    max-attempts-per-ip: 10000
