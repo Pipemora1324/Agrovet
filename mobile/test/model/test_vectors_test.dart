@@ -27,8 +27,9 @@ void main() {
     final appModel = File('assets/model/${config.modelFile}').readAsBytesSync();
     final digest = sha256.convert(appModel).toString();
     expect(digest, vectors['tflite_sha256']);
-    expect(File('assets/model/model_config.json').readAsStringSync(),
-        File('../ml/models/model_config.json').readAsStringSync());
+    // Mismo contenido, sin importar los fines de línea que deje git en cada sistema
+    String lf(String path) => File(path).readAsStringSync().replaceAll('\r\n', '\n');
+    expect(lf('assets/model/model_config.json'), lf('../ml/models/model_config.json'));
   });
 
   test('hay 8 casos de cuatro tipos', () {
