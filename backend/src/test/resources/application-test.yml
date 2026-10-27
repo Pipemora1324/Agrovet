@@ -1,0 +1,12 @@
+# Solo para pruebas. La base la entrega Testcontainers; este secreto no se usa fuera de las pruebas.
+spring:
+  datasource:
+    url: jdbc:postgresql://placeholder/test
+    username: test
+    password: test
+
+agrovet:
+  jwt:
+    secret: dGVzdC1zZWNyZXQtc29sby1wYXJhLXBydWViYXMtMDEyMzQ1Njc4OWFiY2RlZg==
+  cors:
+    allowed-origins: http://localhost:3000
