@@ -8,8 +8,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?Defina POSTGRES_USER en .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en .env}
     ports:
-      # Solo accesible desde este equipo
-      - "127.0.0.1:5432:5432"
+      # Solo accesible desde este equipo; cambie DB_HOST_PORT si ya tiene otro PostgreSQL en el 5432
+      - "127.0.0.1:${DB_HOST_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
