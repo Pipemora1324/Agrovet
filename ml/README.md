@@ -111,6 +111,17 @@ temprano se prefiere que el amarillo sea sensible y reservar el rojo para el umb
 las ventanas sanas quedan 77,7 % verde, 20,3 % amarillo y 2,0 % rojo; las que terminan 1–5 días
 antes del inicio, 21,3 % verde, 32,5 % amarillo y 46,3 % rojo.
 
+## CNN de triaje visual de la ubre (desactivada)
+
+`src/train_cnn.py` deja lista la estructura: MobileNetV2 preentrenada y congelada, cabeza binaria
+(sana / con signos de mastitis), aumento de datos, ajuste fino de las últimas 30 capas y exportación
+a TFLite solo con operaciones nativas.
+
+**Está desactivada** porque no hay fotos reales etiquetadas. Sin al menos 50 imágenes por clase en
+`data/udder_images/healthy/` y `data/udder_images/mastitis/` (carpetas que no se versionan), el
+script termina sin entrenar. No se usan imágenes sintéticas ni descargadas para rellenar. La app no
+tiene la función de foto hasta que exista un modelo validado.
+
 ## Artefactos que usa la app
 
 Se versionan `models/mastitis_lstm.tflite`, `models/model_config.json` y `models/test_vectors.json`.
