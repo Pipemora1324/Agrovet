@@ -1,0 +1,96 @@
+{
+  "note": "Métricas obtenidas con un dataset sintético. Sirven para comprobar el pipeline; NO validan la hipótesis del proyecto (F1 >= 0,80).",
+  "dataset": {
+    "records": 36000,
+    "cows": 600,
+    "sick_cows": 210,
+    "erroneous_records": 763
+  },
+  "windows": {
+    "train": {
+      "cows": 420,
+      "windows": 16634,
+      "positives": 735
+    },
+    "val": {
+      "cows": 90,
+      "windows": 3478,
+      "positives": 155
+    },
+    "test": {
+      "cows": 90,
+      "windows": 3514,
+      "positives": 160
+    }
+  },
+  "preprocessing": {
+    "window_days": 14,
+    "base_days": 7,
+    "features": [
+      "temperature_c",
+      "milk_l",
+      "feed_kg"
+    ]
+  },
+  "threshold": 0.854394,
+  "threshold_selection": "Máximo F1 en validación",
+  "test": {
+    "f1": 0.4917,
+    "precision": 0.5248,
+    "recall": 0.4625,
+    "roc_auc": 0.8909,
+    "pr_auc": 0.5205,
+    "confusion_matrix": {
+      "tn": 3287,
+      "fp": 67,
+      "fn": 86,
+      "tp": 74
+    }
+  },
+  "early_warning": {
+    "sick_cows": 32,
+    "detected_cows": 30,
+    "detection_rate": 0.9375,
+    "median_anticipation_days": 2.0,
+    "definition": "Primera alerta (prob >= umbral) en ventanas que terminan 1 a 5 días antes del inicio clínico; anticipación = días entre esa alerta y el inicio."
+  },
+  "false_alarms": {
+    "healthy_cows": 58,
+    "healthy_cows_with_alert": 31,
+    "healthy_cows_with_alert_rate": 0.5345,
+    "alert_windows": 55,
+    "healthy_windows": 2726,
+    "alert_rate_per_window": 0.0202,
+    "definition": "Ventanas de vacas sanas con prob >= umbral (cada ventana = un día de evaluación)."
+  },
+  "traffic_light_share": {
+    "healthy_windows": {
+      "green": 0.7773,
+      "yellow": 0.2025,
+      "red": 0.0202
+    },
+    "windows_1_to_5_days_before_onset": {
+      "green": 0.2125,
+      "yellow": 0.325,
+      "red": 0.4625
+    }
+  },
+  "validation": {
+    "f1_at_threshold": 0.5102,
+    "roc_auc": 0.8929
+  },
+  "training": {
+    "epochs_run": 42,
+    "best_epoch": 32,
+    "best_val_auc": 0.8929,
+    "class_weight": {
+      "0": 0.5231,
+      "1": 11.3156
+    },
+    "seed": 42
+  },
+  "versions": {
+    "tensorflow": "2.21.0",
+    "keras": "3.15.1"
+  }
+}
