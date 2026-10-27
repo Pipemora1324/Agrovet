@@ -34,6 +34,7 @@ env/
 .mypy_cache/
 ml/**/*.csv
 ml/data/raw/
+ml/data/udder_images/
 *.keras
 *.h5
 ml/models/checkpoints/
