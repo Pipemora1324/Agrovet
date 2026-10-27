@@ -62,6 +62,17 @@ class $CowsTable extends Cows with TableInfo<$CowsTable, CowRow> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _syncErrorMeta = const VerificationMeta(
+    'syncError',
+  );
+  @override
+  late final GeneratedColumn<String> syncError = GeneratedColumn<String>(
+    'sync_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -141,6 +152,7 @@ class $CowsTable extends Cows with TableInfo<$CowsTable, CowRow> {
     deleted,
     syncPending,
     isDemo,
+    syncError,
     id,
     tag,
     name,
@@ -188,6 +200,12 @@ class $CowsTable extends Cows with TableInfo<$CowsTable, CowRow> {
       context.handle(
         _isDemoMeta,
         isDemo.isAcceptableOrUnknown(data['is_demo']!, _isDemoMeta),
+      );
+    }
+    if (data.containsKey('sync_error')) {
+      context.handle(
+        _syncErrorMeta,
+        syncError.isAcceptableOrUnknown(data['sync_error']!, _syncErrorMeta),
       );
     }
     if (data.containsKey('id')) {
@@ -263,6 +281,10 @@ class $CowsTable extends Cows with TableInfo<$CowsTable, CowRow> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_demo'],
       )!,
+      syncError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sync_error'],
+      ),
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -307,6 +329,9 @@ class CowRow extends DataClass implements Insertable<CowRow> {
 
   /// Datos de demostración (solo en modo debug); nunca se sincronizan.
   final bool isDemo;
+
+  /// Motivo por el que el servidor rechazó el elemento (no se reintenta hasta que cambie).
+  final String? syncError;
   final String id;
   final String tag;
   final String? name;
@@ -319,6 +344,7 @@ class CowRow extends DataClass implements Insertable<CowRow> {
     required this.deleted,
     required this.syncPending,
     required this.isDemo,
+    this.syncError,
     required this.id,
     required this.tag,
     this.name,
@@ -334,6 +360,9 @@ class CowRow extends DataClass implements Insertable<CowRow> {
     map['deleted'] = Variable<bool>(deleted);
     map['sync_pending'] = Variable<bool>(syncPending);
     map['is_demo'] = Variable<bool>(isDemo);
+    if (!nullToAbsent || syncError != null) {
+      map['sync_error'] = Variable<String>(syncError);
+    }
     map['id'] = Variable<String>(id);
     map['tag'] = Variable<String>(tag);
     if (!nullToAbsent || name != null) {
@@ -358,6 +387,9 @@ class CowRow extends DataClass implements Insertable<CowRow> {
       deleted: Value(deleted),
       syncPending: Value(syncPending),
       isDemo: Value(isDemo),
+      syncError: syncError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncError),
       id: Value(id),
       tag: Value(tag),
       name: name == null && nullToAbsent ? const Value.absent() : Value(name),
@@ -384,6 +416,7 @@ class CowRow extends DataClass implements Insertable<CowRow> {
       deleted: serializer.fromJson<bool>(json['deleted']),
       syncPending: serializer.fromJson<bool>(json['syncPending']),
       isDemo: serializer.fromJson<bool>(json['isDemo']),
+      syncError: serializer.fromJson<String?>(json['syncError']),
       id: serializer.fromJson<String>(json['id']),
       tag: serializer.fromJson<String>(json['tag']),
       name: serializer.fromJson<String?>(json['name']),
@@ -401,6 +434,7 @@ class CowRow extends DataClass implements Insertable<CowRow> {
       'deleted': serializer.toJson<bool>(deleted),
       'syncPending': serializer.toJson<bool>(syncPending),
       'isDemo': serializer.toJson<bool>(isDemo),
+      'syncError': serializer.toJson<String?>(syncError),
       'id': serializer.toJson<String>(id),
       'tag': serializer.toJson<String>(tag),
       'name': serializer.toJson<String?>(name),
@@ -416,6 +450,7 @@ class CowRow extends DataClass implements Insertable<CowRow> {
     bool? deleted,
     bool? syncPending,
     bool? isDemo,
+    Value<String?> syncError = const Value.absent(),
     String? id,
     String? tag,
     Value<String?> name = const Value.absent(),
@@ -428,6 +463,7 @@ class CowRow extends DataClass implements Insertable<CowRow> {
     deleted: deleted ?? this.deleted,
     syncPending: syncPending ?? this.syncPending,
     isDemo: isDemo ?? this.isDemo,
+    syncError: syncError.present ? syncError.value : this.syncError,
     id: id ?? this.id,
     tag: tag ?? this.tag,
     name: name.present ? name.value : this.name,
@@ -444,6 +480,7 @@ class CowRow extends DataClass implements Insertable<CowRow> {
           ? data.syncPending.value
           : this.syncPending,
       isDemo: data.isDemo.present ? data.isDemo.value : this.isDemo,
+      syncError: data.syncError.present ? data.syncError.value : this.syncError,
       id: data.id.present ? data.id.value : this.id,
       tag: data.tag.present ? data.tag.value : this.tag,
       name: data.name.present ? data.name.value : this.name,
@@ -463,6 +500,7 @@ class CowRow extends DataClass implements Insertable<CowRow> {
           ..write('deleted: $deleted, ')
           ..write('syncPending: $syncPending, ')
           ..write('isDemo: $isDemo, ')
+          ..write('syncError: $syncError, ')
           ..write('id: $id, ')
           ..write('tag: $tag, ')
           ..write('name: $name, ')
@@ -480,6 +518,7 @@ class CowRow extends DataClass implements Insertable<CowRow> {
     deleted,
     syncPending,
     isDemo,
+    syncError,
     id,
     tag,
     name,
@@ -496,6 +535,7 @@ class CowRow extends DataClass implements Insertable<CowRow> {
           other.deleted == this.deleted &&
           other.syncPending == this.syncPending &&
           other.isDemo == this.isDemo &&
+          other.syncError == this.syncError &&
           other.id == this.id &&
           other.tag == this.tag &&
           other.name == this.name &&
@@ -510,6 +550,7 @@ class CowsCompanion extends UpdateCompanion<CowRow> {
   final Value<bool> deleted;
   final Value<bool> syncPending;
   final Value<bool> isDemo;
+  final Value<String?> syncError;
   final Value<String> id;
   final Value<String> tag;
   final Value<String?> name;
@@ -523,6 +564,7 @@ class CowsCompanion extends UpdateCompanion<CowRow> {
     this.deleted = const Value.absent(),
     this.syncPending = const Value.absent(),
     this.isDemo = const Value.absent(),
+    this.syncError = const Value.absent(),
     this.id = const Value.absent(),
     this.tag = const Value.absent(),
     this.name = const Value.absent(),
@@ -537,6 +579,7 @@ class CowsCompanion extends UpdateCompanion<CowRow> {
     this.deleted = const Value.absent(),
     this.syncPending = const Value.absent(),
     this.isDemo = const Value.absent(),
+    this.syncError = const Value.absent(),
     required String id,
     required String tag,
     this.name = const Value.absent(),
@@ -554,6 +597,7 @@ class CowsCompanion extends UpdateCompanion<CowRow> {
     Expression<bool>? deleted,
     Expression<bool>? syncPending,
     Expression<bool>? isDemo,
+    Expression<String>? syncError,
     Expression<String>? id,
     Expression<String>? tag,
     Expression<String>? name,
@@ -568,6 +612,7 @@ class CowsCompanion extends UpdateCompanion<CowRow> {
       if (deleted != null) 'deleted': deleted,
       if (syncPending != null) 'sync_pending': syncPending,
       if (isDemo != null) 'is_demo': isDemo,
+      if (syncError != null) 'sync_error': syncError,
       if (id != null) 'id': id,
       if (tag != null) 'tag': tag,
       if (name != null) 'name': name,
@@ -584,6 +629,7 @@ class CowsCompanion extends UpdateCompanion<CowRow> {
     Value<bool>? deleted,
     Value<bool>? syncPending,
     Value<bool>? isDemo,
+    Value<String?>? syncError,
     Value<String>? id,
     Value<String>? tag,
     Value<String?>? name,
@@ -598,6 +644,7 @@ class CowsCompanion extends UpdateCompanion<CowRow> {
       deleted: deleted ?? this.deleted,
       syncPending: syncPending ?? this.syncPending,
       isDemo: isDemo ?? this.isDemo,
+      syncError: syncError ?? this.syncError,
       id: id ?? this.id,
       tag: tag ?? this.tag,
       name: name ?? this.name,
@@ -623,6 +670,9 @@ class CowsCompanion extends UpdateCompanion<CowRow> {
     }
     if (isDemo.present) {
       map['is_demo'] = Variable<bool>(isDemo.value);
+    }
+    if (syncError.present) {
+      map['sync_error'] = Variable<String>(syncError.value);
     }
     if (id.present) {
       map['id'] = Variable<String>(id.value);
@@ -658,6 +708,7 @@ class CowsCompanion extends UpdateCompanion<CowRow> {
           ..write('deleted: $deleted, ')
           ..write('syncPending: $syncPending, ')
           ..write('isDemo: $isDemo, ')
+          ..write('syncError: $syncError, ')
           ..write('id: $id, ')
           ..write('tag: $tag, ')
           ..write('name: $name, ')
@@ -730,6 +781,17 @@ class $DailyRecordsTable extends DailyRecords
       'CHECK ("is_demo" IN (0, 1))',
     ),
     defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _syncErrorMeta = const VerificationMeta(
+    'syncError',
+  );
+  @override
+  late final GeneratedColumn<String> syncError = GeneratedColumn<String>(
+    'sync_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
@@ -867,6 +929,7 @@ class $DailyRecordsTable extends DailyRecords
     deleted,
     syncPending,
     isDemo,
+    syncError,
     id,
     cowId,
     recordDate,
@@ -918,6 +981,12 @@ class $DailyRecordsTable extends DailyRecords
       context.handle(
         _isDemoMeta,
         isDemo.isAcceptableOrUnknown(data['is_demo']!, _isDemoMeta),
+      );
+    }
+    if (data.containsKey('sync_error')) {
+      context.handle(
+        _syncErrorMeta,
+        syncError.isAcceptableOrUnknown(data['sync_error']!, _syncErrorMeta),
       );
     }
     if (data.containsKey('id')) {
@@ -1027,6 +1096,10 @@ class $DailyRecordsTable extends DailyRecords
         DriftSqlType.bool,
         data['${effectivePrefix}is_demo'],
       )!,
+      syncError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sync_error'],
+      ),
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -1087,6 +1160,9 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
 
   /// Datos de demostración (solo en modo debug); nunca se sincronizan.
   final bool isDemo;
+
+  /// Motivo por el que el servidor rechazó el elemento (no se reintenta hasta que cambie).
+  final String? syncError;
   final String id;
   final String cowId;
 
@@ -1105,6 +1181,7 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     required this.deleted,
     required this.syncPending,
     required this.isDemo,
+    this.syncError,
     required this.id,
     required this.cowId,
     required this.recordDate,
@@ -1124,6 +1201,9 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     map['deleted'] = Variable<bool>(deleted);
     map['sync_pending'] = Variable<bool>(syncPending);
     map['is_demo'] = Variable<bool>(isDemo);
+    if (!nullToAbsent || syncError != null) {
+      map['sync_error'] = Variable<String>(syncError);
+    }
     map['id'] = Variable<String>(id);
     map['cow_id'] = Variable<String>(cowId);
     map['record_date'] = Variable<String>(recordDate);
@@ -1152,6 +1232,9 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       deleted: Value(deleted),
       syncPending: Value(syncPending),
       isDemo: Value(isDemo),
+      syncError: syncError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncError),
       id: Value(id),
       cowId: Value(cowId),
       recordDate: Value(recordDate),
@@ -1184,6 +1267,7 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       deleted: serializer.fromJson<bool>(json['deleted']),
       syncPending: serializer.fromJson<bool>(json['syncPending']),
       isDemo: serializer.fromJson<bool>(json['isDemo']),
+      syncError: serializer.fromJson<String?>(json['syncError']),
       id: serializer.fromJson<String>(json['id']),
       cowId: serializer.fromJson<String>(json['cowId']),
       recordDate: serializer.fromJson<String>(json['recordDate']),
@@ -1205,6 +1289,7 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       'deleted': serializer.toJson<bool>(deleted),
       'syncPending': serializer.toJson<bool>(syncPending),
       'isDemo': serializer.toJson<bool>(isDemo),
+      'syncError': serializer.toJson<String?>(syncError),
       'id': serializer.toJson<String>(id),
       'cowId': serializer.toJson<String>(cowId),
       'recordDate': serializer.toJson<String>(recordDate),
@@ -1224,6 +1309,7 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     bool? deleted,
     bool? syncPending,
     bool? isDemo,
+    Value<String?> syncError = const Value.absent(),
     String? id,
     String? cowId,
     String? recordDate,
@@ -1240,6 +1326,7 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     deleted: deleted ?? this.deleted,
     syncPending: syncPending ?? this.syncPending,
     isDemo: isDemo ?? this.isDemo,
+    syncError: syncError.present ? syncError.value : this.syncError,
     id: id ?? this.id,
     cowId: cowId ?? this.cowId,
     recordDate: recordDate ?? this.recordDate,
@@ -1260,6 +1347,7 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           ? data.syncPending.value
           : this.syncPending,
       isDemo: data.isDemo.present ? data.isDemo.value : this.isDemo,
+      syncError: data.syncError.present ? data.syncError.value : this.syncError,
       id: data.id.present ? data.id.value : this.id,
       cowId: data.cowId.present ? data.cowId.value : this.cowId,
       recordDate: data.recordDate.present
@@ -1289,6 +1377,7 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           ..write('deleted: $deleted, ')
           ..write('syncPending: $syncPending, ')
           ..write('isDemo: $isDemo, ')
+          ..write('syncError: $syncError, ')
           ..write('id: $id, ')
           ..write('cowId: $cowId, ')
           ..write('recordDate: $recordDate, ')
@@ -1310,6 +1399,7 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     deleted,
     syncPending,
     isDemo,
+    syncError,
     id,
     cowId,
     recordDate,
@@ -1330,6 +1420,7 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           other.deleted == this.deleted &&
           other.syncPending == this.syncPending &&
           other.isDemo == this.isDemo &&
+          other.syncError == this.syncError &&
           other.id == this.id &&
           other.cowId == this.cowId &&
           other.recordDate == this.recordDate &&
@@ -1348,6 +1439,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
   final Value<bool> deleted;
   final Value<bool> syncPending;
   final Value<bool> isDemo;
+  final Value<String?> syncError;
   final Value<String> id;
   final Value<String> cowId;
   final Value<String> recordDate;
@@ -1365,6 +1457,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     this.deleted = const Value.absent(),
     this.syncPending = const Value.absent(),
     this.isDemo = const Value.absent(),
+    this.syncError = const Value.absent(),
     this.id = const Value.absent(),
     this.cowId = const Value.absent(),
     this.recordDate = const Value.absent(),
@@ -1383,6 +1476,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     this.deleted = const Value.absent(),
     this.syncPending = const Value.absent(),
     this.isDemo = const Value.absent(),
+    this.syncError = const Value.absent(),
     required String id,
     required String cowId,
     required String recordDate,
@@ -1404,6 +1498,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     Expression<bool>? deleted,
     Expression<bool>? syncPending,
     Expression<bool>? isDemo,
+    Expression<String>? syncError,
     Expression<String>? id,
     Expression<String>? cowId,
     Expression<String>? recordDate,
@@ -1422,6 +1517,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
       if (deleted != null) 'deleted': deleted,
       if (syncPending != null) 'sync_pending': syncPending,
       if (isDemo != null) 'is_demo': isDemo,
+      if (syncError != null) 'sync_error': syncError,
       if (id != null) 'id': id,
       if (cowId != null) 'cow_id': cowId,
       if (recordDate != null) 'record_date': recordDate,
@@ -1442,6 +1538,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     Value<bool>? deleted,
     Value<bool>? syncPending,
     Value<bool>? isDemo,
+    Value<String?>? syncError,
     Value<String>? id,
     Value<String>? cowId,
     Value<String>? recordDate,
@@ -1460,6 +1557,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
       deleted: deleted ?? this.deleted,
       syncPending: syncPending ?? this.syncPending,
       isDemo: isDemo ?? this.isDemo,
+      syncError: syncError ?? this.syncError,
       id: id ?? this.id,
       cowId: cowId ?? this.cowId,
       recordDate: recordDate ?? this.recordDate,
@@ -1489,6 +1587,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     }
     if (isDemo.present) {
       map['is_demo'] = Variable<bool>(isDemo.value);
+    }
+    if (syncError.present) {
+      map['sync_error'] = Variable<String>(syncError.value);
     }
     if (id.present) {
       map['id'] = Variable<String>(id.value);
@@ -1536,6 +1637,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
           ..write('deleted: $deleted, ')
           ..write('syncPending: $syncPending, ')
           ..write('isDemo: $isDemo, ')
+          ..write('syncError: $syncError, ')
           ..write('id: $id, ')
           ..write('cowId: $cowId, ')
           ..write('recordDate: $recordDate, ')
@@ -1613,6 +1715,17 @@ class $InferencesTable extends Inferences
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _syncErrorMeta = const VerificationMeta(
+    'syncError',
+  );
+  @override
+  late final GeneratedColumn<String> syncError = GeneratedColumn<String>(
+    'sync_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -1684,6 +1797,7 @@ class $InferencesTable extends Inferences
     deleted,
     syncPending,
     isDemo,
+    syncError,
     id,
     cowId,
     windowEndDate,
@@ -1730,6 +1844,12 @@ class $InferencesTable extends Inferences
       context.handle(
         _isDemoMeta,
         isDemo.isAcceptableOrUnknown(data['is_demo']!, _isDemoMeta),
+      );
+    }
+    if (data.containsKey('sync_error')) {
+      context.handle(
+        _syncErrorMeta,
+        syncError.isAcceptableOrUnknown(data['sync_error']!, _syncErrorMeta),
       );
     }
     if (data.containsKey('id')) {
@@ -1811,6 +1931,10 @@ class $InferencesTable extends Inferences
         DriftSqlType.bool,
         data['${effectivePrefix}is_demo'],
       )!,
+      syncError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sync_error'],
+      ),
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -1851,6 +1975,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
 
   /// Datos de demostración (solo en modo debug); nunca se sincronizan.
   final bool isDemo;
+
+  /// Motivo por el que el servidor rechazó el elemento (no se reintenta hasta que cambie).
+  final String? syncError;
   final String id;
   final String cowId;
   final String windowEndDate;
@@ -1862,6 +1989,7 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     required this.deleted,
     required this.syncPending,
     required this.isDemo,
+    this.syncError,
     required this.id,
     required this.cowId,
     required this.windowEndDate,
@@ -1876,6 +2004,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     map['deleted'] = Variable<bool>(deleted);
     map['sync_pending'] = Variable<bool>(syncPending);
     map['is_demo'] = Variable<bool>(isDemo);
+    if (!nullToAbsent || syncError != null) {
+      map['sync_error'] = Variable<String>(syncError);
+    }
     map['id'] = Variable<String>(id);
     map['cow_id'] = Variable<String>(cowId);
     map['window_end_date'] = Variable<String>(windowEndDate);
@@ -1891,6 +2022,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
       deleted: Value(deleted),
       syncPending: Value(syncPending),
       isDemo: Value(isDemo),
+      syncError: syncError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncError),
       id: Value(id),
       cowId: Value(cowId),
       windowEndDate: Value(windowEndDate),
@@ -1910,6 +2044,7 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
       deleted: serializer.fromJson<bool>(json['deleted']),
       syncPending: serializer.fromJson<bool>(json['syncPending']),
       isDemo: serializer.fromJson<bool>(json['isDemo']),
+      syncError: serializer.fromJson<String?>(json['syncError']),
       id: serializer.fromJson<String>(json['id']),
       cowId: serializer.fromJson<String>(json['cowId']),
       windowEndDate: serializer.fromJson<String>(json['windowEndDate']),
@@ -1926,6 +2061,7 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
       'deleted': serializer.toJson<bool>(deleted),
       'syncPending': serializer.toJson<bool>(syncPending),
       'isDemo': serializer.toJson<bool>(isDemo),
+      'syncError': serializer.toJson<String?>(syncError),
       'id': serializer.toJson<String>(id),
       'cowId': serializer.toJson<String>(cowId),
       'windowEndDate': serializer.toJson<String>(windowEndDate),
@@ -1940,6 +2076,7 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     bool? deleted,
     bool? syncPending,
     bool? isDemo,
+    Value<String?> syncError = const Value.absent(),
     String? id,
     String? cowId,
     String? windowEndDate,
@@ -1951,6 +2088,7 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     deleted: deleted ?? this.deleted,
     syncPending: syncPending ?? this.syncPending,
     isDemo: isDemo ?? this.isDemo,
+    syncError: syncError.present ? syncError.value : this.syncError,
     id: id ?? this.id,
     cowId: cowId ?? this.cowId,
     windowEndDate: windowEndDate ?? this.windowEndDate,
@@ -1966,6 +2104,7 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
           ? data.syncPending.value
           : this.syncPending,
       isDemo: data.isDemo.present ? data.isDemo.value : this.isDemo,
+      syncError: data.syncError.present ? data.syncError.value : this.syncError,
       id: data.id.present ? data.id.value : this.id,
       cowId: data.cowId.present ? data.cowId.value : this.cowId,
       windowEndDate: data.windowEndDate.present
@@ -1988,6 +2127,7 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
           ..write('deleted: $deleted, ')
           ..write('syncPending: $syncPending, ')
           ..write('isDemo: $isDemo, ')
+          ..write('syncError: $syncError, ')
           ..write('id: $id, ')
           ..write('cowId: $cowId, ')
           ..write('windowEndDate: $windowEndDate, ')
@@ -2004,6 +2144,7 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     deleted,
     syncPending,
     isDemo,
+    syncError,
     id,
     cowId,
     windowEndDate,
@@ -2019,6 +2160,7 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
           other.deleted == this.deleted &&
           other.syncPending == this.syncPending &&
           other.isDemo == this.isDemo &&
+          other.syncError == this.syncError &&
           other.id == this.id &&
           other.cowId == this.cowId &&
           other.windowEndDate == this.windowEndDate &&
@@ -2032,6 +2174,7 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
   final Value<bool> deleted;
   final Value<bool> syncPending;
   final Value<bool> isDemo;
+  final Value<String?> syncError;
   final Value<String> id;
   final Value<String> cowId;
   final Value<String> windowEndDate;
@@ -2044,6 +2187,7 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     this.deleted = const Value.absent(),
     this.syncPending = const Value.absent(),
     this.isDemo = const Value.absent(),
+    this.syncError = const Value.absent(),
     this.id = const Value.absent(),
     this.cowId = const Value.absent(),
     this.windowEndDate = const Value.absent(),
@@ -2057,6 +2201,7 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     this.deleted = const Value.absent(),
     this.syncPending = const Value.absent(),
     this.isDemo = const Value.absent(),
+    this.syncError = const Value.absent(),
     required String id,
     required String cowId,
     required String windowEndDate,
@@ -2076,6 +2221,7 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     Expression<bool>? deleted,
     Expression<bool>? syncPending,
     Expression<bool>? isDemo,
+    Expression<String>? syncError,
     Expression<String>? id,
     Expression<String>? cowId,
     Expression<String>? windowEndDate,
@@ -2089,6 +2235,7 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
       if (deleted != null) 'deleted': deleted,
       if (syncPending != null) 'sync_pending': syncPending,
       if (isDemo != null) 'is_demo': isDemo,
+      if (syncError != null) 'sync_error': syncError,
       if (id != null) 'id': id,
       if (cowId != null) 'cow_id': cowId,
       if (windowEndDate != null) 'window_end_date': windowEndDate,
@@ -2104,6 +2251,7 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     Value<bool>? deleted,
     Value<bool>? syncPending,
     Value<bool>? isDemo,
+    Value<String?>? syncError,
     Value<String>? id,
     Value<String>? cowId,
     Value<String>? windowEndDate,
@@ -2117,6 +2265,7 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
       deleted: deleted ?? this.deleted,
       syncPending: syncPending ?? this.syncPending,
       isDemo: isDemo ?? this.isDemo,
+      syncError: syncError ?? this.syncError,
       id: id ?? this.id,
       cowId: cowId ?? this.cowId,
       windowEndDate: windowEndDate ?? this.windowEndDate,
@@ -2141,6 +2290,9 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     }
     if (isDemo.present) {
       map['is_demo'] = Variable<bool>(isDemo.value);
+    }
+    if (syncError.present) {
+      map['sync_error'] = Variable<String>(syncError.value);
     }
     if (id.present) {
       map['id'] = Variable<String>(id.value);
@@ -2173,6 +2325,7 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
           ..write('deleted: $deleted, ')
           ..write('syncPending: $syncPending, ')
           ..write('isDemo: $isDemo, ')
+          ..write('syncError: $syncError, ')
           ..write('id: $id, ')
           ..write('cowId: $cowId, ')
           ..write('windowEndDate: $windowEndDate, ')
@@ -2243,6 +2396,17 @@ class $AlertsTable extends Alerts with TableInfo<$AlertsTable, AlertRow> {
       'CHECK ("is_demo" IN (0, 1))',
     ),
     defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _syncErrorMeta = const VerificationMeta(
+    'syncError',
+  );
+  @override
+  late final GeneratedColumn<String> syncError = GeneratedColumn<String>(
+    'sync_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
@@ -2333,6 +2497,7 @@ class $AlertsTable extends Alerts with TableInfo<$AlertsTable, AlertRow> {
     deleted,
     syncPending,
     isDemo,
+    syncError,
     id,
     cowId,
     inferenceId,
@@ -2380,6 +2545,12 @@ class $AlertsTable extends Alerts with TableInfo<$AlertsTable, AlertRow> {
       context.handle(
         _isDemoMeta,
         isDemo.isAcceptableOrUnknown(data['is_demo']!, _isDemoMeta),
+      );
+    }
+    if (data.containsKey('sync_error')) {
+      context.handle(
+        _syncErrorMeta,
+        syncError.isAcceptableOrUnknown(data['sync_error']!, _syncErrorMeta),
       );
     }
     if (data.containsKey('id')) {
@@ -2457,6 +2628,10 @@ class $AlertsTable extends Alerts with TableInfo<$AlertsTable, AlertRow> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_demo'],
       )!,
+      syncError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sync_error'],
+      ),
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -2501,6 +2676,9 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
 
   /// Datos de demostración (solo en modo debug); nunca se sincronizan.
   final bool isDemo;
+
+  /// Motivo por el que el servidor rechazó el elemento (no se reintenta hasta que cambie).
+  final String? syncError;
   final String id;
   final String cowId;
   final String? inferenceId;
@@ -2513,6 +2691,7 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
     required this.deleted,
     required this.syncPending,
     required this.isDemo,
+    this.syncError,
     required this.id,
     required this.cowId,
     this.inferenceId,
@@ -2528,6 +2707,9 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
     map['deleted'] = Variable<bool>(deleted);
     map['sync_pending'] = Variable<bool>(syncPending);
     map['is_demo'] = Variable<bool>(isDemo);
+    if (!nullToAbsent || syncError != null) {
+      map['sync_error'] = Variable<String>(syncError);
+    }
     map['id'] = Variable<String>(id);
     map['cow_id'] = Variable<String>(cowId);
     if (!nullToAbsent || inferenceId != null) {
@@ -2548,6 +2730,9 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
       deleted: Value(deleted),
       syncPending: Value(syncPending),
       isDemo: Value(isDemo),
+      syncError: syncError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncError),
       id: Value(id),
       cowId: Value(cowId),
       inferenceId: inferenceId == null && nullToAbsent
@@ -2572,6 +2757,7 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
       deleted: serializer.fromJson<bool>(json['deleted']),
       syncPending: serializer.fromJson<bool>(json['syncPending']),
       isDemo: serializer.fromJson<bool>(json['isDemo']),
+      syncError: serializer.fromJson<String?>(json['syncError']),
       id: serializer.fromJson<String>(json['id']),
       cowId: serializer.fromJson<String>(json['cowId']),
       inferenceId: serializer.fromJson<String?>(json['inferenceId']),
@@ -2589,6 +2775,7 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
       'deleted': serializer.toJson<bool>(deleted),
       'syncPending': serializer.toJson<bool>(syncPending),
       'isDemo': serializer.toJson<bool>(isDemo),
+      'syncError': serializer.toJson<String?>(syncError),
       'id': serializer.toJson<String>(id),
       'cowId': serializer.toJson<String>(cowId),
       'inferenceId': serializer.toJson<String?>(inferenceId),
@@ -2604,6 +2791,7 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
     bool? deleted,
     bool? syncPending,
     bool? isDemo,
+    Value<String?> syncError = const Value.absent(),
     String? id,
     String? cowId,
     Value<String?> inferenceId = const Value.absent(),
@@ -2616,6 +2804,7 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
     deleted: deleted ?? this.deleted,
     syncPending: syncPending ?? this.syncPending,
     isDemo: isDemo ?? this.isDemo,
+    syncError: syncError.present ? syncError.value : this.syncError,
     id: id ?? this.id,
     cowId: cowId ?? this.cowId,
     inferenceId: inferenceId.present ? inferenceId.value : this.inferenceId,
@@ -2632,6 +2821,7 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
           ? data.syncPending.value
           : this.syncPending,
       isDemo: data.isDemo.present ? data.isDemo.value : this.isDemo,
+      syncError: data.syncError.present ? data.syncError.value : this.syncError,
       id: data.id.present ? data.id.value : this.id,
       cowId: data.cowId.present ? data.cowId.value : this.cowId,
       inferenceId: data.inferenceId.present
@@ -2653,6 +2843,7 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
           ..write('deleted: $deleted, ')
           ..write('syncPending: $syncPending, ')
           ..write('isDemo: $isDemo, ')
+          ..write('syncError: $syncError, ')
           ..write('id: $id, ')
           ..write('cowId: $cowId, ')
           ..write('inferenceId: $inferenceId, ')
@@ -2670,6 +2861,7 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
     deleted,
     syncPending,
     isDemo,
+    syncError,
     id,
     cowId,
     inferenceId,
@@ -2686,6 +2878,7 @@ class AlertRow extends DataClass implements Insertable<AlertRow> {
           other.deleted == this.deleted &&
           other.syncPending == this.syncPending &&
           other.isDemo == this.isDemo &&
+          other.syncError == this.syncError &&
           other.id == this.id &&
           other.cowId == this.cowId &&
           other.inferenceId == this.inferenceId &&
@@ -2700,6 +2893,7 @@ class AlertsCompanion extends UpdateCompanion<AlertRow> {
   final Value<bool> deleted;
   final Value<bool> syncPending;
   final Value<bool> isDemo;
+  final Value<String?> syncError;
   final Value<String> id;
   final Value<String> cowId;
   final Value<String?> inferenceId;
@@ -2713,6 +2907,7 @@ class AlertsCompanion extends UpdateCompanion<AlertRow> {
     this.deleted = const Value.absent(),
     this.syncPending = const Value.absent(),
     this.isDemo = const Value.absent(),
+    this.syncError = const Value.absent(),
     this.id = const Value.absent(),
     this.cowId = const Value.absent(),
     this.inferenceId = const Value.absent(),
@@ -2727,6 +2922,7 @@ class AlertsCompanion extends UpdateCompanion<AlertRow> {
     this.deleted = const Value.absent(),
     this.syncPending = const Value.absent(),
     this.isDemo = const Value.absent(),
+    this.syncError = const Value.absent(),
     required String id,
     required String cowId,
     this.inferenceId = const Value.absent(),
@@ -2745,6 +2941,7 @@ class AlertsCompanion extends UpdateCompanion<AlertRow> {
     Expression<bool>? deleted,
     Expression<bool>? syncPending,
     Expression<bool>? isDemo,
+    Expression<String>? syncError,
     Expression<String>? id,
     Expression<String>? cowId,
     Expression<String>? inferenceId,
@@ -2759,6 +2956,7 @@ class AlertsCompanion extends UpdateCompanion<AlertRow> {
       if (deleted != null) 'deleted': deleted,
       if (syncPending != null) 'sync_pending': syncPending,
       if (isDemo != null) 'is_demo': isDemo,
+      if (syncError != null) 'sync_error': syncError,
       if (id != null) 'id': id,
       if (cowId != null) 'cow_id': cowId,
       if (inferenceId != null) 'inference_id': inferenceId,
@@ -2775,6 +2973,7 @@ class AlertsCompanion extends UpdateCompanion<AlertRow> {
     Value<bool>? deleted,
     Value<bool>? syncPending,
     Value<bool>? isDemo,
+    Value<String?>? syncError,
     Value<String>? id,
     Value<String>? cowId,
     Value<String?>? inferenceId,
@@ -2789,6 +2988,7 @@ class AlertsCompanion extends UpdateCompanion<AlertRow> {
       deleted: deleted ?? this.deleted,
       syncPending: syncPending ?? this.syncPending,
       isDemo: isDemo ?? this.isDemo,
+      syncError: syncError ?? this.syncError,
       id: id ?? this.id,
       cowId: cowId ?? this.cowId,
       inferenceId: inferenceId ?? this.inferenceId,
@@ -2814,6 +3014,9 @@ class AlertsCompanion extends UpdateCompanion<AlertRow> {
     }
     if (isDemo.present) {
       map['is_demo'] = Variable<bool>(isDemo.value);
+    }
+    if (syncError.present) {
+      map['sync_error'] = Variable<String>(syncError.value);
     }
     if (id.present) {
       map['id'] = Variable<String>(id.value);
@@ -2849,6 +3052,7 @@ class AlertsCompanion extends UpdateCompanion<AlertRow> {
           ..write('deleted: $deleted, ')
           ..write('syncPending: $syncPending, ')
           ..write('isDemo: $isDemo, ')
+          ..write('syncError: $syncError, ')
           ..write('id: $id, ')
           ..write('cowId: $cowId, ')
           ..write('inferenceId: $inferenceId, ')
@@ -2889,6 +3093,7 @@ typedef $$CowsTableCreateCompanionBuilder = CowsCompanion Function({
   Value<bool> deleted,
   Value<bool> syncPending,
   Value<bool> isDemo,
+  Value<String?> syncError,
   required String id,
   required String tag,
   Value<String?> name,
@@ -2903,6 +3108,7 @@ typedef $$CowsTableUpdateCompanionBuilder = CowsCompanion Function({
   Value<bool> deleted,
   Value<bool> syncPending,
   Value<bool> isDemo,
+  Value<String?> syncError,
   Value<String> id,
   Value<String> tag,
   Value<String?> name,
@@ -2998,6 +3204,11 @@ class $$CowsTableFilterComposer extends Composer<_$AppDatabase, $CowsTable> {
 
   ColumnFilters<bool> get isDemo => $composableBuilder(
     column: $table.isDemo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get syncError => $composableBuilder(
+    column: $table.syncError,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3140,6 +3351,11 @@ class $$CowsTableOrderingComposer extends Composer<_$AppDatabase, $CowsTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get syncError => $composableBuilder(
+    column: $table.syncError,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -3198,6 +3414,9 @@ class $$CowsTableAnnotationComposer
 
   GeneratedColumn<bool> get isDemo =>
       $composableBuilder(column: $table.isDemo, builder: (column) => column);
+
+  GeneratedColumn<String> get syncError =>
+      $composableBuilder(column: $table.syncError, builder: (column) => column);
 
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
@@ -3334,6 +3553,7 @@ class $$CowsTableTableManager
                 Value<bool> deleted = const Value.absent(),
                 Value<bool> syncPending = const Value.absent(),
                 Value<bool> isDemo = const Value.absent(),
+                Value<String?> syncError = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String> tag = const Value.absent(),
                 Value<String?> name = const Value.absent(),
@@ -3347,6 +3567,7 @@ class $$CowsTableTableManager
                 deleted: deleted,
                 syncPending: syncPending,
                 isDemo: isDemo,
+                syncError: syncError,
                 id: id,
                 tag: tag,
                 name: name,
@@ -3362,6 +3583,7 @@ class $$CowsTableTableManager
                 Value<bool> deleted = const Value.absent(),
                 Value<bool> syncPending = const Value.absent(),
                 Value<bool> isDemo = const Value.absent(),
+                Value<String?> syncError = const Value.absent(),
                 required String id,
                 required String tag,
                 Value<String?> name = const Value.absent(),
@@ -3375,6 +3597,7 @@ class $$CowsTableTableManager
                 deleted: deleted,
                 syncPending: syncPending,
                 isDemo: isDemo,
+                syncError: syncError,
                 id: id,
                 tag: tag,
                 name: name,
@@ -3494,6 +3717,7 @@ typedef $$DailyRecordsTableCreateCompanionBuilder =
       Value<bool> deleted,
       Value<bool> syncPending,
       Value<bool> isDemo,
+      Value<String?> syncError,
       required String id,
       required String cowId,
       required String recordDate,
@@ -3513,6 +3737,7 @@ typedef $$DailyRecordsTableUpdateCompanionBuilder =
       Value<bool> deleted,
       Value<bool> syncPending,
       Value<bool> isDemo,
+      Value<String?> syncError,
       Value<String> id,
       Value<String> cowId,
       Value<String> recordDate,
@@ -3575,6 +3800,11 @@ class $$DailyRecordsTableFilterComposer
 
   ColumnFilters<bool> get isDemo => $composableBuilder(
     column: $table.isDemo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get syncError => $composableBuilder(
+    column: $table.syncError,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3681,6 +3911,11 @@ class $$DailyRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get syncError => $composableBuilder(
+    column: $table.syncError,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -3778,6 +4013,9 @@ class $$DailyRecordsTableAnnotationComposer
   GeneratedColumn<bool> get isDemo =>
       $composableBuilder(column: $table.isDemo, builder: (column) => column);
 
+  GeneratedColumn<String> get syncError =>
+      $composableBuilder(column: $table.syncError, builder: (column) => column);
+
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -3872,6 +4110,7 @@ class $$DailyRecordsTableTableManager
                 Value<bool> deleted = const Value.absent(),
                 Value<bool> syncPending = const Value.absent(),
                 Value<bool> isDemo = const Value.absent(),
+                Value<String?> syncError = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String> cowId = const Value.absent(),
                 Value<String> recordDate = const Value.absent(),
@@ -3889,6 +4128,7 @@ class $$DailyRecordsTableTableManager
                 deleted: deleted,
                 syncPending: syncPending,
                 isDemo: isDemo,
+                syncError: syncError,
                 id: id,
                 cowId: cowId,
                 recordDate: recordDate,
@@ -3908,6 +4148,7 @@ class $$DailyRecordsTableTableManager
                 Value<bool> deleted = const Value.absent(),
                 Value<bool> syncPending = const Value.absent(),
                 Value<bool> isDemo = const Value.absent(),
+                Value<String?> syncError = const Value.absent(),
                 required String id,
                 required String cowId,
                 required String recordDate,
@@ -3925,6 +4166,7 @@ class $$DailyRecordsTableTableManager
                 deleted: deleted,
                 syncPending: syncPending,
                 isDemo: isDemo,
+                syncError: syncError,
                 id: id,
                 cowId: cowId,
                 recordDate: recordDate,
@@ -4008,6 +4250,7 @@ typedef $$InferencesTableCreateCompanionBuilder = InferencesCompanion Function({
   Value<bool> deleted,
   Value<bool> syncPending,
   Value<bool> isDemo,
+  Value<String?> syncError,
   required String id,
   required String cowId,
   required String windowEndDate,
@@ -4021,6 +4264,7 @@ typedef $$InferencesTableUpdateCompanionBuilder = InferencesCompanion Function({
   Value<bool> deleted,
   Value<bool> syncPending,
   Value<bool> isDemo,
+  Value<String?> syncError,
   Value<String> id,
   Value<String> cowId,
   Value<String> windowEndDate,
@@ -4097,6 +4341,11 @@ class $$InferencesTableFilterComposer
 
   ColumnFilters<bool> get isDemo => $composableBuilder(
     column: $table.isDemo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get syncError => $composableBuilder(
+    column: $table.syncError,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4203,6 +4452,11 @@ class $$InferencesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get syncError => $composableBuilder(
+    column: $table.syncError,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -4274,6 +4528,9 @@ class $$InferencesTableAnnotationComposer
 
   GeneratedColumn<bool> get isDemo =>
       $composableBuilder(column: $table.isDemo, builder: (column) => column);
+
+  GeneratedColumn<String> get syncError =>
+      $composableBuilder(column: $table.syncError, builder: (column) => column);
 
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
@@ -4377,6 +4634,7 @@ class $$InferencesTableTableManager
                 Value<bool> deleted = const Value.absent(),
                 Value<bool> syncPending = const Value.absent(),
                 Value<bool> isDemo = const Value.absent(),
+                Value<String?> syncError = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String> cowId = const Value.absent(),
                 Value<String> windowEndDate = const Value.absent(),
@@ -4389,6 +4647,7 @@ class $$InferencesTableTableManager
                 deleted: deleted,
                 syncPending: syncPending,
                 isDemo: isDemo,
+                syncError: syncError,
                 id: id,
                 cowId: cowId,
                 windowEndDate: windowEndDate,
@@ -4403,6 +4662,7 @@ class $$InferencesTableTableManager
                 Value<bool> deleted = const Value.absent(),
                 Value<bool> syncPending = const Value.absent(),
                 Value<bool> isDemo = const Value.absent(),
+                Value<String?> syncError = const Value.absent(),
                 required String id,
                 required String cowId,
                 required String windowEndDate,
@@ -4415,6 +4675,7 @@ class $$InferencesTableTableManager
                 deleted: deleted,
                 syncPending: syncPending,
                 isDemo: isDemo,
+                syncError: syncError,
                 id: id,
                 cowId: cowId,
                 windowEndDate: windowEndDate,
@@ -4510,6 +4771,7 @@ typedef $$AlertsTableCreateCompanionBuilder = AlertsCompanion Function({
   Value<bool> deleted,
   Value<bool> syncPending,
   Value<bool> isDemo,
+  Value<String?> syncError,
   required String id,
   required String cowId,
   Value<String?> inferenceId,
@@ -4524,6 +4786,7 @@ typedef $$AlertsTableUpdateCompanionBuilder = AlertsCompanion Function({
   Value<bool> deleted,
   Value<bool> syncPending,
   Value<bool> isDemo,
+  Value<String?> syncError,
   Value<String> id,
   Value<String> cowId,
   Value<String?> inferenceId,
@@ -4599,6 +4862,11 @@ class $$AlertsTableFilterComposer
 
   ColumnFilters<bool> get isDemo => $composableBuilder(
     column: $table.isDemo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get syncError => $composableBuilder(
+    column: $table.syncError,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4703,6 +4971,11 @@ class $$AlertsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get syncError => $composableBuilder(
+    column: $table.syncError,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -4797,6 +5070,9 @@ class $$AlertsTableAnnotationComposer
 
   GeneratedColumn<bool> get isDemo =>
       $composableBuilder(column: $table.isDemo, builder: (column) => column);
+
+  GeneratedColumn<String> get syncError =>
+      $composableBuilder(column: $table.syncError, builder: (column) => column);
 
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
@@ -4894,6 +5170,7 @@ class $$AlertsTableTableManager
                 Value<bool> deleted = const Value.absent(),
                 Value<bool> syncPending = const Value.absent(),
                 Value<bool> isDemo = const Value.absent(),
+                Value<String?> syncError = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String> cowId = const Value.absent(),
                 Value<String?> inferenceId = const Value.absent(),
@@ -4907,6 +5184,7 @@ class $$AlertsTableTableManager
                 deleted: deleted,
                 syncPending: syncPending,
                 isDemo: isDemo,
+                syncError: syncError,
                 id: id,
                 cowId: cowId,
                 inferenceId: inferenceId,
@@ -4922,6 +5200,7 @@ class $$AlertsTableTableManager
                 Value<bool> deleted = const Value.absent(),
                 Value<bool> syncPending = const Value.absent(),
                 Value<bool> isDemo = const Value.absent(),
+                Value<String?> syncError = const Value.absent(),
                 required String id,
                 required String cowId,
                 Value<String?> inferenceId = const Value.absent(),
@@ -4935,6 +5214,7 @@ class $$AlertsTableTableManager
                 deleted: deleted,
                 syncPending: syncPending,
                 isDemo: isDemo,
+                syncError: syncError,
                 id: id,
                 cowId: cowId,
                 inferenceId: inferenceId,
