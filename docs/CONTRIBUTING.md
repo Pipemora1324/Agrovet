@@ -34,7 +34,7 @@ git push origin develop
 Solo código fuente y documentación del proyecto. Nunca:
 
 - Dependencias ni builds: `node_modules`, `.dart_tool`, `build`, `target`, `.gradle`, entornos virtuales.
-- Secretos: `.env`, `*.jks`, `*.keystore`, `key.properties`, `google-services.json`, claves de bases alojadas.
+- Secretos: `.env`, `*.jks`, `*.keystore`, `key.properties`, `google-services.json`, credenciales de la base de datos.
 - `local.properties`, datasets `.csv` ni modelos `.keras`/`.h5`.
 
 Sí se versionan el modelo `.tflite`, `model_config.json` y `test_vectors.json`, porque la app los
