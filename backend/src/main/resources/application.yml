@@ -1,0 +1,54 @@
+# Todo lo sensible llega por variables de entorno (ver .env.example). No hay valores por defecto
+# para credenciales ni para el secreto del JWT: si faltan, la aplicación no arranca.
+spring:
+  application:
+    name: agrovet-backend
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
+
+agrovet:
+  jwt:
+    secret: ${JWT_SECRET}
+    issuer: agrovet
+    access-ttl: ${JWT_ACCESS_TTL:PT15M}
+    refresh-ttl: ${JWT_REFRESH_TTL:P14D}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+  login-rate-limit:
+    max-attempts: ${LOGIN_MAX_ATTEMPTS:5}
+    window: ${LOGIN_WINDOW:PT5M}
+    max-attempts-per-ip: ${LOGIN_MAX_ATTEMPTS_PER_IP:30}
+
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:true}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
