@@ -113,6 +113,34 @@ void main() {
     await settle(tester);
     expect(find.text('Rosita'), findsOneWidget);
 
+    // Registro del día para que también viaje un registro diario
+    await tester.tap(find.text('Rosita'));
+    await settle(tester);
+    await tester.tap(find.text('Registro de hoy'));
+    await settle(tester);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Temperatura'), '38,7');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Leche del día'), '11,5');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Alimento consumido'), '9');
+    await tester.scrollUntilVisible(find.text('Guardar registro'), 300, scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text('Guardar registro'));
+    await settle(tester);
+    await back(tester);
+    await settle(tester);
+
+    // Sincronización manual: la nube muestra los 2 cambios pendientes
+    expect(find.byIcon(Icons.cloud_upload), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.cloud_upload));
+    // El aviso dura 4 s: se busca mientras la respuesta llega, antes de que se oculte
+    final saved = find.text('Datos respaldados en el servidor.');
+    for (var i = 0; i < 30 && saved.evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(saved, findsOneWidget);
+    await settle(tester, seconds: 5);
+    expect(find.byIcon(Icons.cloud_done), findsOneWidget);
+    // EMAIL_SINCRONIZADO lo lee la verificación hecha desde el equipo contra PostgreSQL
+    debugPrint('EMAIL_SINCRONIZADO=$email');
+
     await tester.tap(find.byTooltip('Cerrar sesión'));
     await settle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Cerrar sesión'));
