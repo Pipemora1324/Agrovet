@@ -21,7 +21,6 @@ application-local.yml
 application-local.properties
 google-services.json
 GoogleService-Info.plist
-supabase/.temp/
 *.secret
 
 # --- ML (Python) ---

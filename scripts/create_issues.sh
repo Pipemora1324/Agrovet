@@ -167,11 +167,6 @@ issue "RNF-03" "Seguridad de la API" "requerimiento,no-funcional,backend,priorid
 - [ ] Cada usuario solo accede a sus propios datos, con pruebas que lo demuestren
 - [ ] Secretos y URL de la base solo por variables de entorno"
 
-issue "RNF-08" "Protección de los datos en el celular" "requerimiento,no-funcional,mobile,prioridad:alta" \
-"- [ ] Base local cifrada (SQLCipher)
-- [ ] Tokens en almacenamiento seguro del sistema
-- [ ] La clave de la base no queda en el código"
-
 issue "RNF-04" "Paridad del preprocesamiento Python / Dart" "requerimiento,no-funcional,ml,mobile,prioridad:alta" \
 "- [ ] La app reproduce test_vectors.json con tolerancia 1e-4
 - [ ] La prueba corre en el CI de la app"
@@ -189,5 +184,10 @@ issue "RNF-06" "Integración continua por módulo" "requerimiento,no-funcional,d
 issue "RNF-07" "Documentación de la API" "requerimiento,no-funcional,backend,docs,prioridad:baja" \
 "- [ ] Swagger / OpenAPI disponible en el backend
 - [ ] README de cada módulo con instrucciones de ejecución"
+
+issue "RNF-08" "Protección de los datos en el celular" "requerimiento,no-funcional,mobile,prioridad:alta" \
+"- [ ] Base local cifrada (SQLCipher)
+- [ ] Tokens en almacenamiento seguro del sistema
+- [ ] La clave de la base no queda en el código"
 
 echo "Listo."
