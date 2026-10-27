@@ -10,6 +10,9 @@ mixin SyncColumns on Table {
 
   /// Datos de demostración (solo en modo debug); nunca se sincronizan.
   BoolColumn get isDemo => boolean().withDefault(const Constant(false))();
+
+  /// Motivo por el que el servidor rechazó el elemento (no se reintenta hasta que cambie).
+  TextColumn get syncError => text().nullable()();
 }
 
 @DataClassName('CowRow')
@@ -83,10 +86,19 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(cows, cows.syncError);
+            await m.addColumn(dailyRecords, dailyRecords.syncError);
+            await m.addColumn(inferences, inferences.syncError);
+            await m.addColumn(alerts, alerts.syncError);
+          }
+        },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
         },

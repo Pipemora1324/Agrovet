@@ -11,6 +11,7 @@ import 'package:agrovet/presentation/auth/login_screen.dart';
 import 'package:agrovet/presentation/cows/cows_screen.dart';
 import 'package:agrovet/presentation/risk/risk_cubit.dart';
 import 'package:agrovet/presentation/risk/risk_screen.dart';
+import 'package:agrovet/presentation/sync/sync_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -83,7 +84,13 @@ void main() {
           RepositoryProvider<CowRepository>.value(value: repo),
           RepositoryProvider.value(value: authCubit()),
         ],
-        child: BlocProvider.value(value: authCubit(), child: app(const CowsScreen())),
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: authCubit()),
+            BlocProvider(create: (_) => SyncCubit.disabled()),
+          ],
+          child: app(const CowsScreen()),
+        ),
       ));
       await tester.pumpAndSettle();
     }

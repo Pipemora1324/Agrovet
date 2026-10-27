@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
 import '../auth/auth_cubit.dart';
+import '../sync/sync_button.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/fade_in.dart';
 import '../widgets/traffic_light.dart';
@@ -47,6 +48,7 @@ class _CowsView extends StatelessWidget {
     return AppScaffold(
       title: 'Mis vacas',
       actions: [
+        const SyncButton(),
         IconButton(
           tooltip: 'Cerrar sesión',
           icon: const Icon(Icons.logout),
