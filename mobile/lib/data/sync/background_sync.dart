@@ -33,6 +33,8 @@ Future<bool> runBackgroundSync() async {
   try {
     final client = ApiClient(baseUrl: AppConfig.apiBaseUrl, store: store);
     final report = await SyncService(db, SyncApi(client)).syncNow();
+    // Igual que en la app: solo cuenta si el servidor confirmó algo
+    if (report.ok && report.sent > 0) await store.saveLastSync(session.userId, DateTime.now());
     return report.ok;
   } finally {
     await db.close();

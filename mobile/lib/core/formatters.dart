@@ -12,6 +12,9 @@ String formatDay(DateTime date) {
 
 String formatShortDay(DateTime date) => DateFormat('d MMM', 'es').format(date);
 
+/// "Hoy, 14:32" o "lun 16 de marzo, 08:05".
+String formatDateTime(DateTime value) => '${formatDay(value)}, ${DateFormat.Hm('es').format(value)}';
+
 String formatNumber(double? value, {int decimals = 1}) =>
     value == null ? '—' : value.toStringAsFixed(decimals).replaceAll('.', ',');
 

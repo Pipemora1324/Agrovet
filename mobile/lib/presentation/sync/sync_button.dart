@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'sync_cubit.dart';
+import 'sync_screen.dart';
 
-/// Ícono de la barra superior: nube con el número de cambios por subir. Al tocarlo, sincroniza.
+/// Ícono de la barra superior: nube con el número de cambios por subir. Al tocarlo abre el estado
+/// del respaldo, donde está el botón "Sincronizar ahora".
 class SyncButton extends StatelessWidget {
   const SyncButton({super.key});
 
@@ -18,19 +20,25 @@ class SyncButton extends StatelessWidget {
           if (!state.enabled) return const SizedBox.shrink();
           final tooltip = state.syncing
               ? 'Sincronizando…'
-              : state.pending == 0
-                  ? 'Todo respaldado'
-                  : '${state.pending} cambio(s) por respaldar. Toque para sincronizar';
+              : state.hasProblems
+                  ? 'Hay un problema con el respaldo'
+                  : state.pending == 0
+                      ? 'Todo respaldado'
+                      : '${state.pending} cambio(s) por respaldar';
           return IconButton(
             tooltip: tooltip,
-            onPressed: state.syncing ? null : () => context.read<SyncCubit>().syncNow(),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncScreen())),
             icon: state.syncing
                 ? const SizedBox(
                     width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
                 : Badge(
                     isLabelVisible: state.pending > 0,
                     label: Text('${state.pending}'),
-                    child: Icon(state.pending == 0 ? Icons.cloud_done : Icons.cloud_upload),
+                    child: Icon(state.hasProblems
+                        ? Icons.sync_problem
+                        : state.pending == 0
+                            ? Icons.cloud_done
+                            : Icons.cloud_upload),
                   ),
           );
         },

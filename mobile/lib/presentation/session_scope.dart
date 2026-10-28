@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -47,9 +49,14 @@ class _SessionScopeState extends State<SessionScope> {
   late final Future<_SessionDeps> _deps;
   AppDatabase? _db;
 
+  // Al volver la app al frente se sincroniza lo pendiente
+  final _resumed = StreamController<void>.broadcast();
+  late final AppLifecycleListener _lifecycle;
+
   @override
   void initState() {
     super.initState();
+    _lifecycle = AppLifecycleListener(onResume: () => _resumed.add(null));
     _deps = _open(context.read<SecureStore>(), context.read<ApiClient>());
   }
 
@@ -68,8 +75,13 @@ class _SessionScopeState extends State<SessionScope> {
     }
     final sync = session.isDemo
         ? SyncCubit.disabled()
-        : (SyncCubit(SyncService(db, SyncApi(api)), connectivity: widget.connectivity ?? _online())
-          ..syncNow(silent: true));
+        : (SyncCubit(
+            SyncService(db, SyncApi(api)),
+            connectivity: widget.connectivity ?? _online(),
+            appResumed: _resumed.stream,
+            loadLastSync: () => store.lastSyncFor(session.userId),
+            saveLastSync: (at) => store.saveLastSync(session.userId, at),
+          )..syncNow(silent: true));
     return _SessionDeps(repository, RiskEvaluator(await widget.predictor), sync);
   }
 
@@ -79,6 +91,8 @@ class _SessionScopeState extends State<SessionScope> {
 
   @override
   void dispose() {
+    _lifecycle.dispose();
+    _resumed.close();
     _deps.then((deps) => deps.sync.close()).whenComplete(() => _db?.close());
     super.dispose();
   }
