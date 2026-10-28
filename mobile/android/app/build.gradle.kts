@@ -27,6 +27,14 @@ android {
         versionName = flutter.versionName
     }
 
+    packaging {
+        jniLibs {
+            // La app usa solo el intérprete TFLite en CPU (libtensorflowlite_jni.so).
+            // flutter_litert trae además el delegado de GPU, que nunca se carga.
+            excludes += listOf("**/libtensorflowlite_gpu_jni.so", "**/libLiteRtClGlAccelerator.so")
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
