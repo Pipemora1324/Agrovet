@@ -81,16 +81,23 @@ lib/
 
 Todo se guarda primero en el celular; cada cambio queda marcado como pendiente.
 
-- **Cuándo**: al abrir la sesión, al recuperar la conexión (`connectivity_plus`), cuando el ganadero
-  toca la nube de la barra superior y cada 15 minutos en segundo plano con `workmanager` (solo con
-  red; si falla, Android reintenta con espera exponencial).
+- **Cuándo**: al abrir la sesión, al volver la app al frente y al recuperar la conexión
+  (`connectivity_plus`) si hay cambios pendientes; cuando el ganadero toca "Sincronizar ahora"; y cada
+  15 minutos en segundo plano con `workmanager`, aunque la app esté cerrada (solo con red; si falla,
+  Android reintenta con espera exponencial). Android decide el momento exacto de la tarea periódica y
+  puede atrasarla para agruparla con otras.
 - **Cómo**: `POST /api/sync` en lotes de hasta 200 elementos por tipo, primero las vacas. Ante fallas
   de red o del servidor se reintenta con espera exponencial (2, 4 y 8 s, con variación).
 - **Confirmación**: solo se marca como sincronizado lo que el servidor confirma, y solo si la fila no
   cambió mientras se enviaba. Nunca se borra nada local.
 - **Rechazos**: si el servidor rechaza un elemento (por ejemplo, otro registro para el mismo día), se
   guarda el motivo y no se reintenta hasta que el ganadero lo corrija.
-- La nube muestra cuántos cambios faltan por subir. La sesión de demostración no sincroniza.
+- **Estado**: la nube de la barra superior muestra cuántos cambios faltan por subir y cambia de ícono
+  si hay un problema. Al tocarla se abre "Respaldo de datos" con los pendientes, la hora de la última
+  sincronización (la guardan tanto la app como la tarea en segundo plano), el error del último intento,
+  lo que el servidor rechazó con su motivo y el botón **"Sincronizar ahora"**. Solo cuenta como
+  sincronización un envío que el servidor confirmó.
+- La sesión de demostración no sincroniza.
 
 ## Decisiones de diseño (para revisión)
 
