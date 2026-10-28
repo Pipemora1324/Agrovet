@@ -34,3 +34,11 @@ abstract interface class InferenceRepository {
   Stream<Inference?> watchLatest(String cowId);
   Future<List<Inference>> inferencesBetween(String cowId, DateTime from, DateTime to);
 }
+
+abstract interface class AlertRepository {
+  /// Alertas que el ganadero todavía no ha atendido, de la más reciente a la más antigua.
+  Stream<List<CowAlert>> watchPendingAlerts(String cowId);
+
+  /// Marca la alerta como atendida; queda pendiente de sincronizar.
+  Future<void> markAlertAttended(String alertId);
+}

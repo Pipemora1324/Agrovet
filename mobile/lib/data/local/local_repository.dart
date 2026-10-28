@@ -16,7 +16,7 @@ DateTime parseDateKey(String value) {
 
 /// Repositorio local sobre la base cifrada. Todo cambio queda pendiente de sincronizar;
 /// en la sesión de demostración se marca isDemo y nunca se envía al servidor.
-class LocalRepository implements CowRepository, RecordRepository, InferenceRepository {
+class LocalRepository implements CowRepository, RecordRepository, InferenceRepository, AlertRepository {
   LocalRepository(this.db, {this.isDemo = false, DateTime Function()? clock}) : _now = clock ?? DateTime.now;
 
   final AppDatabase db;
@@ -244,5 +244,38 @@ class LocalRepository implements CowRepository, RecordRepository, InferenceRepos
     riskLevel: RiskLevel.fromCode(row.riskLevel),
     modelVersion: row.modelVersion,
     updatedAt: row.updatedAt,
+  );
+
+  @override
+  Stream<List<CowAlert>> watchPendingAlerts(String cowId) =>
+      (db.select(db.alerts)
+            ..where((a) => a.cowId.equals(cowId) & a.attended.equals(false) & a.deleted.equals(false))
+            ..orderBy([(a) => OrderingTerm.desc(a.createdAt)]))
+          .watch()
+          .map((rows) => rows.map(_toAlert).toList());
+
+  @override
+  Future<void> markAlertAttended(String alertId) {
+    final now = _now();
+    // Solo cambia si seguía sin atender: tocar dos veces no genera otra versión para sincronizar
+    return (db.update(db.alerts)..where((a) => a.id.equals(alertId) & a.attended.equals(false))).write(
+      AlertsCompanion(
+        attended: const Value(true),
+        attendedAt: Value(now),
+        updatedAt: Value(now),
+        syncPending: const Value(true),
+        syncError: const Value(null),
+      ),
+    );
+  }
+
+  CowAlert _toAlert(AlertRow row) => CowAlert(
+    id: row.id,
+    cowId: row.cowId,
+    inferenceId: row.inferenceId,
+    riskLevel: RiskLevel.fromCode(row.riskLevel),
+    attended: row.attended,
+    attendedAt: row.attendedAt,
+    createdAt: row.createdAt,
   );
 }
