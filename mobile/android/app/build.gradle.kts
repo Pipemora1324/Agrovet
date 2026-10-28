@@ -37,6 +37,9 @@ android {
                 "**/libLiteRtClGlAccelerator.so",
                 "**/libLiteRt.so",
             )
+            // Bibliotecas comprimidas dentro del APK: la descarga pesa menos de la mitad, a cambio
+            // de que Android las descomprima al instalar. Importa más el plan de datos que el espacio.
+            useLegacyPackaging = true
         }
     }
 
