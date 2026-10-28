@@ -29,6 +29,28 @@ Desde el emulador, la app lo busca en `http://10.0.2.2:8080`. Otra dirección se
 flutter run --dart-define=API_BASE_URL=https://mi-servidor.example.org
 ```
 
+### APK para instalar
+
+```bash
+flutter build apk --release --split-per-abi
+```
+
+Genera un APK por arquitectura en `build/app/outputs/flutter-apk/`. La mayoría de los celulares
+actuales usa `arm64-v8a`; los más viejos o de gama muy baja, `armeabi-v7a`.
+
+| APK | Tamaño |
+|---|---|
+| arm64-v8a | 12,5 MB |
+| armeabi-v7a | 11,6 MB |
+| x86_64 (emuladores) | 13,5 MB |
+
+Antes un solo APK arm64 pesaba 39,1 MB. Para bajarlo:
+- se quitaron el delegado de GPU de TFLite y el runtime de LiteRT de la API CompiledModel, que
+  `flutter_litert` incluye pero la app no usa (solo usa el intérprete en CPU);
+- las bibliotecas nativas van comprimidas dentro del APK.
+
+El CI falla si algún APK pasa de 15 MB.
+
 En release solo se permite HTTPS: el permiso para HTTP sin cifrar existe únicamente en debug y
 solo hacia `10.0.2.2` y `localhost`.
 

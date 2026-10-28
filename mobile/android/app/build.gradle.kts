@@ -27,6 +27,22 @@ android {
         versionName = flutter.versionName
     }
 
+    packaging {
+        jniLibs {
+            // La app usa solo el intérprete TFLite en CPU (libtensorflowlite_jni.so).
+            // flutter_litert trae además el delegado de GPU y el runtime de la API CompiledModel
+            // (libLiteRt.so); ninguno se carga.
+            excludes += listOf(
+                "**/libtensorflowlite_gpu_jni.so",
+                "**/libLiteRtClGlAccelerator.so",
+                "**/libLiteRt.so",
+            )
+            // Bibliotecas comprimidas dentro del APK: la descarga pesa menos de la mitad, a cambio
+            // de que Android las descomprima al instalar. Importa más el plan de datos que el espacio.
+            useLegacyPackaging = true
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
