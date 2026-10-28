@@ -70,6 +70,18 @@ void main() {
 
     await back(tester);
     await settle(tester);
+
+    // La evaluación en rojo deja una alerta en la ficha; se marca como atendida
+    final attend = find.text('Marcar como atendida');
+    final pendingAlerts = attend.evaluate().length;
+    expect(pendingAlerts, greaterThan(0));
+    await shot(tester, '05b_alerta');
+    await tester.ensureVisible(attend.first);
+    await tester.tap(attend.first);
+    await settle(tester);
+    expect(find.text('Marcar como atendida'), findsNWidgets(pendingAlerts - 1));
+
+    await tester.ensureVisible(find.text('Ver historial'));
     await tester.tap(find.text('Ver historial'));
     await settle(tester, seconds: 3);
     expect(find.text('Temperatura (°C)'), findsOneWidget);
@@ -127,9 +139,13 @@ void main() {
     await back(tester);
     await settle(tester);
 
-    // Sincronización manual: la nube muestra los 2 cambios pendientes
+    // Sincronización manual: la nube abre el estado del respaldo con los 2 cambios pendientes
     expect(find.byIcon(Icons.cloud_upload), findsOneWidget);
     await tester.tap(find.byIcon(Icons.cloud_upload));
+    await settle(tester);
+    expect(find.text('Hay cambios por subir'), findsOneWidget);
+    expect(find.text('2'), findsWidgets);
+    await tester.tap(find.text('Sincronizar ahora'));
     // El aviso dura 4 s: se busca mientras la respuesta llega, antes de que se oculte
     final saved = find.text('Datos respaldados en el servidor.');
     for (var i = 0; i < 30 && saved.evaluate().isEmpty; i++) {
@@ -137,6 +153,9 @@ void main() {
     }
     expect(saved, findsOneWidget);
     await settle(tester, seconds: 5);
+    expect(find.text('Todo respaldado'), findsOneWidget);
+    expect(find.textContaining('Hoy, '), findsOneWidget);
+    await back(tester);
     expect(find.byIcon(Icons.cloud_done), findsOneWidget);
     // EMAIL_SINCRONIZADO lo lee la verificación hecha desde el equipo contra PostgreSQL
     debugPrint('EMAIL_SINCRONIZADO=$email');

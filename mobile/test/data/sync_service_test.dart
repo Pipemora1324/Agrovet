@@ -108,11 +108,18 @@ void main() {
     expect(record.syncPending, isFalse);
     expect(record.syncError, 'Ya existe otro registro de esa vaca para ese día.');
 
+    final issues = await service(gateway).watchRejected().first;
+    expect(issues, hasLength(1));
+    expect(issues.single.kind, 'Registro');
+    expect(issues.single.label, 'V-01 · 2026-03-20');
+    expect(issues.single.reason, 'Ya existe otro registro de esa vaca para ese día.');
+
     // Al corregirlo vuelve a quedar pendiente y sin el error
     await repo.saveRecord(DailyRecord(id: 'r1', cowId: 'c1', recordDate: day, milkL: 11, updatedAt: day));
     final edited = await db.select(db.dailyRecords).getSingle();
     expect(edited.syncPending, isTrue);
     expect(edited.syncError, isNull);
+    expect(await service(gateway).watchRejected().first, isEmpty);
   });
 
   test('sin red reintenta con espera exponencial y luego confirma', () async {
@@ -151,6 +158,30 @@ void main() {
     final gateway = FakeGateway();
     await service(gateway).syncNow();
     expect(gateway.batches, isEmpty);
+    expect(await service(gateway).watchPendingCount().first, 0);
+  });
+
+  test('una alerta marcada como atendida se vuelve a enviar con la fecha de atención', () async {
+    final attendedAt = DateTime.utc(2026, 3, 21, 9);
+    final clocked = LocalRepository(db, clock: () => attendedAt);
+    await seed();
+    await clocked.saveInference(
+      Inference(
+          id: 'i1', cowId: 'c1', windowEndDate: day, probability: 0.9, riskLevel: RiskLevel.red, modelVersion: 'x', updatedAt: day),
+      alert: CowAlert(id: 'al1', cowId: 'c1', inferenceId: 'i1', riskLevel: RiskLevel.red, createdAt: day),
+    );
+    final gateway = FakeGateway();
+    await service(gateway).syncNow();
+    expect((gateway.batches.single['alerts'] as List).single['attended'], isFalse);
+
+    await clocked.markAlertAttended('al1');
+    expect(await service(gateway).watchPendingCount().first, 1);
+    await service(gateway).syncNow();
+
+    final sent = (gateway.batches.last['alerts'] as List).single as Map;
+    expect(sent['attended'], isTrue);
+    expect(sent['attendedAt'], '2026-03-21T09:00:00.000Z');
+    expect(gateway.batches.last['cows'], isEmpty);
     expect(await service(gateway).watchPendingCount().first, 0);
   });
 

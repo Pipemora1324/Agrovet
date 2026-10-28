@@ -29,6 +29,28 @@ Desde el emulador, la app lo busca en `http://10.0.2.2:8080`. Otra dirección se
 flutter run --dart-define=API_BASE_URL=https://mi-servidor.example.org
 ```
 
+### APK para instalar
+
+```bash
+flutter build apk --release --split-per-abi
+```
+
+Genera un APK por arquitectura en `build/app/outputs/flutter-apk/`. La mayoría de los celulares
+actuales usa `arm64-v8a`; los más viejos o de gama muy baja, `armeabi-v7a`.
+
+| APK | Tamaño |
+|---|---|
+| arm64-v8a | 12,5 MB |
+| armeabi-v7a | 11,6 MB |
+| x86_64 (emuladores) | 13,5 MB |
+
+Antes un solo APK arm64 pesaba 39,1 MB. Para bajarlo:
+- se quitaron el delegado de GPU de TFLite y el runtime de LiteRT de la API CompiledModel, que
+  `flutter_litert` incluye pero la app no usa (solo usa el intérprete en CPU);
+- las bibliotecas nativas van comprimidas dentro del APK.
+
+El CI falla si algún APK pasa de 15 MB.
+
 En release solo se permite HTTPS: el permiso para HTTP sin cifrar existe únicamente en debug y
 solo hacia `10.0.2.2` y `localhost`.
 
@@ -81,16 +103,23 @@ lib/
 
 Todo se guarda primero en el celular; cada cambio queda marcado como pendiente.
 
-- **Cuándo**: al abrir la sesión, al recuperar la conexión (`connectivity_plus`), cuando el ganadero
-  toca la nube de la barra superior y cada 15 minutos en segundo plano con `workmanager` (solo con
-  red; si falla, Android reintenta con espera exponencial).
+- **Cuándo**: al abrir la sesión, al volver la app al frente y al recuperar la conexión
+  (`connectivity_plus`) si hay cambios pendientes; cuando el ganadero toca "Sincronizar ahora"; y cada
+  15 minutos en segundo plano con `workmanager`, aunque la app esté cerrada (solo con red; si falla,
+  Android reintenta con espera exponencial). Android decide el momento exacto de la tarea periódica y
+  puede atrasarla para agruparla con otras.
 - **Cómo**: `POST /api/sync` en lotes de hasta 200 elementos por tipo, primero las vacas. Ante fallas
   de red o del servidor se reintenta con espera exponencial (2, 4 y 8 s, con variación).
 - **Confirmación**: solo se marca como sincronizado lo que el servidor confirma, y solo si la fila no
   cambió mientras se enviaba. Nunca se borra nada local.
 - **Rechazos**: si el servidor rechaza un elemento (por ejemplo, otro registro para el mismo día), se
   guarda el motivo y no se reintenta hasta que el ganadero lo corrija.
-- La nube muestra cuántos cambios faltan por subir. La sesión de demostración no sincroniza.
+- **Estado**: la nube de la barra superior muestra cuántos cambios faltan por subir y cambia de ícono
+  si hay un problema. Al tocarla se abre "Respaldo de datos" con los pendientes, la hora de la última
+  sincronización (la guardan tanto la app como la tarea en segundo plano), el error del último intento,
+  lo que el servidor rechazó con su motivo y el botón **"Sincronizar ahora"**. Solo cuenta como
+  sincronización un envío que el servidor confirmó.
+- La sesión de demostración no sincroniza.
 
 ## Decisiones de diseño (para revisión)
 
@@ -107,6 +136,10 @@ Todo se guarda primero en el celular; cada cambio queda marcado como pendiente.
   columnas, ficha y resultado en dos paneles y gráficas lado a lado.
 - **Animaciones**: entrada escalonada de las tarjetas, semáforo que se enciende, barra de probabilidad
   que se llena, transición entre login y app. Se desactivan si el sistema pide reducir el movimiento.
+- **Alertas**: cada evaluación amarilla o roja crea una alerta. Las que siguen sin atender aparecen en
+  la ficha de la vaca con el botón "Marcar como atendida"; al tocarlo se guarda la fecha y el cambio
+  se sincroniza como cualquier otro. Si llega tarde una versión vieja, el servidor no deshace la
+  atención.
 - **Navegación**: las pantallas de la sesión viven en un navegador propio dentro de la sesión; al
   cerrar sesión se cierra todo junto con la base.
 

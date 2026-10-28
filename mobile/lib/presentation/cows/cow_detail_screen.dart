@@ -73,6 +73,7 @@ class CowDetailScreen extends StatelessWidget {
             stream: inferences.watchLatest(cowId),
             builder: (context, latest) {
               final summary = _SummaryCard(cow: cow, latest: latest.data);
+              final alerts = _PendingAlerts(cowId: cowId);
               final actions = _Actions(cow: cow);
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
@@ -82,7 +83,9 @@ class CowDetailScreen extends StatelessWidget {
                         children: [
                           Expanded(child: FadeIn(child: summary)),
                           const SizedBox(width: 16),
-                          Expanded(child: FadeIn(index: 1, child: actions)),
+                          Expanded(
+                            child: FadeIn(index: 1, child: Column(children: [alerts, actions])),
+                          ),
                         ],
                       )
                     : CenteredContent(
@@ -90,6 +93,7 @@ class CowDetailScreen extends StatelessWidget {
                           children: [
                             FadeIn(child: summary),
                             const SizedBox(height: 16),
+                            alerts,
                             FadeIn(index: 1, child: actions),
                           ],
                         ),
@@ -199,6 +203,76 @@ class _InfoRow extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// Alertas amarillas o rojas sin atender. Desaparece cuando no hay ninguna.
+class _PendingAlerts extends StatelessWidget {
+  const _PendingAlerts({required this.cowId});
+
+  final String cowId;
+
+  Future<void> _markAttended(BuildContext context, CowAlert alert) async {
+    await context.read<AlertRepository>().markAlertAttended(alert.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alerta marcada como atendida.')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return StreamBuilder<List<CowAlert>>(
+      stream: context.read<AlertRepository>().watchPendingAlerts(cowId),
+      builder: (context, snapshot) {
+        final alerts = snapshot.data ?? const <CowAlert>[];
+        if (alerts.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: alerts.first.riskLevel.color, width: 3),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.notifications_active, color: alerts.first.riskLevel.color, size: 30),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(alerts.length == 1 ? 'Alerta sin atender' : '${alerts.length} alertas sin atender',
+                            style: theme.textTheme.titleMedium),
+                      ),
+                    ],
+                  ),
+                  for (final alert in alerts) ...[
+                    const Divider(height: 28),
+                    Row(
+                      children: [
+                        RiskChip(level: alert.riskLevel),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(formatDay(alert.createdAt), style: theme.textTheme.bodyLarge)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    BigButton(
+                      icon: Icons.check_circle,
+                      label: 'Marcar como atendida',
+                      outlined: true,
+                      onPressed: () => _markAttended(context, alert),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _Actions extends StatelessWidget {

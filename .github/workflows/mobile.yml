@@ -44,9 +44,29 @@ jobs:
         if: hashFiles('mobile/pubspec.yaml') != ''
         run: flutter test
 
-      - name: APK de prueba
+      - name: APK por arquitectura
         if: hashFiles('mobile/pubspec.yaml') != ''
-        run: flutter build apk --debug
+        run: flutter build apk --release --split-per-abi
+
+      # Pensado para planes de datos limitados: ningún APK puede pasar de 15 MB
+      - name: Tamaño de los APK
+        if: hashFiles('mobile/pubspec.yaml') != ''
+        run: |
+          limit=$((15 * 1024 * 1024))
+          status=0
+          echo "| APK | Tamaño (MB) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          for apk in build/app/outputs/flutter-apk/app-*-release.apk; do
+            size=$(stat -c %s "$apk")
+            mb=$(awk "BEGIN { printf \"%.1f\", $size / 1048576 }")
+            echo "$(basename "$apk"): $mb MB"
+            echo "| $(basename "$apk") | $mb |" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$size" -gt "$limit" ]; then
+              echo "::error::$(basename "$apk") pesa $mb MB y el límite es 15 MB"
+              status=1
+            fi
+          done
+          exit $status
 
       - name: Sin código aún
         if: hashFiles('mobile/pubspec.yaml') == ''

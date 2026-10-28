@@ -39,6 +39,15 @@ class SecureStore {
     return key;
   }
 
+  /// Última sincronización completa del usuario; la escriben la app y la tarea en segundo plano.
+  Future<DateTime?> lastSyncFor(String userId) async {
+    final raw = await _storage.read(key: 'last_sync_$userId');
+    return raw == null ? null : DateTime.tryParse(raw)?.toLocal();
+  }
+
+  Future<void> saveLastSync(String userId, DateTime at) =>
+      _storage.write(key: 'last_sync_$userId', value: at.toUtc().toIso8601String());
+
   static String generateHexKey([Random? random]) {
     final rng = random ?? Random.secure();
     return List.generate(32, (_) => rng.nextInt(256).toRadixString(16).padLeft(2, '0')).join();

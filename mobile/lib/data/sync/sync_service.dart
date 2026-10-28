@@ -45,6 +45,18 @@ class SyncApi implements SyncGateway {
   }
 }
 
+/// Elemento que el servidor no aceptó; se muestra al ganadero para que lo corrija.
+class SyncIssue {
+  const SyncIssue({required this.kind, required this.label, required this.reason});
+
+  /// Qué es, en palabras del ganadero: "Vaca", "Registro", "Evaluación" o "Alerta".
+  final String kind;
+
+  /// Arete de la vaca y, si aplica, el día.
+  final String label;
+  final String reason;
+}
+
 class SyncReport {
   const SyncReport({this.sent = 0, this.confirmed = 0, this.rejected = 0, this.error});
 
@@ -99,6 +111,31 @@ class SyncService {
       readsFrom: {db.cows, db.dailyRecords, db.inferences, db.alerts},
     );
     return query.watchSingle().map((row) => row.read<int>('pending'));
+  }
+
+  /// Lo rechazado por el servidor (queda con su motivo hasta que el ganadero lo corrija).
+  Stream<List<SyncIssue>> watchRejected() {
+    final query = db.customSelect(
+      "SELECT 'Vaca' AS kind, tag AS label, sync_error FROM cows "
+      'WHERE sync_error IS NOT NULL AND is_demo = 0 '
+      "UNION ALL SELECT 'Registro', c.tag || ' · ' || d.record_date, d.sync_error FROM daily_records d "
+      'JOIN cows c ON c.id = d.cow_id WHERE d.sync_error IS NOT NULL AND d.is_demo = 0 '
+      "UNION ALL SELECT 'Evaluación', c.tag || ' · ' || i.window_end_date, i.sync_error FROM inferences i "
+      'JOIN cows c ON c.id = i.cow_id WHERE i.sync_error IS NOT NULL AND i.is_demo = 0 '
+      "UNION ALL SELECT 'Alerta', c.tag, a.sync_error FROM alerts a "
+      'JOIN cows c ON c.id = a.cow_id WHERE a.sync_error IS NOT NULL AND a.is_demo = 0',
+      readsFrom: {db.cows, db.dailyRecords, db.inferences, db.alerts},
+    );
+    return query.watch().map(
+      (rows) => [
+        for (final row in rows)
+          SyncIssue(
+            kind: row.read<String>('kind'),
+            label: row.read<String>('label'),
+            reason: row.read<String>('sync_error'),
+          ),
+      ],
+    );
   }
 
   Future<SyncReport> syncNow() async {

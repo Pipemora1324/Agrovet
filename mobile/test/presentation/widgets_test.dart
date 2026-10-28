@@ -1,17 +1,22 @@
+import 'dart:async';
+
 import 'package:agrovet/core/theme.dart';
 import 'package:agrovet/data/remote/api_client.dart';
 import 'package:agrovet/data/remote/auth_api.dart';
 import 'package:agrovet/data/security/secure_store.dart';
+import 'package:agrovet/data/sync/sync_service.dart';
 import 'package:agrovet/domain/entities.dart';
 import 'package:agrovet/domain/repositories.dart';
 import 'package:agrovet/domain/risk_evaluator.dart';
 import 'package:agrovet/domain/session.dart';
 import 'package:agrovet/presentation/auth/auth_cubit.dart';
 import 'package:agrovet/presentation/auth/login_screen.dart';
+import 'package:agrovet/presentation/cows/cow_detail_screen.dart';
 import 'package:agrovet/presentation/cows/cows_screen.dart';
 import 'package:agrovet/presentation/risk/risk_cubit.dart';
 import 'package:agrovet/presentation/risk/risk_screen.dart';
 import 'package:agrovet/presentation/sync/sync_cubit.dart';
+import 'package:agrovet/presentation/sync/sync_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -129,6 +134,62 @@ void main() {
     expect(find.textContaining('Probabilidad estimada: 90 %'), findsOneWidget);
   });
 
+  testWidgets('la ficha muestra la alerta sin atender y permite marcarla como atendida', (tester) async {
+    final repo = _CowWithAlerts(
+      Cow(id: 'c1', tag: 'V-01', name: 'Lucero', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026)),
+      [CowAlert(id: 'al1', cowId: 'c1', riskLevel: RiskLevel.red, createdAt: DateTime.now())],
+    );
+    addTearDown(repo.dispose);
+    await tester.pumpWidget(MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<CowRepository>.value(value: repo),
+        RepositoryProvider<InferenceRepository>.value(value: repo),
+        RepositoryProvider<AlertRepository>.value(value: repo),
+      ],
+      child: BlocProvider(create: (_) => SyncCubit.disabled(), child: app(const CowDetailScreen(cowId: 'c1'))),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Alerta sin atender'), findsOneWidget);
+    expect(find.text('Alto riesgo'), findsOneWidget);
+    await tester.tap(find.text('Marcar como atendida'));
+    await tester.pumpAndSettle();
+
+    expect(repo.attended, ['al1']);
+    expect(find.text('Alerta marcada como atendida.'), findsOneWidget);
+    expect(find.text('Alerta sin atender'), findsNothing);
+    expect(find.text('Registro de hoy'), findsOneWidget);
+  });
+
+  testWidgets('el respaldo muestra pendientes, última sincronización, errores y el botón', (tester) async {
+    final cubit = _FixedSyncCubit(SyncState(
+      pending: 3,
+      lastSyncAt: DateTime.now().copyWith(hour: 14, minute: 32),
+      lastError: 'No hay conexión con el servidor.',
+      rejected: const [
+        SyncIssue(kind: 'Registro', label: 'V-01 · 2026-03-20', reason: 'Ya existe otro registro de esa vaca para ese día.'),
+      ],
+    ));
+    await tester.pumpWidget(BlocProvider<SyncCubit>.value(value: cubit, child: app(const SyncScreen())));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hay un problema'), findsOneWidget);
+    expect(find.text('Pendientes: '), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('Hoy, 14:32'), findsOneWidget);
+    expect(find.textContaining('Último intento: No hay conexión con el servidor.'), findsOneWidget);
+    expect(find.text('Registro · V-01 · 2026-03-20'), findsOneWidget);
+    expect(find.text('Ya existe otro registro de esa vaca para ese día.'), findsOneWidget);
+
+    await tester.tap(find.text('Sincronizar ahora'));
+    expect(cubit.requested, 1);
+
+    cubit.show(const SyncState());
+    await tester.pumpAndSettle();
+    expect(find.text('Todo respaldado'), findsOneWidget);
+    expect(find.text('Todavía no'), findsOneWidget);
+  });
+
   testWidgets('con pocos datos explica cuántos días faltan', (tester) async {
     final cow = Cow(id: 'c1', tag: 'V-01', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026));
     final cubit = _FixedRiskCubit(const RiskState(
@@ -158,6 +219,19 @@ class _FixedRiskCubit extends RiskCubit {
   Future<void> evaluate() async {}
 }
 
+class _FixedSyncCubit extends SyncCubit {
+  _FixedSyncCubit(SyncState initial) : super.disabled() {
+    emit(initial);
+  }
+
+  int requested = 0;
+
+  void show(SyncState state) => emit(state);
+
+  @override
+  Future<void> syncNow({bool silent = false}) async => requested++;
+}
+
 class _FixedCows implements CowRepository {
   _FixedCows(this.cows);
 
@@ -165,6 +239,40 @@ class _FixedCows implements CowRepository {
 
   @override
   Stream<List<CowSummary>> watchCows() => Stream.value(cows);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+/// Una vaca con alertas en memoria; marcar una la quita de la lista, como la base real.
+class _CowWithAlerts implements CowRepository, InferenceRepository, AlertRepository {
+  _CowWithAlerts(this.cow, List<CowAlert> alerts) : _alerts = [...alerts];
+
+  final Cow cow;
+  final List<CowAlert> _alerts;
+  final _changes = StreamController<List<CowAlert>>.broadcast(sync: true);
+  final List<String> attended = [];
+
+  @override
+  Stream<Cow?> watchCow(String id) => Stream.value(cow);
+
+  @override
+  Stream<Inference?> watchLatest(String cowId) => Stream.value(null);
+
+  @override
+  Stream<List<CowAlert>> watchPendingAlerts(String cowId) async* {
+    yield List.of(_alerts);
+    yield* _changes.stream;
+  }
+
+  @override
+  Future<void> markAlertAttended(String alertId) async {
+    attended.add(alertId);
+    _alerts.removeWhere((a) => a.id == alertId);
+    _changes.add(List.of(_alerts));
+  }
+
+  Future<void> dispose() => _changes.close();
 
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
