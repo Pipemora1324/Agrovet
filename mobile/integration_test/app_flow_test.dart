@@ -70,6 +70,18 @@ void main() {
 
     await back(tester);
     await settle(tester);
+
+    // La evaluación en rojo deja una alerta en la ficha; se marca como atendida
+    final attend = find.text('Marcar como atendida');
+    final pendingAlerts = attend.evaluate().length;
+    expect(pendingAlerts, greaterThan(0));
+    await shot(tester, '05b_alerta');
+    await tester.ensureVisible(attend.first);
+    await tester.tap(attend.first);
+    await settle(tester);
+    expect(find.text('Marcar como atendida'), findsNWidgets(pendingAlerts - 1));
+
+    await tester.ensureVisible(find.text('Ver historial'));
     await tester.tap(find.text('Ver historial'));
     await settle(tester, seconds: 3);
     expect(find.text('Temperatura (°C)'), findsOneWidget);
