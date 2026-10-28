@@ -108,11 +108,18 @@ void main() {
     expect(record.syncPending, isFalse);
     expect(record.syncError, 'Ya existe otro registro de esa vaca para ese día.');
 
+    final issues = await service(gateway).watchRejected().first;
+    expect(issues, hasLength(1));
+    expect(issues.single.kind, 'Registro');
+    expect(issues.single.label, 'V-01 · 2026-03-20');
+    expect(issues.single.reason, 'Ya existe otro registro de esa vaca para ese día.');
+
     // Al corregirlo vuelve a quedar pendiente y sin el error
     await repo.saveRecord(DailyRecord(id: 'r1', cowId: 'c1', recordDate: day, milkL: 11, updatedAt: day));
     final edited = await db.select(db.dailyRecords).getSingle();
     expect(edited.syncPending, isTrue);
     expect(edited.syncError, isNull);
+    expect(await service(gateway).watchRejected().first, isEmpty);
   });
 
   test('sin red reintenta con espera exponencial y luego confirma', () async {
