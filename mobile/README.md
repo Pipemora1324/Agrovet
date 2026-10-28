@@ -107,6 +107,10 @@ Todo se guarda primero en el celular; cada cambio queda marcado como pendiente.
   columnas, ficha y resultado en dos paneles y gráficas lado a lado.
 - **Animaciones**: entrada escalonada de las tarjetas, semáforo que se enciende, barra de probabilidad
   que se llena, transición entre login y app. Se desactivan si el sistema pide reducir el movimiento.
+- **Alertas**: cada evaluación amarilla o roja crea una alerta. Las que siguen sin atender aparecen en
+  la ficha de la vaca con el botón "Marcar como atendida"; al tocarlo se guarda la fecha y el cambio
+  se sincroniza como cualquier otro. Si llega tarde una versión vieja, el servidor no deshace la
+  atención.
 - **Navegación**: las pantallas de la sesión viven en un navegador propio dentro de la sesión; al
   cerrar sesión se cierra todo junto con la base.
 
