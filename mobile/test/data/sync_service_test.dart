@@ -154,6 +154,30 @@ void main() {
     expect(await service(gateway).watchPendingCount().first, 0);
   });
 
+  test('una alerta marcada como atendida se vuelve a enviar con la fecha de atención', () async {
+    final attendedAt = DateTime.utc(2026, 3, 21, 9);
+    final clocked = LocalRepository(db, clock: () => attendedAt);
+    await seed();
+    await clocked.saveInference(
+      Inference(
+          id: 'i1', cowId: 'c1', windowEndDate: day, probability: 0.9, riskLevel: RiskLevel.red, modelVersion: 'x', updatedAt: day),
+      alert: CowAlert(id: 'al1', cowId: 'c1', inferenceId: 'i1', riskLevel: RiskLevel.red, createdAt: day),
+    );
+    final gateway = FakeGateway();
+    await service(gateway).syncNow();
+    expect((gateway.batches.single['alerts'] as List).single['attended'], isFalse);
+
+    await clocked.markAlertAttended('al1');
+    expect(await service(gateway).watchPendingCount().first, 1);
+    await service(gateway).syncNow();
+
+    final sent = (gateway.batches.last['alerts'] as List).single as Map;
+    expect(sent['attended'], isTrue);
+    expect(sent['attendedAt'], '2026-03-21T09:00:00.000Z');
+    expect(gateway.batches.last['cows'], isEmpty);
+    expect(await service(gateway).watchPendingCount().first, 0);
+  });
+
   test('envía en lotes del tamaño configurado', () async {
     for (var i = 0; i < 5; i++) {
       await repo.saveCow(Cow(id: 'c$i', tag: 'V-$i', productionStatus: ProductionStatus.dry, updatedAt: day));

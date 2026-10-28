@@ -99,6 +99,7 @@ class _SessionScopeState extends State<SessionScope> {
               RepositoryProvider<CowRepository>.value(value: deps.repository),
               RepositoryProvider<RecordRepository>.value(value: deps.repository),
               RepositoryProvider<InferenceRepository>.value(value: deps.repository),
+              RepositoryProvider<AlertRepository>.value(value: deps.repository),
               RepositoryProvider<RiskEvaluator>.value(value: deps.evaluator),
             ],
             child: BlocProvider<SyncCubit>.value(value: deps.sync, child: widget.child),

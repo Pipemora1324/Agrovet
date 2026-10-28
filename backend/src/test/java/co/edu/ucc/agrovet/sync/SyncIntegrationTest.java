@@ -237,6 +237,40 @@ class SyncIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void alertMarkedAsAttendedIsUpdatedAndShownInHistory() throws Exception {
+        UUID cowId = UUID.randomUUID();
+        UUID inf = UUID.randomUUID();
+        UUID alertId = UUID.randomUUID();
+        Instant attendedAt = Instant.parse("2026-03-02T09:30:00Z");
+        Map<String, Object> alert = new HashMap<>(Map.of("id", alertId, "cowId", cowId, "inferenceId", inf,
+                "riskLevel", "RED", "updatedAt", T1));
+        syncOk(ana, Map.of("cows", List.of(cow(cowId, "S-008", "LACTATING", T1)),
+                "inferences", List.of(inference(inf, cowId, 0.9, "RED")), "alerts", List.of(alert)));
+
+        alert.put("attended", true);
+        alert.put("attendedAt", attendedAt);
+        alert.put("updatedAt", attendedAt);
+        JsonNode response = syncOk(ana, Map.of("alerts", List.of(alert)));
+
+        assertThat(response.get("confirmed").get("alerts").get(0).asText()).isEqualTo(alertId.toString());
+        assertThat(jdbc.queryForObject("SELECT attended FROM alerts WHERE id = ?", Boolean.class, alertId)).isTrue();
+        assertThat(jdbc.queryForObject("SELECT attended_at FROM alerts WHERE id = ?", java.sql.Timestamp.class,
+                alertId).toInstant()).isEqualTo(attendedAt);
+        mvc.perform(get("/api/cows/" + cowId + "/history").header("Authorization", ana.bearer())
+                        .param("from", "2026-03-01").param("to", "2026-03-02"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.alerts[0].attended").value(true))
+                .andExpect(jsonPath("$.alerts[0].attendedAt").value("2026-03-02T09:30:00Z"));
+
+        // Una versión vieja (sin atender) que llegue tarde no deshace la atención
+        alert.put("attended", false);
+        alert.put("attendedAt", null);
+        alert.put("updatedAt", T1);
+        syncOk(ana, Map.of("alerts", List.of(alert)));
+        assertThat(jdbc.queryForObject("SELECT attended FROM alerts WHERE id = ?", Boolean.class, alertId)).isTrue();
+    }
+
+    @Test
     void syncRequiresAuthentication() throws Exception {
         mvc.perform(post("/api/sync").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isUnauthorized());
