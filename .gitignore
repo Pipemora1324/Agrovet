@@ -19,16 +19,22 @@ key.properties
 local.properties
 application-local.yml
 application-local.properties
+google-services.json
+GoogleService-Info.plist
+*.secret
 
 # --- ML (Python) ---
 __pycache__/
 *.py[cod]
 .venv/
 venv/
+env/
 .ipynb_checkpoints/
 .pytest_cache/
-ml/data/*.csv
+.mypy_cache/
+ml/**/*.csv
 ml/data/raw/
+ml/data/udder_images/
 *.keras
 *.h5
 ml/models/checkpoints/
@@ -55,3 +61,7 @@ mobile/**/android/app/release/
 build/
 dist/
 coverage/
+node_modules/
+.gradle/
+.dart_tool/
+target/

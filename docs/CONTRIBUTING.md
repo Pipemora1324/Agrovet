@@ -6,7 +6,7 @@
 |----------------------------|------------------------------------------------------------|
 | `main`                     | Versión estable. Solo recibe merges desde `develop`.       |
 | `develop`                  | Integración. Aquí llegan las ramas de funcionalidad.       |
-| `feature/<modulo>-<tema>`  | Trabajo puntual. Ej.: `feature/ml-dataset`, `feature/backend-sync`. |
+| `feature/<modulo>-<tema>`  | Trabajo puntual, local. Ej.: `feature/ml-dataset`, `feature/backend-cows`. |
 
 Módulos: `ml`, `backend`, `mobile`, `docs`, `repo`.
 
@@ -16,6 +16,7 @@ Reglas:
 - Cada rama de funcionalidad sale de `develop` y vuelve a `develop` con merge `--no-ff`,
   para que quede visible en el historial qué entró junto.
 - Cuando una fase está terminada y probada, `develop` se integra a `main` también con `--no-ff`.
+- Solo se suben `main` y `develop`. La rama de funcionalidad se borra apenas se integra.
 
 ```bash
 git checkout develop
@@ -24,8 +25,26 @@ git checkout -b feature/backend-sync
 # ... commits ...
 git checkout develop
 git merge --no-ff feature/backend-sync
-git push origin develop feature/backend-sync
+git branch -d feature/backend-sync
+git push origin develop
 ```
+
+## Qué se versiona
+
+Solo código fuente y documentación del proyecto. Nunca:
+
+- Dependencias ni builds: `node_modules`, `.dart_tool`, `build`, `target`, `.gradle`, entornos virtuales.
+- Secretos: `.env`, `*.jks`, `*.keystore`, `key.properties`, `google-services.json`, credenciales de la base de datos.
+- `local.properties`, datasets `.csv` ni modelos `.keras`/`.h5`.
+
+Sí se versionan el modelo `.tflite`, `model_config.json` y `test_vectors.json`, porque la app los
+necesita. Antes de cada push conviene revisar `git diff --stat origin/develop..develop`.
+
+## Idioma
+
+- **En inglés**: identificadores (clases, métodos, variables), tablas, columnas, endpoints,
+  migraciones, ramas y nombres de archivos de código.
+- **En español**: comentarios, textos de la interfaz, mensajes que ve el usuario, commits y PR.
 
 ## Commits
 
@@ -48,6 +67,8 @@ Evitar mensajes como `cambios`, `arreglos` o `wip`.
 - Título corto en español, igual de claro que un buen commit.
 - Llenar la plantilla: qué cambia, cómo se probó y qué falta.
 - El CI del módulo debe pasar antes de integrar.
+- Las propuestas de Dependabot no se integran tal cual: se revisan y la actualización se
+  aplica en un commit propio sobre `develop`; luego se cierra el PR.
 
 ## Issues
 

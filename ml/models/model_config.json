@@ -1,0 +1,78 @@
+{
+  "model_file": "mastitis_lstm.tflite",
+  "model_version": "1.0.0-synthetic",
+  "trained_on": "synthetic",
+  "note": "Métricas obtenidas con un dataset sintético. Sirven para comprobar el pipeline; NO validan la hipótesis del proyecto (F1 >= 0,80).",
+  "tflite_sha256": "50504707d2fd916223e311538443fd368fc31ebe08ecd0e0859bce2e34ea8b58",
+  "input": {
+    "shape": [
+      1,
+      14,
+      3
+    ],
+    "dtype": "float32",
+    "features": [
+      "temperature_c",
+      "milk_l",
+      "feed_kg"
+    ]
+  },
+  "output": {
+    "shape": [
+      1,
+      1
+    ],
+    "meaning": "Probabilidad de síntomas clínicos de mastitis en 1 a 5 días"
+  },
+  "preprocessing": {
+    "window_days": 14,
+    "base_days": 7,
+    "min_valid_days": 10,
+    "valid_ranges": {
+      "temperature_c": [
+        35.0,
+        42.0
+      ],
+      "milk_l": [
+        0.5,
+        45.0
+      ],
+      "feed_kg": [
+        0.5,
+        35.0
+      ]
+    },
+    "imputation": "Faltante o fuera de rango: último valor válido anterior; al comienzo, primer valor válido siguiente.",
+    "temperature_c": {
+      "method": "difference",
+      "scale": 0.5,
+      "formula": "(t - base) / scale"
+    },
+    "milk_l": {
+      "method": "ratio",
+      "scale": 0.1,
+      "formula": "(x / base - 1) / scale"
+    },
+    "feed_kg": {
+      "method": "ratio",
+      "scale": 0.1,
+      "formula": "(x / base - 1) / scale"
+    },
+    "base": "Media de los primeros 7 días de la ventana, ya limpios."
+  },
+  "threshold": 0.854394,
+  "traffic_light": {
+    "green": {
+      "min": 0.0,
+      "max_exclusive": 0.427197
+    },
+    "yellow": {
+      "min": 0.427197,
+      "max_exclusive": 0.854394
+    },
+    "red": {
+      "min": 0.854394,
+      "max": 1.0
+    }
+  }
+}

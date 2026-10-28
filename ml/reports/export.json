@@ -1,0 +1,23 @@
+{
+  "note": "Métricas obtenidas con un dataset sintético. Sirven para comprobar el pipeline; NO validan la hipótesis del proyecto (F1 >= 0,80).",
+  "tflite_bytes": 62740,
+  "ops": [
+    "ADD",
+    "DELEGATE",
+    "FILL",
+    "FULLY_CONNECTED",
+    "LOGISTIC",
+    "MUL",
+    "PACK",
+    "SHAPE",
+    "SPLIT",
+    "STRIDED_SLICE",
+    "TANH",
+    "TRANSPOSE",
+    "UNPACK"
+  ],
+  "test_windows": 3514,
+  "max_abs_diff_keras_vs_tflite": 3.5762786865234375e-07,
+  "mean_abs_diff_keras_vs_tflite": 4.068957437652898e-08,
+  "same_decision_rate": 1.0
+}

@@ -5,8 +5,8 @@
 # Se puede correr varias veces: las etiquetas se actualizan y los issues que ya
 # existen (mismo código RF/RNF en el título) se saltan.
 #
-# Uso:  bash scripts/crear_issues.sh            # crea todo
-#       bash scripts/crear_issues.sh --dry-run  # solo muestra lo que haría
+# Uso:  bash scripts/create_issues.sh            # crea todo
+#       bash scripts/create_issues.sh --dry-run  # solo muestra lo que haría
 
 set -euo pipefail
 
@@ -18,7 +18,7 @@ if ! $DRY_RUN; then
   gh auth status >/dev/null 2>&1 || { echo "Primero: gh auth login"; exit 1; }
 fi
 
-etiqueta() {  # nombre color descripción
+label() {  # nombre color descripción
   if $DRY_RUN; then
     echo "[etiqueta] $1"
   else
@@ -28,39 +28,40 @@ etiqueta() {  # nombre color descripción
 }
 
 issue() {  # código título etiquetas cuerpo
-  local codigo="$1" titulo="$2" etiquetas="$3" cuerpo="$4"
+  local code="$1" title="$2" labels="$3" body="$4"
   if $DRY_RUN; then
-    echo "[issue] $codigo: $titulo  ($etiquetas)"
+    echo "[issue] $code: $title  ($labels)"
     return
   fi
-  local existentes
-  existentes=$(gh issue list --state all --search "\"$codigo:\" in:title" --json title --jq '.[].title')
-  if grep -q "^$codigo:" <<<"$existentes"; then
-    echo "Ya existe: $codigo"
+  local existing
+  existing=$(gh issue list --state all --search "\"$code:\" in:title" --json title --jq '.[].title')
+  if grep -q "^$code:" <<<"$existing"; then
+    echo "Ya existe: $code"
     return
   fi
-  gh issue create --title "$codigo: $titulo" --label "$etiquetas" --body "$cuerpo" >/dev/null
-  echo "Creado: $codigo"
+  gh issue create --title "$code: $title" --label "$labels" --body "$body" >/dev/null
+  echo "Creado: $code"
 }
 
 # --- Etiquetas ---
-etiqueta "requerimiento"   "0E8A16" "Requerimiento funcional o no funcional"
-etiqueta "no-funcional"    "5319E7" "Requerimiento no funcional"
-etiqueta "bug"             "D73A4A" "Algo no funciona"
-etiqueta "ml"              "1D76DB" "Modelo y datos (Python)"
-etiqueta "backend"         "B60205" "API Spring Boot"
-etiqueta "mobile"          "FBCA04" "App Android (Flutter)"
-etiqueta "docs"            "C5DEF5" "Documentación"
-etiqueta "prioridad:alta"  "B60205" "Necesario para la entrega"
-etiqueta "prioridad:media" "D93F0B" "Importante, no bloqueante"
-etiqueta "prioridad:baja"  "0E8A16" "Deseable"
+label "requerimiento"   "0E8A16" "Requerimiento funcional o no funcional"
+label "no-funcional"    "5319E7" "Requerimiento no funcional"
+label "bug"             "D73A4A" "Algo no funciona"
+label "ml"              "1D76DB" "Modelo y datos (Python)"
+label "backend"         "B60205" "API Spring Boot"
+label "mobile"          "FBCA04" "App Android (Flutter)"
+label "docs"            "C5DEF5" "Documentación"
+label "prioridad:alta"  "B60205" "Necesario para la entrega"
+label "prioridad:media" "D93F0B" "Importante, no bloqueante"
+label "prioridad:baja"  "0E8A16" "Deseable"
 
 # --- Requerimientos funcionales ---
 issue "RF-01" "Registro e inicio de sesión" "requerimiento,backend,mobile,prioridad:alta" \
 "Como ganadero, quiero crear una cuenta e iniciar sesión para que mis datos queden asociados a mí.
 
 - [ ] Registro con nombre, correo y contraseña (guardada con BCrypt)
-- [ ] Login que devuelve un token JWT con expiración
+- [ ] Login que devuelve un token de acceso de vida corta y un refresh token
+- [ ] Renovación de sesión con rotación del refresh token
 - [ ] La app guarda la sesión y funciona offline después del primer ingreso"
 
 issue "RF-02" "Registro y edición de bovinos" "requerimiento,backend,mobile,prioridad:alta" \
@@ -74,6 +75,7 @@ issue "RF-03" "Captura diaria con validación de rangos" "requerimiento,mobile,p
 "Como ganadero, quiero registrar cada día temperatura, leche y alimento de cada vaca.
 
 - [ ] Temperatura (°C), leche (L) y alimento (kg) con rangos válidos
+- [ ] Checklist de síntomas visibles (ubre inflamada, leche con grumos, dolor al ordeño, etc.)
 - [ ] Mensajes claros cuando un valor está fuera de rango
 - [ ] Un registro por vaca y día (editar si ya existe)"
 
@@ -152,12 +154,18 @@ issue "RNF-01" "Funcionamiento sin conexión" "requerimiento,no-funcional,mobile
 issue "RNF-02" "Interfaz apta para trabajo de campo" "requerimiento,no-funcional,mobile,prioridad:alta" \
 "- [ ] Botones grandes y alto contraste (legible a pleno sol)
 - [ ] Poco texto, íconos claros
+- [ ] Diseño adaptable a celulares y tablets
 - [ ] Probado en un celular de gama baja"
 
 issue "RNF-03" "Seguridad de la API" "requerimiento,no-funcional,backend,prioridad:alta" \
-"- [ ] JWT con secreto y expiración por variables de entorno
+"- [ ] Token de acceso de vida corta y refresh token con rotación
 - [ ] Contraseñas con BCrypt
-- [ ] Cada usuario solo accede a sus propios bovinos"
+- [ ] Límite de intentos en el login
+- [ ] CORS restringido a orígenes configurados
+- [ ] Validación de toda entrada (Bean Validation)
+- [ ] Solo consultas parametrizadas
+- [ ] Cada usuario solo accede a sus propios datos, con pruebas que lo demuestren
+- [ ] Secretos y URL de la base solo por variables de entorno"
 
 issue "RNF-04" "Paridad del preprocesamiento Python / Dart" "requerimiento,no-funcional,ml,mobile,prioridad:alta" \
 "- [ ] La app reproduce test_vectors.json con tolerancia 1e-4
@@ -169,10 +177,17 @@ issue "RNF-05" "Compatibilidad Android" "requerimiento,no-funcional,mobile,prior
 
 issue "RNF-06" "Integración continua por módulo" "requerimiento,no-funcional,docs,prioridad:media" \
 "- [ ] Un workflow por módulo (ml, backend, mobile)
-- [ ] Las pruebas deben pasar antes de integrar a develop"
+- [ ] Las pruebas deben pasar antes de integrar a develop
+- [ ] Dependabot y revisión de dependencias en los pull requests
+- [ ] Actions fijadas por SHA"
 
 issue "RNF-07" "Documentación de la API" "requerimiento,no-funcional,backend,docs,prioridad:baja" \
 "- [ ] Swagger / OpenAPI disponible en el backend
 - [ ] README de cada módulo con instrucciones de ejecución"
+
+issue "RNF-08" "Protección de los datos en el celular" "requerimiento,no-funcional,mobile,prioridad:alta" \
+"- [ ] Base local cifrada (SQLCipher)
+- [ ] Tokens en almacenamiento seguro del sistema
+- [ ] La clave de la base no queda en el código"
 
 echo "Listo."
