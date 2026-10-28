@@ -4,6 +4,7 @@ import 'package:agrovet/core/theme.dart';
 import 'package:agrovet/data/remote/api_client.dart';
 import 'package:agrovet/data/remote/auth_api.dart';
 import 'package:agrovet/data/security/secure_store.dart';
+import 'package:agrovet/data/sync/sync_service.dart';
 import 'package:agrovet/domain/entities.dart';
 import 'package:agrovet/domain/repositories.dart';
 import 'package:agrovet/domain/risk_evaluator.dart';
@@ -15,6 +16,7 @@ import 'package:agrovet/presentation/cows/cows_screen.dart';
 import 'package:agrovet/presentation/risk/risk_cubit.dart';
 import 'package:agrovet/presentation/risk/risk_screen.dart';
 import 'package:agrovet/presentation/sync/sync_cubit.dart';
+import 'package:agrovet/presentation/sync/sync_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -159,6 +161,35 @@ void main() {
     expect(find.text('Registro de hoy'), findsOneWidget);
   });
 
+  testWidgets('el respaldo muestra pendientes, última sincronización, errores y el botón', (tester) async {
+    final cubit = _FixedSyncCubit(SyncState(
+      pending: 3,
+      lastSyncAt: DateTime.now().copyWith(hour: 14, minute: 32),
+      lastError: 'No hay conexión con el servidor.',
+      rejected: const [
+        SyncIssue(kind: 'Registro', label: 'V-01 · 2026-03-20', reason: 'Ya existe otro registro de esa vaca para ese día.'),
+      ],
+    ));
+    await tester.pumpWidget(BlocProvider<SyncCubit>.value(value: cubit, child: app(const SyncScreen())));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hay un problema'), findsOneWidget);
+    expect(find.text('Pendientes: '), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('Hoy, 14:32'), findsOneWidget);
+    expect(find.textContaining('Último intento: No hay conexión con el servidor.'), findsOneWidget);
+    expect(find.text('Registro · V-01 · 2026-03-20'), findsOneWidget);
+    expect(find.text('Ya existe otro registro de esa vaca para ese día.'), findsOneWidget);
+
+    await tester.tap(find.text('Sincronizar ahora'));
+    expect(cubit.requested, 1);
+
+    cubit.show(const SyncState());
+    await tester.pumpAndSettle();
+    expect(find.text('Todo respaldado'), findsOneWidget);
+    expect(find.text('Todavía no'), findsOneWidget);
+  });
+
   testWidgets('con pocos datos explica cuántos días faltan', (tester) async {
     final cow = Cow(id: 'c1', tag: 'V-01', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026));
     final cubit = _FixedRiskCubit(const RiskState(
@@ -186,6 +217,19 @@ class _FixedRiskCubit extends RiskCubit {
 
   @override
   Future<void> evaluate() async {}
+}
+
+class _FixedSyncCubit extends SyncCubit {
+  _FixedSyncCubit(SyncState initial) : super.disabled() {
+    emit(initial);
+  }
+
+  int requested = 0;
+
+  void show(SyncState state) => emit(state);
+
+  @override
+  Future<void> syncNow({bool silent = false}) async => requested++;
 }
 
 class _FixedCows implements CowRepository {
