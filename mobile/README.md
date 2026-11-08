@@ -38,6 +38,16 @@ adb reverse tcp:8025 tcp:8025   # Mailpit, para leer los códigos en el navegado
 flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 ```
 
+## Registro diario y semáforo
+
+- El registro tiene dos preguntas Sí/No ("¿Comió normal?", "¿Dio menos leche de lo usual?"), cinco
+  signos de la ubre (enrojecida, hinchada, caliente, dolor al tocar, grumos o sangre) y mediciones
+  **opcionales** (temperatura, leche, alimento).
+- El semáforo final es el más grave entre el **puntaje por síntomas** del día (reglas provisionales,
+  a validar con un veterinario: ver `docs/symptom_score.md`) y el **modelo LSTM**. La pantalla dice
+  cuál lo indicó. Si no hay días suficientes con mediciones, muestra "Faltan datos para el modelo" y
+  se apoya en los síntomas.
+
 ## Cuenta
 
 - **Registro**: nombre, correo, contraseña y la casilla obligatoria de autorización de datos
