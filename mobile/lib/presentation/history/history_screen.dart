@@ -125,7 +125,7 @@ class _HistoryView extends StatelessWidget {
                           child: ListTile(
                             leading: Icon(inference.riskLevel.icon, color: inference.riskLevel.color, size: 32),
                             title: Text(formatDay(inference.windowEndDate)),
-                            subtitle: Text('Probabilidad ${formatPercent(inference.probability)}'),
+                            subtitle: Text(_inferenceSummary(inference)),
                             trailing: RiskChip(level: inference.riskLevel),
                           ),
                         ),
@@ -253,4 +253,14 @@ class _MetricChart extends StatelessWidget {
       ),
     );
   }
+}
+
+/// "Modelo 72 % · Síntomas 3 puntos · lo indicó el modelo".
+String _inferenceSummary(Inference inference) {
+  final parts = [
+    if (inference.probability != null) 'Modelo ${formatPercent(inference.probability!)}',
+    if (inference.symptomScore != null) 'Síntomas ${inference.symptomScore} pts',
+    if (inference.cause != null && inference.riskLevel != RiskLevel.green) 'lo indicó ${inference.cause!.label}',
+  ];
+  return parts.isEmpty ? '' : parts.join(' · ');
 }

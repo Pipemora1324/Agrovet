@@ -61,34 +61,78 @@ class Cow extends Equatable {
       [id, tag, name, breed, birthDate, calvings, productionStatus, updatedAt, isDemo];
 }
 
-/// Checklist de síntomas visibles del registro diario.
+/// Lo que el ganadero observa en el día: dos preguntas Sí/No (pueden quedar sin responder) y los
+/// signos de la ubre.
 class Symptoms extends Equatable {
   const Symptoms({
     this.udderSwelling = false,
     this.abnormalMilk = false,
     this.udderPain = false,
     this.lethargy = false,
+    this.udderRedness = false,
+    this.udderHeat = false,
+    this.ateNormally,
+    this.milkDrop,
   });
 
+  /// Ubre hinchada.
   final bool udderSwelling;
+
+  /// Grumos o sangre en la leche.
   final bool abnormalMilk;
+
+  /// Dolor al tocar.
   final bool udderPain;
+
+  /// Casilla de versiones anteriores ("decaída, come poco"). Ya no se pregunta; se conserva.
   final bool lethargy;
 
-  bool get any => udderSwelling || abnormalMilk || udderPain || lethargy;
+  /// Ubre enrojecida.
+  final bool udderRedness;
 
-  int get count => [udderSwelling, abnormalMilk, udderPain, lethargy].where((s) => s).length;
+  /// Ubre caliente.
+  final bool udderHeat;
 
-  Symptoms copyWith({bool? udderSwelling, bool? abnormalMilk, bool? udderPain, bool? lethargy}) =>
+  /// ¿Comió normal? null = sin respuesta.
+  final bool? ateNormally;
+
+  /// ¿Produjo menos leche de lo usual? null = sin respuesta.
+  final bool? milkDrop;
+
+  /// Algún signo en la ubre o en la leche.
+  bool get anyUdderSign => udderRedness || udderSwelling || udderHeat || udderPain || abnormalMilk;
+
+  /// Algo fuera de lo normal: un signo de la ubre, no comió normal, dio menos leche o estaba decaída.
+  bool get any => anyUdderSign || lethargy || ateNormally == false || milkDrop == true;
+
+  /// Respondió alguna pregunta o marcó algún signo.
+  bool get anyAnswer => anyUdderSign || lethargy || ateNormally != null || milkDrop != null;
+
+  Symptoms copyWith({
+    bool? udderSwelling,
+    bool? abnormalMilk,
+    bool? udderPain,
+    bool? lethargy,
+    bool? udderRedness,
+    bool? udderHeat,
+    bool? Function()? ateNormally,
+    bool? Function()? milkDrop,
+  }) =>
       Symptoms(
         udderSwelling: udderSwelling ?? this.udderSwelling,
         abnormalMilk: abnormalMilk ?? this.abnormalMilk,
         udderPain: udderPain ?? this.udderPain,
         lethargy: lethargy ?? this.lethargy,
+        udderRedness: udderRedness ?? this.udderRedness,
+        udderHeat: udderHeat ?? this.udderHeat,
+        // Función para poder volver a "sin respuesta" (null)
+        ateNormally: ateNormally == null ? this.ateNormally : ateNormally(),
+        milkDrop: milkDrop == null ? this.milkDrop : milkDrop(),
       );
 
   @override
-  List<Object?> get props => [udderSwelling, abnormalMilk, udderPain, lethargy];
+  List<Object?> get props =>
+      [udderSwelling, abnormalMilk, udderPain, lethargy, udderRedness, udderHeat, ateNormally, milkDrop];
 }
 
 class DailyRecord extends Equatable {
@@ -121,12 +165,32 @@ class DailyRecord extends Equatable {
       [id, cowId, recordDate, temperatureC, milkL, feedKg, symptoms, notes, updatedAt];
 }
 
+/// Qué indicador fijó el color final del semáforo.
+enum RiskCause {
+  model('MODEL', 'el modelo'),
+  symptoms('SYMPTOMS', 'los síntomas'),
+  both('BOTH', 'los síntomas y el modelo');
+
+  const RiskCause(this.code, this.label);
+
+  final String code;
+
+  /// Para la frase "Lo indicó …".
+  final String label;
+
+  static RiskCause? fromCode(String? code) => values.where((c) => c.code == code).firstOrNull;
+}
+
+/// Evaluación guardada del semáforo: color final, probabilidad del modelo (si se pudo usar),
+/// puntaje por síntomas (si había registro del día) y cuál de los dos fijó el color.
 class Inference extends Equatable {
   const Inference({
     required this.id,
     required this.cowId,
     required this.windowEndDate,
-    required this.probability,
+    this.probability,
+    this.symptomScore,
+    this.cause,
     required this.riskLevel,
     required this.modelVersion,
     required this.updatedAt,
@@ -135,14 +199,22 @@ class Inference extends Equatable {
   final String id;
   final String cowId;
   final DateTime windowEndDate;
-  final double probability;
+
+  /// null si no había días suficientes con datos numéricos para el modelo.
+  final double? probability;
+
+  /// null en evaluaciones anteriores o sin registro del día.
+  final int? symptomScore;
+
+  /// null en evaluaciones anteriores (solo modelo).
+  final RiskCause? cause;
   final RiskLevel riskLevel;
   final String modelVersion;
   final DateTime updatedAt;
 
   @override
   List<Object?> get props =>
-      [id, cowId, windowEndDate, probability, riskLevel, modelVersion, updatedAt];
+      [id, cowId, windowEndDate, probability, symptomScore, cause, riskLevel, modelVersion, updatedAt];
 }
 
 class CowAlert extends Equatable {

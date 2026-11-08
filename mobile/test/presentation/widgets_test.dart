@@ -8,6 +8,7 @@ import 'package:agrovet/data/sync/sync_service.dart';
 import 'package:agrovet/domain/entities.dart';
 import 'package:agrovet/domain/repositories.dart';
 import 'package:agrovet/domain/risk_evaluator.dart';
+import 'package:agrovet/domain/symptom_score.dart';
 import 'package:agrovet/domain/session.dart';
 import 'package:agrovet/presentation/auth/auth_cubit.dart';
 import 'package:agrovet/presentation/auth/login_screen.dart';
@@ -121,17 +122,48 @@ void main() {
 
   testWidgets('el resultado muestra el semáforo, la recomendación y el aviso fijo', (tester) async {
     final cow = Cow(id: 'c1', tag: 'V-01', name: 'Lucero', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026));
+    final today = dateOnly(DateTime.now());
     final cubit = _FixedRiskCubit(RiskState(
       evaluating: false,
-      outcome: RiskResult(probability: 0.9, level: RiskLevel.red, windowEnd: DateTime.now()),
-      todaySymptoms: const Symptoms(),
+      outcome: RiskEvaluator.combine(
+        model: RiskResult(probability: 0.9, level: RiskLevel.red, windowEnd: today),
+        symptoms: SymptomScore.assess(DailyRecord(
+          id: 'r', cowId: 'c1', recordDate: today, symptoms: const Symptoms(udderHeat: true), updatedAt: today)),
+        day: today,
+      ),
+      todaySymptoms: const Symptoms(udderHeat: true),
     ));
     await tester.pumpWidget(BlocProvider<RiskCubit>.value(value: cubit, child: app(RiskView(cow: cow))));
     await tester.pumpAndSettle();
-    expect(find.text('Alto riesgo'), findsOneWidget);
+    expect(find.text('Alto riesgo'), findsWidgets);
+    expect(find.text('Lo indicó: el modelo.'), findsOneWidget);
     expect(find.text('Consulte al veterinario'), findsOneWidget);
     expect(find.text('Esta herramienta apoya, no reemplaza al veterinario.'), findsOneWidget);
     expect(find.textContaining('Probabilidad estimada: 90 %'), findsOneWidget);
+    expect(find.text('Puntaje: 2 puntos'), findsOneWidget);
+    expect(find.text('Ubre caliente (+2)'), findsOneWidget);
+    expect(find.text(SymptomScore.notice), findsOneWidget);
+  });
+
+  testWidgets('sin datos para el modelo se apoya en los síntomas y lo dice', (tester) async {
+    final cow = Cow(id: 'c1', tag: 'V-01', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026));
+    final today = dateOnly(DateTime.now());
+    final cubit = _FixedRiskCubit(RiskState(
+      evaluating: false,
+      outcome: RiskEvaluator.combine(
+        model: const InsufficientData(recordedDays: 3, requiredDays: 10, windowDays: 14),
+        symptoms: SymptomScore.assess(DailyRecord(
+          id: 'r', cowId: 'c1', recordDate: today, symptoms: const Symptoms(abnormalMilk: true), updatedAt: today)),
+        day: today,
+      ),
+    ));
+    await tester.pumpWidget(BlocProvider<RiskCubit>.value(value: cubit, child: app(RiskView(cow: cow))));
+    await tester.pumpAndSettle();
+    expect(find.text('Alerta temprana'), findsWidgets);
+    expect(find.text('Lo indicó: los síntomas.'), findsOneWidget);
+    expect(find.text('Faltan datos para el modelo'), findsOneWidget);
+    expect(find.textContaining('Hay 3 de los últimos 14 días'), findsOneWidget);
+    expect(find.text('Grumos o sangre en la leche (+3)'), findsOneWidget);
   });
 
   testWidgets('la ficha muestra la alerta sin atender y permite marcarla como atendida', (tester) async {
@@ -190,11 +222,11 @@ void main() {
     expect(find.text('Todavía no'), findsOneWidget);
   });
 
-  testWidgets('con pocos datos explica cuántos días faltan', (tester) async {
+  testWidgets('sin registro de hoy y con pocos datos explica qué falta', (tester) async {
     final cow = Cow(id: 'c1', tag: 'V-01', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026));
     final cubit = _FixedRiskCubit(const RiskState(
       evaluating: false,
-      outcome: InsufficientData(recordedDays: 6, requiredDays: 10, windowDays: 14),
+      outcome: NothingToEvaluate(InsufficientData(recordedDays: 6, requiredDays: 10, windowDays: 14)),
     ));
     await tester.pumpWidget(BlocProvider<RiskCubit>.value(value: cubit, child: app(RiskView(cow: cow))));
     await tester.pumpAndSettle();

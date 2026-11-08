@@ -43,6 +43,18 @@ public class DailyRecord {
     @Column(nullable = false)
     private boolean lethargy;
 
+    @Column(name = "udder_redness", nullable = false)
+    private boolean udderRedness;
+
+    @Column(name = "udder_heat", nullable = false)
+    private boolean udderHeat;
+
+    @Column(name = "ate_normally")
+    private Boolean ateNormally;
+
+    @Column(name = "milk_drop")
+    private Boolean milkDrop;
+
     @Column(length = 500)
     private String notes;
 
@@ -75,6 +87,10 @@ public class DailyRecord {
         this.abnormalMilk = symptoms.abnormalMilk();
         this.udderPain = symptoms.udderPain();
         this.lethargy = symptoms.lethargy();
+        this.udderRedness = symptoms.udderRedness();
+        this.udderHeat = symptoms.udderHeat();
+        this.ateNormally = symptoms.ateNormally();
+        this.milkDrop = symptoms.milkDrop();
         this.notes = notes;
         this.deleted = deleted;
         this.updatedAt = updatedAt;
@@ -105,7 +121,8 @@ public class DailyRecord {
     }
 
     public Symptoms getSymptoms() {
-        return new Symptoms(udderSwelling, abnormalMilk, udderPain, lethargy);
+        return new Symptoms(udderSwelling, abnormalMilk, udderPain, lethargy, udderRedness, udderHeat, ateNormally,
+                milkDrop);
     }
 
     public String getNotes() {

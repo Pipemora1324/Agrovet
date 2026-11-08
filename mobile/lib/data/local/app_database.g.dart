@@ -914,6 +914,64 @@ class $DailyRecordsTable extends DailyRecords
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _udderRednessMeta = const VerificationMeta(
+    'udderRedness',
+  );
+  @override
+  late final GeneratedColumn<bool> udderRedness = GeneratedColumn<bool>(
+    'udder_redness',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("udder_redness" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _udderHeatMeta = const VerificationMeta(
+    'udderHeat',
+  );
+  @override
+  late final GeneratedColumn<bool> udderHeat = GeneratedColumn<bool>(
+    'udder_heat',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("udder_heat" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _ateNormallyMeta = const VerificationMeta(
+    'ateNormally',
+  );
+  @override
+  late final GeneratedColumn<bool> ateNormally = GeneratedColumn<bool>(
+    'ate_normally',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("ate_normally" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _milkDropMeta = const VerificationMeta(
+    'milkDrop',
+  );
+  @override
+  late final GeneratedColumn<bool> milkDrop = GeneratedColumn<bool>(
+    'milk_drop',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("milk_drop" IN (0, 1))',
+    ),
+  );
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -940,6 +998,10 @@ class $DailyRecordsTable extends DailyRecords
     abnormalMilk,
     udderPain,
     lethargy,
+    udderRedness,
+    udderHeat,
+    ateNormally,
+    milkDrop,
     notes,
   ];
   @override
@@ -1061,6 +1123,36 @@ class $DailyRecordsTable extends DailyRecords
         lethargy.isAcceptableOrUnknown(data['lethargy']!, _lethargyMeta),
       );
     }
+    if (data.containsKey('udder_redness')) {
+      context.handle(
+        _udderRednessMeta,
+        udderRedness.isAcceptableOrUnknown(
+          data['udder_redness']!,
+          _udderRednessMeta,
+        ),
+      );
+    }
+    if (data.containsKey('udder_heat')) {
+      context.handle(
+        _udderHeatMeta,
+        udderHeat.isAcceptableOrUnknown(data['udder_heat']!, _udderHeatMeta),
+      );
+    }
+    if (data.containsKey('ate_normally')) {
+      context.handle(
+        _ateNormallyMeta,
+        ateNormally.isAcceptableOrUnknown(
+          data['ate_normally']!,
+          _ateNormallyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('milk_drop')) {
+      context.handle(
+        _milkDropMeta,
+        milkDrop.isAcceptableOrUnknown(data['milk_drop']!, _milkDropMeta),
+      );
+    }
     if (data.containsKey('notes')) {
       context.handle(
         _notesMeta,
@@ -1140,6 +1232,22 @@ class $DailyRecordsTable extends DailyRecords
         DriftSqlType.bool,
         data['${effectivePrefix}lethargy'],
       )!,
+      udderRedness: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}udder_redness'],
+      )!,
+      udderHeat: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}udder_heat'],
+      )!,
+      ateNormally: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}ate_normally'],
+      ),
+      milkDrop: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}milk_drop'],
+      ),
       notes: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
@@ -1174,7 +1282,17 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
   final bool udderSwelling;
   final bool abnormalMilk;
   final bool udderPain;
+
+  /// Casilla de versiones anteriores ("decaída, come poco"); ya no se pregunta pero se conserva.
   final bool lethargy;
+  final bool udderRedness;
+  final bool udderHeat;
+
+  /// ¿Comió normal? null = sin respuesta.
+  final bool? ateNormally;
+
+  /// ¿Produjo menos leche de lo usual? null = sin respuesta.
+  final bool? milkDrop;
   final String? notes;
   const DailyRecordRow({
     required this.updatedAt,
@@ -1192,6 +1310,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     required this.abnormalMilk,
     required this.udderPain,
     required this.lethargy,
+    required this.udderRedness,
+    required this.udderHeat,
+    this.ateNormally,
+    this.milkDrop,
     this.notes,
   });
   @override
@@ -1220,6 +1342,14 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     map['abnormal_milk'] = Variable<bool>(abnormalMilk);
     map['udder_pain'] = Variable<bool>(udderPain);
     map['lethargy'] = Variable<bool>(lethargy);
+    map['udder_redness'] = Variable<bool>(udderRedness);
+    map['udder_heat'] = Variable<bool>(udderHeat);
+    if (!nullToAbsent || ateNormally != null) {
+      map['ate_normally'] = Variable<bool>(ateNormally);
+    }
+    if (!nullToAbsent || milkDrop != null) {
+      map['milk_drop'] = Variable<bool>(milkDrop);
+    }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
@@ -1251,6 +1381,14 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       abnormalMilk: Value(abnormalMilk),
       udderPain: Value(udderPain),
       lethargy: Value(lethargy),
+      udderRedness: Value(udderRedness),
+      udderHeat: Value(udderHeat),
+      ateNormally: ateNormally == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ateNormally),
+      milkDrop: milkDrop == null && nullToAbsent
+          ? const Value.absent()
+          : Value(milkDrop),
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
@@ -1278,6 +1416,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       abnormalMilk: serializer.fromJson<bool>(json['abnormalMilk']),
       udderPain: serializer.fromJson<bool>(json['udderPain']),
       lethargy: serializer.fromJson<bool>(json['lethargy']),
+      udderRedness: serializer.fromJson<bool>(json['udderRedness']),
+      udderHeat: serializer.fromJson<bool>(json['udderHeat']),
+      ateNormally: serializer.fromJson<bool?>(json['ateNormally']),
+      milkDrop: serializer.fromJson<bool?>(json['milkDrop']),
       notes: serializer.fromJson<String?>(json['notes']),
     );
   }
@@ -1300,6 +1442,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       'abnormalMilk': serializer.toJson<bool>(abnormalMilk),
       'udderPain': serializer.toJson<bool>(udderPain),
       'lethargy': serializer.toJson<bool>(lethargy),
+      'udderRedness': serializer.toJson<bool>(udderRedness),
+      'udderHeat': serializer.toJson<bool>(udderHeat),
+      'ateNormally': serializer.toJson<bool?>(ateNormally),
+      'milkDrop': serializer.toJson<bool?>(milkDrop),
       'notes': serializer.toJson<String?>(notes),
     };
   }
@@ -1320,6 +1466,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     bool? abnormalMilk,
     bool? udderPain,
     bool? lethargy,
+    bool? udderRedness,
+    bool? udderHeat,
+    Value<bool?> ateNormally = const Value.absent(),
+    Value<bool?> milkDrop = const Value.absent(),
     Value<String?> notes = const Value.absent(),
   }) => DailyRecordRow(
     updatedAt: updatedAt ?? this.updatedAt,
@@ -1337,6 +1487,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     abnormalMilk: abnormalMilk ?? this.abnormalMilk,
     udderPain: udderPain ?? this.udderPain,
     lethargy: lethargy ?? this.lethargy,
+    udderRedness: udderRedness ?? this.udderRedness,
+    udderHeat: udderHeat ?? this.udderHeat,
+    ateNormally: ateNormally.present ? ateNormally.value : this.ateNormally,
+    milkDrop: milkDrop.present ? milkDrop.value : this.milkDrop,
     notes: notes.present ? notes.value : this.notes,
   );
   DailyRecordRow copyWithCompanion(DailyRecordsCompanion data) {
@@ -1366,6 +1520,14 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           : this.abnormalMilk,
       udderPain: data.udderPain.present ? data.udderPain.value : this.udderPain,
       lethargy: data.lethargy.present ? data.lethargy.value : this.lethargy,
+      udderRedness: data.udderRedness.present
+          ? data.udderRedness.value
+          : this.udderRedness,
+      udderHeat: data.udderHeat.present ? data.udderHeat.value : this.udderHeat,
+      ateNormally: data.ateNormally.present
+          ? data.ateNormally.value
+          : this.ateNormally,
+      milkDrop: data.milkDrop.present ? data.milkDrop.value : this.milkDrop,
       notes: data.notes.present ? data.notes.value : this.notes,
     );
   }
@@ -1388,6 +1550,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           ..write('abnormalMilk: $abnormalMilk, ')
           ..write('udderPain: $udderPain, ')
           ..write('lethargy: $lethargy, ')
+          ..write('udderRedness: $udderRedness, ')
+          ..write('udderHeat: $udderHeat, ')
+          ..write('ateNormally: $ateNormally, ')
+          ..write('milkDrop: $milkDrop, ')
           ..write('notes: $notes')
           ..write(')'))
         .toString();
@@ -1410,6 +1576,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     abnormalMilk,
     udderPain,
     lethargy,
+    udderRedness,
+    udderHeat,
+    ateNormally,
+    milkDrop,
     notes,
   );
   @override
@@ -1431,6 +1601,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           other.abnormalMilk == this.abnormalMilk &&
           other.udderPain == this.udderPain &&
           other.lethargy == this.lethargy &&
+          other.udderRedness == this.udderRedness &&
+          other.udderHeat == this.udderHeat &&
+          other.ateNormally == this.ateNormally &&
+          other.milkDrop == this.milkDrop &&
           other.notes == this.notes);
 }
 
@@ -1450,6 +1624,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
   final Value<bool> abnormalMilk;
   final Value<bool> udderPain;
   final Value<bool> lethargy;
+  final Value<bool> udderRedness;
+  final Value<bool> udderHeat;
+  final Value<bool?> ateNormally;
+  final Value<bool?> milkDrop;
   final Value<String?> notes;
   final Value<int> rowid;
   const DailyRecordsCompanion({
@@ -1468,6 +1646,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     this.abnormalMilk = const Value.absent(),
     this.udderPain = const Value.absent(),
     this.lethargy = const Value.absent(),
+    this.udderRedness = const Value.absent(),
+    this.udderHeat = const Value.absent(),
+    this.ateNormally = const Value.absent(),
+    this.milkDrop = const Value.absent(),
     this.notes = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1487,6 +1669,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     this.abnormalMilk = const Value.absent(),
     this.udderPain = const Value.absent(),
     this.lethargy = const Value.absent(),
+    this.udderRedness = const Value.absent(),
+    this.udderHeat = const Value.absent(),
+    this.ateNormally = const Value.absent(),
+    this.milkDrop = const Value.absent(),
     this.notes = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : updatedAt = Value(updatedAt),
@@ -1509,6 +1695,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     Expression<bool>? abnormalMilk,
     Expression<bool>? udderPain,
     Expression<bool>? lethargy,
+    Expression<bool>? udderRedness,
+    Expression<bool>? udderHeat,
+    Expression<bool>? ateNormally,
+    Expression<bool>? milkDrop,
     Expression<String>? notes,
     Expression<int>? rowid,
   }) {
@@ -1528,6 +1718,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
       if (abnormalMilk != null) 'abnormal_milk': abnormalMilk,
       if (udderPain != null) 'udder_pain': udderPain,
       if (lethargy != null) 'lethargy': lethargy,
+      if (udderRedness != null) 'udder_redness': udderRedness,
+      if (udderHeat != null) 'udder_heat': udderHeat,
+      if (ateNormally != null) 'ate_normally': ateNormally,
+      if (milkDrop != null) 'milk_drop': milkDrop,
       if (notes != null) 'notes': notes,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1549,6 +1743,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     Value<bool>? abnormalMilk,
     Value<bool>? udderPain,
     Value<bool>? lethargy,
+    Value<bool>? udderRedness,
+    Value<bool>? udderHeat,
+    Value<bool?>? ateNormally,
+    Value<bool?>? milkDrop,
     Value<String?>? notes,
     Value<int>? rowid,
   }) {
@@ -1568,6 +1766,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
       abnormalMilk: abnormalMilk ?? this.abnormalMilk,
       udderPain: udderPain ?? this.udderPain,
       lethargy: lethargy ?? this.lethargy,
+      udderRedness: udderRedness ?? this.udderRedness,
+      udderHeat: udderHeat ?? this.udderHeat,
+      ateNormally: ateNormally ?? this.ateNormally,
+      milkDrop: milkDrop ?? this.milkDrop,
       notes: notes ?? this.notes,
       rowid: rowid ?? this.rowid,
     );
@@ -1621,6 +1823,18 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     if (lethargy.present) {
       map['lethargy'] = Variable<bool>(lethargy.value);
     }
+    if (udderRedness.present) {
+      map['udder_redness'] = Variable<bool>(udderRedness.value);
+    }
+    if (udderHeat.present) {
+      map['udder_heat'] = Variable<bool>(udderHeat.value);
+    }
+    if (ateNormally.present) {
+      map['ate_normally'] = Variable<bool>(ateNormally.value);
+    }
+    if (milkDrop.present) {
+      map['milk_drop'] = Variable<bool>(milkDrop.value);
+    }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
@@ -1648,6 +1862,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
           ..write('abnormalMilk: $abnormalMilk, ')
           ..write('udderPain: $udderPain, ')
           ..write('lethargy: $lethargy, ')
+          ..write('udderRedness: $udderRedness, ')
+          ..write('udderHeat: $udderHeat, ')
+          ..write('ateNormally: $ateNormally, ')
+          ..write('milkDrop: $milkDrop, ')
           ..write('notes: $notes, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1765,9 +1983,29 @@ class $InferencesTable extends Inferences
   late final GeneratedColumn<double> probability = GeneratedColumn<double>(
     'probability',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.double,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _symptomScoreMeta = const VerificationMeta(
+    'symptomScore',
+  );
+  @override
+  late final GeneratedColumn<int> symptomScore = GeneratedColumn<int>(
+    'symptom_score',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _causeMeta = const VerificationMeta('cause');
+  @override
+  late final GeneratedColumn<String> cause = GeneratedColumn<String>(
+    'cause',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _riskLevelMeta = const VerificationMeta(
     'riskLevel',
@@ -1802,6 +2040,8 @@ class $InferencesTable extends Inferences
     cowId,
     windowEndDate,
     probability,
+    symptomScore,
+    cause,
     riskLevel,
     modelVersion,
   ];
@@ -1884,8 +2124,21 @@ class $InferencesTable extends Inferences
           _probabilityMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_probabilityMeta);
+    }
+    if (data.containsKey('symptom_score')) {
+      context.handle(
+        _symptomScoreMeta,
+        symptomScore.isAcceptableOrUnknown(
+          data['symptom_score']!,
+          _symptomScoreMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cause')) {
+      context.handle(
+        _causeMeta,
+        cause.isAcceptableOrUnknown(data['cause']!, _causeMeta),
+      );
     }
     if (data.containsKey('risk_level')) {
       context.handle(
@@ -1950,7 +2203,15 @@ class $InferencesTable extends Inferences
       probability: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}probability'],
-      )!,
+      ),
+      symptomScore: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}symptom_score'],
+      ),
+      cause: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cause'],
+      ),
       riskLevel: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}risk_level'],
@@ -1981,7 +2242,15 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
   final String id;
   final String cowId;
   final String windowEndDate;
-  final double probability;
+
+  /// Probabilidad del modelo; null si no hubo días suficientes con datos numéricos.
+  final double? probability;
+
+  /// Puntaje por síntomas del día (reglas provisionales).
+  final int? symptomScore;
+
+  /// Qué fijó el color final: MODEL, SYMPTOMS o BOTH.
+  final String? cause;
   final String riskLevel;
   final String modelVersion;
   const InferenceRow({
@@ -1993,7 +2262,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     required this.id,
     required this.cowId,
     required this.windowEndDate,
-    required this.probability,
+    this.probability,
+    this.symptomScore,
+    this.cause,
     required this.riskLevel,
     required this.modelVersion,
   });
@@ -2010,7 +2281,15 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     map['id'] = Variable<String>(id);
     map['cow_id'] = Variable<String>(cowId);
     map['window_end_date'] = Variable<String>(windowEndDate);
-    map['probability'] = Variable<double>(probability);
+    if (!nullToAbsent || probability != null) {
+      map['probability'] = Variable<double>(probability);
+    }
+    if (!nullToAbsent || symptomScore != null) {
+      map['symptom_score'] = Variable<int>(symptomScore);
+    }
+    if (!nullToAbsent || cause != null) {
+      map['cause'] = Variable<String>(cause);
+    }
     map['risk_level'] = Variable<String>(riskLevel);
     map['model_version'] = Variable<String>(modelVersion);
     return map;
@@ -2028,7 +2307,15 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
       id: Value(id),
       cowId: Value(cowId),
       windowEndDate: Value(windowEndDate),
-      probability: Value(probability),
+      probability: probability == null && nullToAbsent
+          ? const Value.absent()
+          : Value(probability),
+      symptomScore: symptomScore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(symptomScore),
+      cause: cause == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cause),
       riskLevel: Value(riskLevel),
       modelVersion: Value(modelVersion),
     );
@@ -2048,7 +2335,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
       id: serializer.fromJson<String>(json['id']),
       cowId: serializer.fromJson<String>(json['cowId']),
       windowEndDate: serializer.fromJson<String>(json['windowEndDate']),
-      probability: serializer.fromJson<double>(json['probability']),
+      probability: serializer.fromJson<double?>(json['probability']),
+      symptomScore: serializer.fromJson<int?>(json['symptomScore']),
+      cause: serializer.fromJson<String?>(json['cause']),
       riskLevel: serializer.fromJson<String>(json['riskLevel']),
       modelVersion: serializer.fromJson<String>(json['modelVersion']),
     );
@@ -2065,7 +2354,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
       'id': serializer.toJson<String>(id),
       'cowId': serializer.toJson<String>(cowId),
       'windowEndDate': serializer.toJson<String>(windowEndDate),
-      'probability': serializer.toJson<double>(probability),
+      'probability': serializer.toJson<double?>(probability),
+      'symptomScore': serializer.toJson<int?>(symptomScore),
+      'cause': serializer.toJson<String?>(cause),
       'riskLevel': serializer.toJson<String>(riskLevel),
       'modelVersion': serializer.toJson<String>(modelVersion),
     };
@@ -2080,7 +2371,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     String? id,
     String? cowId,
     String? windowEndDate,
-    double? probability,
+    Value<double?> probability = const Value.absent(),
+    Value<int?> symptomScore = const Value.absent(),
+    Value<String?> cause = const Value.absent(),
     String? riskLevel,
     String? modelVersion,
   }) => InferenceRow(
@@ -2092,7 +2385,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     id: id ?? this.id,
     cowId: cowId ?? this.cowId,
     windowEndDate: windowEndDate ?? this.windowEndDate,
-    probability: probability ?? this.probability,
+    probability: probability.present ? probability.value : this.probability,
+    symptomScore: symptomScore.present ? symptomScore.value : this.symptomScore,
+    cause: cause.present ? cause.value : this.cause,
     riskLevel: riskLevel ?? this.riskLevel,
     modelVersion: modelVersion ?? this.modelVersion,
   );
@@ -2113,6 +2408,10 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
       probability: data.probability.present
           ? data.probability.value
           : this.probability,
+      symptomScore: data.symptomScore.present
+          ? data.symptomScore.value
+          : this.symptomScore,
+      cause: data.cause.present ? data.cause.value : this.cause,
       riskLevel: data.riskLevel.present ? data.riskLevel.value : this.riskLevel,
       modelVersion: data.modelVersion.present
           ? data.modelVersion.value
@@ -2132,6 +2431,8 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
           ..write('cowId: $cowId, ')
           ..write('windowEndDate: $windowEndDate, ')
           ..write('probability: $probability, ')
+          ..write('symptomScore: $symptomScore, ')
+          ..write('cause: $cause, ')
           ..write('riskLevel: $riskLevel, ')
           ..write('modelVersion: $modelVersion')
           ..write(')'))
@@ -2149,6 +2450,8 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     cowId,
     windowEndDate,
     probability,
+    symptomScore,
+    cause,
     riskLevel,
     modelVersion,
   );
@@ -2165,6 +2468,8 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
           other.cowId == this.cowId &&
           other.windowEndDate == this.windowEndDate &&
           other.probability == this.probability &&
+          other.symptomScore == this.symptomScore &&
+          other.cause == this.cause &&
           other.riskLevel == this.riskLevel &&
           other.modelVersion == this.modelVersion);
 }
@@ -2178,7 +2483,9 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
   final Value<String> id;
   final Value<String> cowId;
   final Value<String> windowEndDate;
-  final Value<double> probability;
+  final Value<double?> probability;
+  final Value<int?> symptomScore;
+  final Value<String?> cause;
   final Value<String> riskLevel;
   final Value<String> modelVersion;
   final Value<int> rowid;
@@ -2192,6 +2499,8 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     this.cowId = const Value.absent(),
     this.windowEndDate = const Value.absent(),
     this.probability = const Value.absent(),
+    this.symptomScore = const Value.absent(),
+    this.cause = const Value.absent(),
     this.riskLevel = const Value.absent(),
     this.modelVersion = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2205,7 +2514,9 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     required String id,
     required String cowId,
     required String windowEndDate,
-    required double probability,
+    this.probability = const Value.absent(),
+    this.symptomScore = const Value.absent(),
+    this.cause = const Value.absent(),
     required String riskLevel,
     required String modelVersion,
     this.rowid = const Value.absent(),
@@ -2213,7 +2524,6 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
        id = Value(id),
        cowId = Value(cowId),
        windowEndDate = Value(windowEndDate),
-       probability = Value(probability),
        riskLevel = Value(riskLevel),
        modelVersion = Value(modelVersion);
   static Insertable<InferenceRow> custom({
@@ -2226,6 +2536,8 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     Expression<String>? cowId,
     Expression<String>? windowEndDate,
     Expression<double>? probability,
+    Expression<int>? symptomScore,
+    Expression<String>? cause,
     Expression<String>? riskLevel,
     Expression<String>? modelVersion,
     Expression<int>? rowid,
@@ -2240,6 +2552,8 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
       if (cowId != null) 'cow_id': cowId,
       if (windowEndDate != null) 'window_end_date': windowEndDate,
       if (probability != null) 'probability': probability,
+      if (symptomScore != null) 'symptom_score': symptomScore,
+      if (cause != null) 'cause': cause,
       if (riskLevel != null) 'risk_level': riskLevel,
       if (modelVersion != null) 'model_version': modelVersion,
       if (rowid != null) 'rowid': rowid,
@@ -2255,7 +2569,9 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     Value<String>? id,
     Value<String>? cowId,
     Value<String>? windowEndDate,
-    Value<double>? probability,
+    Value<double?>? probability,
+    Value<int?>? symptomScore,
+    Value<String?>? cause,
     Value<String>? riskLevel,
     Value<String>? modelVersion,
     Value<int>? rowid,
@@ -2270,6 +2586,8 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
       cowId: cowId ?? this.cowId,
       windowEndDate: windowEndDate ?? this.windowEndDate,
       probability: probability ?? this.probability,
+      symptomScore: symptomScore ?? this.symptomScore,
+      cause: cause ?? this.cause,
       riskLevel: riskLevel ?? this.riskLevel,
       modelVersion: modelVersion ?? this.modelVersion,
       rowid: rowid ?? this.rowid,
@@ -2306,6 +2624,12 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     if (probability.present) {
       map['probability'] = Variable<double>(probability.value);
     }
+    if (symptomScore.present) {
+      map['symptom_score'] = Variable<int>(symptomScore.value);
+    }
+    if (cause.present) {
+      map['cause'] = Variable<String>(cause.value);
+    }
     if (riskLevel.present) {
       map['risk_level'] = Variable<String>(riskLevel.value);
     }
@@ -2330,6 +2654,8 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
           ..write('cowId: $cowId, ')
           ..write('windowEndDate: $windowEndDate, ')
           ..write('probability: $probability, ')
+          ..write('symptomScore: $symptomScore, ')
+          ..write('cause: $cause, ')
           ..write('riskLevel: $riskLevel, ')
           ..write('modelVersion: $modelVersion, ')
           ..write('rowid: $rowid')
@@ -3728,6 +4054,10 @@ typedef $$DailyRecordsTableCreateCompanionBuilder =
       Value<bool> abnormalMilk,
       Value<bool> udderPain,
       Value<bool> lethargy,
+      Value<bool> udderRedness,
+      Value<bool> udderHeat,
+      Value<bool?> ateNormally,
+      Value<bool?> milkDrop,
       Value<String?> notes,
       Value<int> rowid,
     });
@@ -3748,6 +4078,10 @@ typedef $$DailyRecordsTableUpdateCompanionBuilder =
       Value<bool> abnormalMilk,
       Value<bool> udderPain,
       Value<bool> lethargy,
+      Value<bool> udderRedness,
+      Value<bool> udderHeat,
+      Value<bool?> ateNormally,
+      Value<bool?> milkDrop,
       Value<String?> notes,
       Value<int> rowid,
     });
@@ -3850,6 +4184,26 @@ class $$DailyRecordsTableFilterComposer
 
   ColumnFilters<bool> get lethargy => $composableBuilder(
     column: $table.lethargy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get udderRedness => $composableBuilder(
+    column: $table.udderRedness,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get udderHeat => $composableBuilder(
+    column: $table.udderHeat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get ateNormally => $composableBuilder(
+    column: $table.ateNormally,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get milkDrop => $composableBuilder(
+    column: $table.milkDrop,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3961,6 +4315,26 @@ class $$DailyRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get udderRedness => $composableBuilder(
+    column: $table.udderRedness,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get udderHeat => $composableBuilder(
+    column: $table.udderHeat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get ateNormally => $composableBuilder(
+    column: $table.ateNormally,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get milkDrop => $composableBuilder(
+    column: $table.milkDrop,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get notes => $composableBuilder(
     column: $table.notes,
     builder: (column) => ColumnOrderings(column),
@@ -4051,6 +4425,22 @@ class $$DailyRecordsTableAnnotationComposer
   GeneratedColumn<bool> get lethargy =>
       $composableBuilder(column: $table.lethargy, builder: (column) => column);
 
+  GeneratedColumn<bool> get udderRedness => $composableBuilder(
+    column: $table.udderRedness,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get udderHeat =>
+      $composableBuilder(column: $table.udderHeat, builder: (column) => column);
+
+  GeneratedColumn<bool> get ateNormally => $composableBuilder(
+    column: $table.ateNormally,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get milkDrop =>
+      $composableBuilder(column: $table.milkDrop, builder: (column) => column);
+
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
@@ -4121,6 +4511,10 @@ class $$DailyRecordsTableTableManager
                 Value<bool> abnormalMilk = const Value.absent(),
                 Value<bool> udderPain = const Value.absent(),
                 Value<bool> lethargy = const Value.absent(),
+                Value<bool> udderRedness = const Value.absent(),
+                Value<bool> udderHeat = const Value.absent(),
+                Value<bool?> ateNormally = const Value.absent(),
+                Value<bool?> milkDrop = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DailyRecordsCompanion(
@@ -4139,6 +4533,10 @@ class $$DailyRecordsTableTableManager
                 abnormalMilk: abnormalMilk,
                 udderPain: udderPain,
                 lethargy: lethargy,
+                udderRedness: udderRedness,
+                udderHeat: udderHeat,
+                ateNormally: ateNormally,
+                milkDrop: milkDrop,
                 notes: notes,
                 rowid: rowid,
               ),
@@ -4159,6 +4557,10 @@ class $$DailyRecordsTableTableManager
                 Value<bool> abnormalMilk = const Value.absent(),
                 Value<bool> udderPain = const Value.absent(),
                 Value<bool> lethargy = const Value.absent(),
+                Value<bool> udderRedness = const Value.absent(),
+                Value<bool> udderHeat = const Value.absent(),
+                Value<bool?> ateNormally = const Value.absent(),
+                Value<bool?> milkDrop = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DailyRecordsCompanion.insert(
@@ -4177,6 +4579,10 @@ class $$DailyRecordsTableTableManager
                 abnormalMilk: abnormalMilk,
                 udderPain: udderPain,
                 lethargy: lethargy,
+                udderRedness: udderRedness,
+                udderHeat: udderHeat,
+                ateNormally: ateNormally,
+                milkDrop: milkDrop,
                 notes: notes,
                 rowid: rowid,
               ),
@@ -4254,7 +4660,9 @@ typedef $$InferencesTableCreateCompanionBuilder = InferencesCompanion Function({
   required String id,
   required String cowId,
   required String windowEndDate,
-  required double probability,
+  Value<double?> probability,
+  Value<int?> symptomScore,
+  Value<String?> cause,
   required String riskLevel,
   required String modelVersion,
   Value<int> rowid,
@@ -4268,7 +4676,9 @@ typedef $$InferencesTableUpdateCompanionBuilder = InferencesCompanion Function({
   Value<String> id,
   Value<String> cowId,
   Value<String> windowEndDate,
-  Value<double> probability,
+  Value<double?> probability,
+  Value<int?> symptomScore,
+  Value<String?> cause,
   Value<String> riskLevel,
   Value<String> modelVersion,
   Value<int> rowid,
@@ -4361,6 +4771,16 @@ class $$InferencesTableFilterComposer
 
   ColumnFilters<double> get probability => $composableBuilder(
     column: $table.probability,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get symptomScore => $composableBuilder(
+    column: $table.symptomScore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cause => $composableBuilder(
+    column: $table.cause,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4472,6 +4892,16 @@ class $$InferencesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get symptomScore => $composableBuilder(
+    column: $table.symptomScore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cause => $composableBuilder(
+    column: $table.cause,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get riskLevel => $composableBuilder(
     column: $table.riskLevel,
     builder: (column) => ColumnOrderings(column),
@@ -4544,6 +4974,14 @@ class $$InferencesTableAnnotationComposer
     column: $table.probability,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get symptomScore => $composableBuilder(
+    column: $table.symptomScore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get cause =>
+      $composableBuilder(column: $table.cause, builder: (column) => column);
 
   GeneratedColumn<String> get riskLevel =>
       $composableBuilder(column: $table.riskLevel, builder: (column) => column);
@@ -4638,7 +5076,9 @@ class $$InferencesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> cowId = const Value.absent(),
                 Value<String> windowEndDate = const Value.absent(),
-                Value<double> probability = const Value.absent(),
+                Value<double?> probability = const Value.absent(),
+                Value<int?> symptomScore = const Value.absent(),
+                Value<String?> cause = const Value.absent(),
                 Value<String> riskLevel = const Value.absent(),
                 Value<String> modelVersion = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -4652,6 +5092,8 @@ class $$InferencesTableTableManager
                 cowId: cowId,
                 windowEndDate: windowEndDate,
                 probability: probability,
+                symptomScore: symptomScore,
+                cause: cause,
                 riskLevel: riskLevel,
                 modelVersion: modelVersion,
                 rowid: rowid,
@@ -4666,7 +5108,9 @@ class $$InferencesTableTableManager
                 required String id,
                 required String cowId,
                 required String windowEndDate,
-                required double probability,
+                Value<double?> probability = const Value.absent(),
+                Value<int?> symptomScore = const Value.absent(),
+                Value<String?> cause = const Value.absent(),
                 required String riskLevel,
                 required String modelVersion,
                 Value<int> rowid = const Value.absent(),
@@ -4680,6 +5124,8 @@ class $$InferencesTableTableManager
                 cowId: cowId,
                 windowEndDate: windowEndDate,
                 probability: probability,
+                symptomScore: symptomScore,
+                cause: cause,
                 riskLevel: riskLevel,
                 modelVersion: modelVersion,
                 rowid: rowid,

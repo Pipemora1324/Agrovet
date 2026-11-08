@@ -278,4 +278,102 @@ class SyncIntegrationTest extends IntegrationTest {
         mvc.perform(post("/api/sync").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void simpleAnswersAndUdderSignsTravelAndOldAppsStillSync() throws Exception {
+        UUID cowId = UUID.randomUUID();
+        UUID answered = UUID.randomUUID();
+        UUID oldApp = UUID.randomUUID();
+        Map<String, Object> withAnswers = new HashMap<>();
+        withAnswers.put("id", answered);
+        withAnswers.put("cowId", cowId);
+        withAnswers.put("recordDate", LocalDate.now());
+        withAnswers.put("ateNormally", false);
+        withAnswers.put("milkDrop", true);
+        withAnswers.put("udderRedness", true);
+        withAnswers.put("udderHeat", true);
+        withAnswers.put("updatedAt", T1);
+        // Lo que envía una versión anterior de la app: sin los campos nuevos
+        Map<String, Object> previousVersion = record(oldApp, cowId, LocalDate.now().minusDays(1), 12.0, T1);
+
+        JsonNode response = syncOk(ana, Map.of("cows", List.of(cow(cowId, "S-PRE", "LACTATING", T1)),
+                "dailyRecords", List.of(withAnswers, previousVersion)));
+        assertThat(response.get("rejected")).isEmpty();
+        assertThat(jdbc.queryForObject("SELECT NOT ate_normally AND milk_drop AND udder_redness AND udder_heat "
+                + "FROM daily_records WHERE id = ?", Boolean.class, answered)).isTrue();
+        assertThat(jdbc.queryForObject("SELECT ate_normally IS NULL AND milk_drop IS NULL AND NOT udder_redness "
+                + "AND NOT udder_heat FROM daily_records WHERE id = ?", Boolean.class, oldApp)).isTrue();
+
+        mvc.perform(get("/api/cows/" + cowId + "/history").header("Authorization", ana.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.records[1].symptoms.ateNormally").value(false))
+                .andExpect(jsonPath("$.records[1].symptoms.milkDrop").value(true))
+                .andExpect(jsonPath("$.records[1].symptoms.udderRedness").value(true))
+                .andExpect(jsonPath("$.records[0].symptoms.ateNormally").doesNotExist());
+    }
+
+    @Test
+    void evaluationBySymptomsOnlyIsStoredWithItsCause() throws Exception {
+        UUID cowId = UUID.randomUUID();
+        UUID bySymptoms = UUID.randomUUID();
+        UUID empty = UUID.randomUUID();
+        Map<String, Object> symptomsOnly = new HashMap<>();
+        symptomsOnly.put("id", bySymptoms);
+        symptomsOnly.put("cowId", cowId);
+        symptomsOnly.put("windowEndDate", LocalDate.of(2026, 3, 2));
+        symptomsOnly.put("probability", null);
+        symptomsOnly.put("symptomScore", 5);
+        symptomsOnly.put("cause", "SYMPTOMS");
+        symptomsOnly.put("riskLevel", "RED");
+        symptomsOnly.put("modelVersion", "sintomas-provisional-1");
+        symptomsOnly.put("updatedAt", T1);
+        Map<String, Object> withoutIndicators = new HashMap<>(symptomsOnly);
+        withoutIndicators.put("id", empty);
+        withoutIndicators.put("symptomScore", null);
+
+        JsonNode response = syncOk(ana, Map.of("cows", List.of(cow(cowId, "S-SIN", "LACTATING", T1)),
+                "inferences", List.of(symptomsOnly, withoutIndicators)));
+
+        assertThat(response.get("confirmed").get("inferences")).hasSize(1);
+        assertThat(response.get("rejected")).hasSize(1);
+        assertThat(response.get("rejected").get(0).get("id").asText()).isEqualTo(empty.toString());
+        assertThat(jdbc.queryForObject("SELECT probability IS NULL AND symptom_score = 5 AND cause = 'SYMPTOMS' "
+                + "FROM inferences WHERE id = ?", Boolean.class, bySymptoms)).isTrue();
+        mvc.perform(get("/api/cows/" + cowId + "/history?from=2026-03-01&to=2026-03-03")
+                        .header("Authorization", ana.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.inferences[0].symptomScore").value(5))
+                .andExpect(jsonPath("$.inferences[0].cause").value("SYMPTOMS"))
+                .andExpect(jsonPath("$.inferences[0].probability").doesNotExist());
+    }
+
+    @Test
+    void recordWithoutMeasurementsIsAcceptedAndKeptEmpty() throws Exception {
+        UUID cowId = UUID.randomUUID();
+        UUID recordId = UUID.randomUUID();
+        LocalDate day = LocalDate.now();
+        Map<String, Object> onlySymptoms = new HashMap<>();
+        onlySymptoms.put("id", recordId);
+        onlySymptoms.put("cowId", cowId);
+        onlySymptoms.put("recordDate", day);
+        onlySymptoms.put("temperatureC", null);
+        onlySymptoms.put("milkL", null);
+        onlySymptoms.put("udderSwelling", true);
+        onlySymptoms.put("updatedAt", T1);
+
+        JsonNode response = syncOk(ana, Map.of("cows", List.of(cow(cowId, "S-OPC", "LACTATING", T1)),
+                "dailyRecords", List.of(onlySymptoms)));
+        assertThat(response.get("rejected")).isEmpty();
+        assertThat(jdbc.queryForObject(
+                "SELECT temperature_c IS NULL AND milk_l IS NULL AND feed_kg IS NULL AND udder_swelling "
+                        + "FROM daily_records WHERE id = ?", Boolean.class, recordId)).isTrue();
+
+        // El historial no inventa valores: los campos vacíos no aparecen
+        mvc.perform(get("/api/cows/" + cowId + "/history").header("Authorization", ana.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.records", hasSize(1)))
+                .andExpect(jsonPath("$.records[0].temperatureC").doesNotExist())
+                .andExpect(jsonPath("$.records[0].milkL").doesNotExist())
+                .andExpect(jsonPath("$.records[0].symptoms.udderSwelling").value(true));
+    }
 }

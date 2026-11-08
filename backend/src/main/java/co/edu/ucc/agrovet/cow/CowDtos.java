@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Size;
 
 import co.edu.ucc.agrovet.alert.Alert;
 import co.edu.ucc.agrovet.inference.Inference;
+import co.edu.ucc.agrovet.inference.RiskCause;
 import co.edu.ucc.agrovet.inference.RiskLevel;
 import co.edu.ucc.agrovet.record.DailyRecord;
 import co.edu.ucc.agrovet.record.Symptoms;
@@ -60,12 +61,13 @@ public final class CowDtos {
         }
     }
 
-    public record InferenceResponse(UUID id, LocalDate windowEndDate, double probability, RiskLevel riskLevel,
-            String modelVersion) {
+    public record InferenceResponse(UUID id, LocalDate windowEndDate, Double probability, Integer symptomScore,
+            RiskCause cause, RiskLevel riskLevel, String modelVersion) {
 
         public static InferenceResponse from(Inference inference) {
             return new InferenceResponse(inference.getId(), inference.getWindowEndDate(), inference.getProbability(),
-                    inference.getRiskLevel(), inference.getModelVersion());
+                    inference.getSymptomScore(), inference.getCause(), inference.getRiskLevel(),
+                    inference.getModelVersion());
         }
     }
 

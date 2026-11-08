@@ -76,8 +76,8 @@ class _DailyRecordViewState extends State<_DailyRecordView> {
     final temperature = Validators.parseNumber(_temperature.text);
     final milk = Validators.parseNumber(_milk.text);
     final feed = Validators.parseNumber(_feed.text);
-    if (temperature == null && milk == null && feed == null && !state.symptoms.any) {
-      setState(() => _formError = 'Escriba al menos un dato o marque un síntoma.');
+    if (temperature == null && milk == null && feed == null && !state.symptoms.anyAnswer) {
+      setState(() => _formError = 'Responda una pregunta, marque un signo o escriba una medición.');
       return;
     }
     setState(() => _formError = null);
@@ -143,9 +143,39 @@ class _DailyRecordViewState extends State<_DailyRecordView> {
                                 style: theme.textTheme.emphasis),
                           ],
                           const SizedBox(height: 20),
+                          _YesNoQuestion(
+                            question: '¿Comió normal hoy?',
+                            icon: Icons.grass,
+                            value: state.symptoms.ateNormally,
+                            onChanged: (value) => context
+                                .read<DailyRecordCubit>()
+                                .updateSymptoms(state.symptoms.copyWith(ateNormally: () => value)),
+                          ),
+                          const SizedBox(height: 12),
+                          _YesNoQuestion(
+                            question: '¿Dio menos leche de lo usual?',
+                            icon: Icons.water_drop,
+                            value: state.symptoms.milkDrop,
+                            onChanged: (value) => context
+                                .read<DailyRecordCubit>()
+                                .updateSymptoms(state.symptoms.copyWith(milkDrop: () => value)),
+                          ),
+                          const SizedBox(height: 24),
+                          Text('¿Ve alguno de estos signos en la ubre?', style: theme.textTheme.titleMedium),
+                          const SizedBox(height: 8),
+                          _SymptomsChecklist(
+                            symptoms: state.symptoms,
+                            onChanged: context.read<DailyRecordCubit>().updateSymptoms,
+                          ),
+                          const SizedBox(height: 24),
+                          Text('Mediciones (opcionales)', style: theme.textTheme.titleMedium),
+                          const SizedBox(height: 4),
+                          Text('Si las toma, el modelo puede estimar el riesgo con más precisión.',
+                              style: theme.textTheme.bodyMedium),
+                          const SizedBox(height: 12),
                           _NumberField(
                             controller: _temperature,
-                            label: 'Temperatura',
+                            label: 'Temperatura (opcional)',
                             unit: '°C',
                             hint: 'Ej.: 38,6',
                             icon: Icons.thermostat,
@@ -154,7 +184,7 @@ class _DailyRecordViewState extends State<_DailyRecordView> {
                           const SizedBox(height: 16),
                           _NumberField(
                             controller: _milk,
-                            label: 'Leche del día',
+                            label: 'Leche del día (opcional)',
                             unit: 'L',
                             hint: 'Ej.: 12,5',
                             icon: Icons.water_drop,
@@ -163,18 +193,11 @@ class _DailyRecordViewState extends State<_DailyRecordView> {
                           const SizedBox(height: 16),
                           _NumberField(
                             controller: _feed,
-                            label: 'Alimento consumido',
+                            label: 'Alimento consumido (opcional)',
                             unit: 'kg',
                             hint: 'Ej.: 10',
                             icon: Icons.grass,
                             validator: Validators.feedKg,
-                          ),
-                          const SizedBox(height: 24),
-                          Text('¿Ve alguno de estos síntomas?', style: theme.textTheme.titleMedium),
-                          const SizedBox(height: 8),
-                          _SymptomsChecklist(
-                            symptoms: state.symptoms,
-                            onChanged: context.read<DailyRecordCubit>().updateSymptoms,
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -251,6 +274,7 @@ class _NumberField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
+          helperText: 'Déjelo vacío si hoy no lo midió',
           prefixIcon: Icon(icon, size: 28),
           suffixText: unit,
           suffixStyle: Theme.of(context).textTheme.numberUnit,
@@ -269,12 +293,12 @@ class _SymptomsChecklist extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      ('Ubre hinchada o caliente', Icons.local_fire_department, symptoms.udderSwelling,
-          (bool v) => symptoms.copyWith(udderSwelling: v)),
-      ('Leche con grumos, sangre o aguada', Icons.opacity, symptoms.abnormalMilk,
+      ('Enrojecida', Icons.flare, symptoms.udderRedness, (bool v) => symptoms.copyWith(udderRedness: v)),
+      ('Hinchada', Icons.bubble_chart, symptoms.udderSwelling, (bool v) => symptoms.copyWith(udderSwelling: v)),
+      ('Caliente', Icons.local_fire_department, symptoms.udderHeat, (bool v) => symptoms.copyWith(udderHeat: v)),
+      ('Dolor al tocar', Icons.back_hand, symptoms.udderPain, (bool v) => symptoms.copyWith(udderPain: v)),
+      ('Grumos o sangre en la leche', Icons.opacity, symptoms.abnormalMilk,
           (bool v) => symptoms.copyWith(abnormalMilk: v)),
-      ('Dolor al tocar o al ordeñar', Icons.back_hand, symptoms.udderPain, (bool v) => symptoms.copyWith(udderPain: v)),
-      ('Decaída, come poco', Icons.bedtime, symptoms.lethargy, (bool v) => symptoms.copyWith(lethargy: v)),
     ];
     return Column(
       children: [
@@ -306,4 +330,38 @@ class _SymptomsChecklist extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Pregunta de Sí o No. Se puede dejar sin responder; tocar de nuevo la respuesta elegida la borra.
+class _YesNoQuestion extends StatelessWidget {
+  const _YesNoQuestion({required this.question, required this.icon, required this.value, required this.onChanged});
+
+  final String question;
+  final IconData icon;
+  final bool? value;
+  final ValueChanged<bool?> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 28, color: AppColors.primary),
+              const SizedBox(width: 10),
+              Expanded(child: Text(question, style: Theme.of(context).textTheme.titleSmall)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<bool>(
+            emptySelectionAllowed: true,
+            segments: const [
+              ButtonSegment(value: true, label: Text('Sí'), icon: Icon(Icons.check)),
+              ButtonSegment(value: false, label: Text('No'), icon: Icon(Icons.close)),
+            ],
+            selected: {?value},
+            onSelectionChanged: (selection) => onChanged(selection.isEmpty ? null : selection.first),
+          ),
+        ],
+      );
 }
