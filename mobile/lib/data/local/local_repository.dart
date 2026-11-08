@@ -312,6 +312,10 @@ class LocalRepository
           sizeBytes: photo.sizeBytes,
           createdAt: photo.createdAt,
           imageUploaded: Value(photo.imageUploaded),
+          vetConfirmed: Value(photo.vetConfirmed?.code),
+          diagnosis: Value(photo.diagnosis?.code),
+          diagnosisNotes: Value(photo.diagnosisNotes),
+          researchConsent: Value(photo.researchConsent),
           updatedAt: _now(),
           syncPending: const Value(true),
           syncError: const Value(null),
@@ -336,6 +340,10 @@ class LocalRepository
         sizeBytes: row.sizeBytes,
         createdAt: row.createdAt,
         imageUploaded: row.imageUploaded,
+        vetConfirmed: VetConfirmation.fromCode(row.vetConfirmed),
+        diagnosis: Diagnosis.fromCode(row.diagnosis),
+        diagnosisNotes: row.diagnosisNotes,
+        researchConsent: row.researchConsent,
       );
 
   CowAlert _toAlert(AlertRow row) => CowAlert(

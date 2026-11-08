@@ -3532,6 +3532,54 @@ class $CowPhotosTable extends CowPhotos
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _vetConfirmedMeta = const VerificationMeta(
+    'vetConfirmed',
+  );
+  @override
+  late final GeneratedColumn<String> vetConfirmed = GeneratedColumn<String>(
+    'vet_confirmed',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _diagnosisMeta = const VerificationMeta(
+    'diagnosis',
+  );
+  @override
+  late final GeneratedColumn<String> diagnosis = GeneratedColumn<String>(
+    'diagnosis',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _diagnosisNotesMeta = const VerificationMeta(
+    'diagnosisNotes',
+  );
+  @override
+  late final GeneratedColumn<String> diagnosisNotes = GeneratedColumn<String>(
+    'diagnosis_notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _researchConsentMeta = const VerificationMeta(
+    'researchConsent',
+  );
+  @override
+  late final GeneratedColumn<bool> researchConsent = GeneratedColumn<bool>(
+    'research_consent',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("research_consent" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -3556,6 +3604,10 @@ class $CowPhotosTable extends CowPhotos
     fileName,
     sizeBytes,
     imageUploaded,
+    vetConfirmed,
+    diagnosis,
+    diagnosisNotes,
+    researchConsent,
     createdAt,
   ];
   @override
@@ -3651,6 +3703,39 @@ class $CowPhotosTable extends CowPhotos
         ),
       );
     }
+    if (data.containsKey('vet_confirmed')) {
+      context.handle(
+        _vetConfirmedMeta,
+        vetConfirmed.isAcceptableOrUnknown(
+          data['vet_confirmed']!,
+          _vetConfirmedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('diagnosis')) {
+      context.handle(
+        _diagnosisMeta,
+        diagnosis.isAcceptableOrUnknown(data['diagnosis']!, _diagnosisMeta),
+      );
+    }
+    if (data.containsKey('diagnosis_notes')) {
+      context.handle(
+        _diagnosisNotesMeta,
+        diagnosisNotes.isAcceptableOrUnknown(
+          data['diagnosis_notes']!,
+          _diagnosisNotesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('research_consent')) {
+      context.handle(
+        _researchConsentMeta,
+        researchConsent.isAcceptableOrUnknown(
+          data['research_consent']!,
+          _researchConsentMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3712,6 +3797,22 @@ class $CowPhotosTable extends CowPhotos
         DriftSqlType.bool,
         data['${effectivePrefix}image_uploaded'],
       )!,
+      vetConfirmed: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vet_confirmed'],
+      ),
+      diagnosis: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}diagnosis'],
+      ),
+      diagnosisNotes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}diagnosis_notes'],
+      ),
+      researchConsent: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}research_consent'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -3745,6 +3846,16 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
 
   /// El archivo ya se subió al servidor (los datos viajan aparte, con la sincronización).
   final bool imageUploaded;
+
+  /// ¿Lo confirmó un veterinario? YES, NO o PENDING (null: sin responder).
+  final String? vetConfirmed;
+
+  /// MASTITIS, HEALTHY u OTHER.
+  final String? diagnosis;
+  final String? diagnosisNotes;
+
+  /// Permiso expreso para usar la foto en investigación; apagado por defecto.
+  final bool researchConsent;
   final DateTime createdAt;
   const CowPhotoRow({
     required this.updatedAt,
@@ -3758,6 +3869,10 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
     required this.fileName,
     required this.sizeBytes,
     required this.imageUploaded,
+    this.vetConfirmed,
+    this.diagnosis,
+    this.diagnosisNotes,
+    required this.researchConsent,
     required this.createdAt,
   });
   @override
@@ -3776,6 +3891,16 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
     map['file_name'] = Variable<String>(fileName);
     map['size_bytes'] = Variable<int>(sizeBytes);
     map['image_uploaded'] = Variable<bool>(imageUploaded);
+    if (!nullToAbsent || vetConfirmed != null) {
+      map['vet_confirmed'] = Variable<String>(vetConfirmed);
+    }
+    if (!nullToAbsent || diagnosis != null) {
+      map['diagnosis'] = Variable<String>(diagnosis);
+    }
+    if (!nullToAbsent || diagnosisNotes != null) {
+      map['diagnosis_notes'] = Variable<String>(diagnosisNotes);
+    }
+    map['research_consent'] = Variable<bool>(researchConsent);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -3795,6 +3920,16 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
       fileName: Value(fileName),
       sizeBytes: Value(sizeBytes),
       imageUploaded: Value(imageUploaded),
+      vetConfirmed: vetConfirmed == null && nullToAbsent
+          ? const Value.absent()
+          : Value(vetConfirmed),
+      diagnosis: diagnosis == null && nullToAbsent
+          ? const Value.absent()
+          : Value(diagnosis),
+      diagnosisNotes: diagnosisNotes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(diagnosisNotes),
+      researchConsent: Value(researchConsent),
       createdAt: Value(createdAt),
     );
   }
@@ -3816,6 +3951,10 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
       fileName: serializer.fromJson<String>(json['fileName']),
       sizeBytes: serializer.fromJson<int>(json['sizeBytes']),
       imageUploaded: serializer.fromJson<bool>(json['imageUploaded']),
+      vetConfirmed: serializer.fromJson<String?>(json['vetConfirmed']),
+      diagnosis: serializer.fromJson<String?>(json['diagnosis']),
+      diagnosisNotes: serializer.fromJson<String?>(json['diagnosisNotes']),
+      researchConsent: serializer.fromJson<bool>(json['researchConsent']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -3834,6 +3973,10 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
       'fileName': serializer.toJson<String>(fileName),
       'sizeBytes': serializer.toJson<int>(sizeBytes),
       'imageUploaded': serializer.toJson<bool>(imageUploaded),
+      'vetConfirmed': serializer.toJson<String?>(vetConfirmed),
+      'diagnosis': serializer.toJson<String?>(diagnosis),
+      'diagnosisNotes': serializer.toJson<String?>(diagnosisNotes),
+      'researchConsent': serializer.toJson<bool>(researchConsent),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -3850,6 +3993,10 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
     String? fileName,
     int? sizeBytes,
     bool? imageUploaded,
+    Value<String?> vetConfirmed = const Value.absent(),
+    Value<String?> diagnosis = const Value.absent(),
+    Value<String?> diagnosisNotes = const Value.absent(),
+    bool? researchConsent,
     DateTime? createdAt,
   }) => CowPhotoRow(
     updatedAt: updatedAt ?? this.updatedAt,
@@ -3863,6 +4010,12 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
     fileName: fileName ?? this.fileName,
     sizeBytes: sizeBytes ?? this.sizeBytes,
     imageUploaded: imageUploaded ?? this.imageUploaded,
+    vetConfirmed: vetConfirmed.present ? vetConfirmed.value : this.vetConfirmed,
+    diagnosis: diagnosis.present ? diagnosis.value : this.diagnosis,
+    diagnosisNotes: diagnosisNotes.present
+        ? diagnosisNotes.value
+        : this.diagnosisNotes,
+    researchConsent: researchConsent ?? this.researchConsent,
     createdAt: createdAt ?? this.createdAt,
   );
   CowPhotoRow copyWithCompanion(CowPhotosCompanion data) {
@@ -3882,6 +4035,16 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
       imageUploaded: data.imageUploaded.present
           ? data.imageUploaded.value
           : this.imageUploaded,
+      vetConfirmed: data.vetConfirmed.present
+          ? data.vetConfirmed.value
+          : this.vetConfirmed,
+      diagnosis: data.diagnosis.present ? data.diagnosis.value : this.diagnosis,
+      diagnosisNotes: data.diagnosisNotes.present
+          ? data.diagnosisNotes.value
+          : this.diagnosisNotes,
+      researchConsent: data.researchConsent.present
+          ? data.researchConsent.value
+          : this.researchConsent,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3900,6 +4063,10 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
           ..write('fileName: $fileName, ')
           ..write('sizeBytes: $sizeBytes, ')
           ..write('imageUploaded: $imageUploaded, ')
+          ..write('vetConfirmed: $vetConfirmed, ')
+          ..write('diagnosis: $diagnosis, ')
+          ..write('diagnosisNotes: $diagnosisNotes, ')
+          ..write('researchConsent: $researchConsent, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -3918,6 +4085,10 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
     fileName,
     sizeBytes,
     imageUploaded,
+    vetConfirmed,
+    diagnosis,
+    diagnosisNotes,
+    researchConsent,
     createdAt,
   );
   @override
@@ -3935,6 +4106,10 @@ class CowPhotoRow extends DataClass implements Insertable<CowPhotoRow> {
           other.fileName == this.fileName &&
           other.sizeBytes == this.sizeBytes &&
           other.imageUploaded == this.imageUploaded &&
+          other.vetConfirmed == this.vetConfirmed &&
+          other.diagnosis == this.diagnosis &&
+          other.diagnosisNotes == this.diagnosisNotes &&
+          other.researchConsent == this.researchConsent &&
           other.createdAt == this.createdAt);
 }
 
@@ -3950,6 +4125,10 @@ class CowPhotosCompanion extends UpdateCompanion<CowPhotoRow> {
   final Value<String> fileName;
   final Value<int> sizeBytes;
   final Value<bool> imageUploaded;
+  final Value<String?> vetConfirmed;
+  final Value<String?> diagnosis;
+  final Value<String?> diagnosisNotes;
+  final Value<bool> researchConsent;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const CowPhotosCompanion({
@@ -3964,6 +4143,10 @@ class CowPhotosCompanion extends UpdateCompanion<CowPhotoRow> {
     this.fileName = const Value.absent(),
     this.sizeBytes = const Value.absent(),
     this.imageUploaded = const Value.absent(),
+    this.vetConfirmed = const Value.absent(),
+    this.diagnosis = const Value.absent(),
+    this.diagnosisNotes = const Value.absent(),
+    this.researchConsent = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -3979,6 +4162,10 @@ class CowPhotosCompanion extends UpdateCompanion<CowPhotoRow> {
     required String fileName,
     required int sizeBytes,
     this.imageUploaded = const Value.absent(),
+    this.vetConfirmed = const Value.absent(),
+    this.diagnosis = const Value.absent(),
+    this.diagnosisNotes = const Value.absent(),
+    this.researchConsent = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : updatedAt = Value(updatedAt),
@@ -4000,6 +4187,10 @@ class CowPhotosCompanion extends UpdateCompanion<CowPhotoRow> {
     Expression<String>? fileName,
     Expression<int>? sizeBytes,
     Expression<bool>? imageUploaded,
+    Expression<String>? vetConfirmed,
+    Expression<String>? diagnosis,
+    Expression<String>? diagnosisNotes,
+    Expression<bool>? researchConsent,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -4015,6 +4206,10 @@ class CowPhotosCompanion extends UpdateCompanion<CowPhotoRow> {
       if (fileName != null) 'file_name': fileName,
       if (sizeBytes != null) 'size_bytes': sizeBytes,
       if (imageUploaded != null) 'image_uploaded': imageUploaded,
+      if (vetConfirmed != null) 'vet_confirmed': vetConfirmed,
+      if (diagnosis != null) 'diagnosis': diagnosis,
+      if (diagnosisNotes != null) 'diagnosis_notes': diagnosisNotes,
+      if (researchConsent != null) 'research_consent': researchConsent,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -4032,6 +4227,10 @@ class CowPhotosCompanion extends UpdateCompanion<CowPhotoRow> {
     Value<String>? fileName,
     Value<int>? sizeBytes,
     Value<bool>? imageUploaded,
+    Value<String?>? vetConfirmed,
+    Value<String?>? diagnosis,
+    Value<String?>? diagnosisNotes,
+    Value<bool>? researchConsent,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -4047,6 +4246,10 @@ class CowPhotosCompanion extends UpdateCompanion<CowPhotoRow> {
       fileName: fileName ?? this.fileName,
       sizeBytes: sizeBytes ?? this.sizeBytes,
       imageUploaded: imageUploaded ?? this.imageUploaded,
+      vetConfirmed: vetConfirmed ?? this.vetConfirmed,
+      diagnosis: diagnosis ?? this.diagnosis,
+      diagnosisNotes: diagnosisNotes ?? this.diagnosisNotes,
+      researchConsent: researchConsent ?? this.researchConsent,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -4088,6 +4291,18 @@ class CowPhotosCompanion extends UpdateCompanion<CowPhotoRow> {
     if (imageUploaded.present) {
       map['image_uploaded'] = Variable<bool>(imageUploaded.value);
     }
+    if (vetConfirmed.present) {
+      map['vet_confirmed'] = Variable<String>(vetConfirmed.value);
+    }
+    if (diagnosis.present) {
+      map['diagnosis'] = Variable<String>(diagnosis.value);
+    }
+    if (diagnosisNotes.present) {
+      map['diagnosis_notes'] = Variable<String>(diagnosisNotes.value);
+    }
+    if (researchConsent.present) {
+      map['research_consent'] = Variable<bool>(researchConsent.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -4111,6 +4326,10 @@ class CowPhotosCompanion extends UpdateCompanion<CowPhotoRow> {
           ..write('fileName: $fileName, ')
           ..write('sizeBytes: $sizeBytes, ')
           ..write('imageUploaded: $imageUploaded, ')
+          ..write('vetConfirmed: $vetConfirmed, ')
+          ..write('diagnosis: $diagnosis, ')
+          ..write('diagnosisNotes: $diagnosisNotes, ')
+          ..write('researchConsent: $researchConsent, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -6578,6 +6797,10 @@ typedef $$CowPhotosTableCreateCompanionBuilder = CowPhotosCompanion Function({
   required String fileName,
   required int sizeBytes,
   Value<bool> imageUploaded,
+  Value<String?> vetConfirmed,
+  Value<String?> diagnosis,
+  Value<String?> diagnosisNotes,
+  Value<bool> researchConsent,
   required DateTime createdAt,
   Value<int> rowid,
 });
@@ -6593,6 +6816,10 @@ typedef $$CowPhotosTableUpdateCompanionBuilder = CowPhotosCompanion Function({
   Value<String> fileName,
   Value<int> sizeBytes,
   Value<bool> imageUploaded,
+  Value<String?> vetConfirmed,
+  Value<String?> diagnosis,
+  Value<String?> diagnosisNotes,
+  Value<bool> researchConsent,
   Value<DateTime> createdAt,
   Value<int> rowid,
 });
@@ -6675,6 +6902,26 @@ class $$CowPhotosTableFilterComposer
 
   ColumnFilters<bool> get imageUploaded => $composableBuilder(
     column: $table.imageUploaded,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vetConfirmed => $composableBuilder(
+    column: $table.vetConfirmed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get diagnosis => $composableBuilder(
+    column: $table.diagnosis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get diagnosisNotes => $composableBuilder(
+    column: $table.diagnosisNotes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get researchConsent => $composableBuilder(
+    column: $table.researchConsent,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6766,6 +7013,26 @@ class $$CowPhotosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get vetConfirmed => $composableBuilder(
+    column: $table.vetConfirmed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get diagnosis => $composableBuilder(
+    column: $table.diagnosis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get diagnosisNotes => $composableBuilder(
+    column: $table.diagnosisNotes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get researchConsent => $composableBuilder(
+    column: $table.researchConsent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -6838,6 +7105,24 @@ class $$CowPhotosTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get vetConfirmed => $composableBuilder(
+    column: $table.vetConfirmed,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get diagnosis =>
+      $composableBuilder(column: $table.diagnosis, builder: (column) => column);
+
+  GeneratedColumn<String> get diagnosisNotes => $composableBuilder(
+    column: $table.diagnosisNotes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get researchConsent => $composableBuilder(
+    column: $table.researchConsent,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -6904,6 +7189,10 @@ class $$CowPhotosTableTableManager
                 Value<String> fileName = const Value.absent(),
                 Value<int> sizeBytes = const Value.absent(),
                 Value<bool> imageUploaded = const Value.absent(),
+                Value<String?> vetConfirmed = const Value.absent(),
+                Value<String?> diagnosis = const Value.absent(),
+                Value<String?> diagnosisNotes = const Value.absent(),
+                Value<bool> researchConsent = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CowPhotosCompanion(
@@ -6918,6 +7207,10 @@ class $$CowPhotosTableTableManager
                 fileName: fileName,
                 sizeBytes: sizeBytes,
                 imageUploaded: imageUploaded,
+                vetConfirmed: vetConfirmed,
+                diagnosis: diagnosis,
+                diagnosisNotes: diagnosisNotes,
+                researchConsent: researchConsent,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -6934,6 +7227,10 @@ class $$CowPhotosTableTableManager
                 required String fileName,
                 required int sizeBytes,
                 Value<bool> imageUploaded = const Value.absent(),
+                Value<String?> vetConfirmed = const Value.absent(),
+                Value<String?> diagnosis = const Value.absent(),
+                Value<String?> diagnosisNotes = const Value.absent(),
+                Value<bool> researchConsent = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => CowPhotosCompanion.insert(
@@ -6948,6 +7245,10 @@ class $$CowPhotosTableTableManager
                 fileName: fileName,
                 sizeBytes: sizeBytes,
                 imageUploaded: imageUploaded,
+                vetConfirmed: vetConfirmed,
+                diagnosis: diagnosis,
+                diagnosisNotes: diagnosisNotes,
+                researchConsent: researchConsent,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

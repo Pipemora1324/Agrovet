@@ -46,6 +46,8 @@ class PhotoIntegrationTest extends IntegrationTest {
     RecordingEmailSender mail;
     @Autowired
     PhotoProperties properties;
+    @Autowired
+    org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     private TestUser ana;
     private TestUser beto;
@@ -176,6 +178,31 @@ class PhotoIntegrationTest extends IntegrationTest {
         syncPhoto(ana, photoId, true);
         assertThat(Files.exists(file)).isFalse();
         mvc.perform(get(imageUrl(photoId)).header("Authorization", ana.bearer())).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void researchConsentIsExplicitAndCanBeWithdrawn() throws Exception {
+        // Sin el campo, el consentimiento queda apagado
+        assertThat(jdbc.queryForObject("SELECT research_consent FROM cow_photos WHERE id = ?", Boolean.class, photoId))
+                .isFalse();
+
+        sendResearch("\"vetConfirmed\":\"YES\",\"diagnosis\":\"MASTITIS\",\"diagnosisNotes\":\"Cuarto anterior derecho\","
+                + "\"researchConsent\":true");
+        assertThat(jdbc.queryForObject("SELECT research_consent AND research_consent_at IS NOT NULL AND "
+                + "vet_confirmed = 'YES' AND diagnosis = 'MASTITIS' FROM cow_photos WHERE id = ?", Boolean.class, photoId))
+                .isTrue();
+
+        sendResearch("\"vetConfirmed\":\"YES\",\"diagnosis\":\"MASTITIS\",\"researchConsent\":false");
+        assertThat(jdbc.queryForObject("SELECT NOT research_consent AND research_consent_at IS NULL "
+                + "FROM cow_photos WHERE id = ?", Boolean.class, photoId)).isTrue();
+    }
+
+    private void sendResearch(String fields) throws Exception {
+        mvc.perform(post("/api/sync").header("Authorization", ana.bearer()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"photos\":[{\"id\":\"%s\",\"cowId\":\"%s\",\"takenOn\":\"%s\",\"updatedAt\":\"%s\",%s}]}"
+                                .formatted(photoId, cowId, LocalDate.now(), Instant.now(), fields)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rejected").isEmpty());
     }
 
     @Test
