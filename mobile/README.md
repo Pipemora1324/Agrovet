@@ -48,6 +48,20 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
   cuál lo indicó. Si no hay días suficientes con mediciones, muestra "Faltan datos para el modelo" y
   se apoya en los síntomas.
 
+## Fotos
+
+- En la ficha de la vaca, **"Fotos"** permite tomar una con la cámara o elegirla de la galería. Se usan
+  la cámara y el selector de fotos del sistema, así que AgroVet no pide permiso para leer todas las
+  fotos del celular; si la persona negó el acceso a la cámara, la app explica cómo activarlo.
+- Cada foto se reduce (lado mayor de 1600 px, JPEG al 80 %), se le quitan los metadatos EXIF/XMP
+  (incluida la ubicación GPS) y se guarda en el almacenamiento privado de la app, vinculada a la vaca y
+  al día. El historial muestra la galería del periodo.
+- Los datos de la foto viajan con la sincronización y luego se sube el archivo (multipart, con
+  reintentos). El servidor vuelve a validar el tipo real, el tamaño y quita los metadatos.
+- Cada foto tiene, opcionalmente, la confirmación del veterinario, el diagnóstico y el interruptor
+  "Permitir usar esta foto para investigación", apagado por defecto (ver `ml/README.md`).
+- La CNN no se usa en la app hasta tener un modelo validado.
+
 ## Cuenta
 
 - **Registro**: nombre, correo, contraseña y la casilla obligatoria de autorización de datos
