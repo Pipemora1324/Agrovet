@@ -194,6 +194,8 @@ public class SyncService {
         CowPhoto photo = existing.orElseGet(() -> new CowPhoto(item.id(), clock.instant()));
         if (existing.isEmpty() || isNewer(item.updatedAt(), photo.getUpdatedAt())) {
             photo.update(item.cowId(), item.takenOn(), item.deleted(), item.updatedAt());
+            photo.updateResearch(item.vetConfirmed(), item.diagnosis(), item.diagnosisNotes(),
+                    item.researchConsent(), clock.instant());
             photos.saveAndFlush(photo);
             if (item.deleted()) {
                 photoStorage.delete(photo.getId());

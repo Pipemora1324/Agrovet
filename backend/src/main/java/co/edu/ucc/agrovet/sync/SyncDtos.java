@@ -17,6 +17,8 @@ import jakarta.validation.constraints.Size;
 import co.edu.ucc.agrovet.cow.ProductionStatus;
 import co.edu.ucc.agrovet.inference.RiskCause;
 import co.edu.ucc.agrovet.inference.RiskLevel;
+import co.edu.ucc.agrovet.photo.Diagnosis;
+import co.edu.ucc.agrovet.photo.VetConfirmation;
 
 public final class SyncDtos {
 
@@ -116,6 +118,11 @@ public final class SyncDtos {
             @NotNull(message = "Falta el id.") UUID id,
             @NotNull(message = "Falta la vaca.") UUID cowId,
             @NotNull(message = "Falta la fecha de la foto.") LocalDate takenOn,
+            VetConfirmation vetConfirmed,
+            Diagnosis diagnosis,
+            @Size(max = 300, message = "El diagnóstico admite máximo 300 caracteres.") String diagnosisNotes,
+            // Apagado si no viene: el consentimiento siempre es expreso
+            boolean researchConsent,
             @NotNull(message = "Falta la fecha de modificación.") Instant updatedAt,
             boolean deleted) {
     }
