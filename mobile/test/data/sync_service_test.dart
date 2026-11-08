@@ -247,6 +247,8 @@ void main() {
       final report = await SyncService(db, gateway, photos: store, sleep: (_) async {}).syncNow();
       expect(report.ok, isTrue);
       expect((gateway.batches.first['photos'] as List).single['takenOn'], '2026-03-20');
+      // El consentimiento viaja explícito y apagado por defecto
+      expect((gateway.batches.first['photos'] as List).single['researchConsent'], isFalse);
       expect(gateway.uploaded, ['p1']);
       final row = await db.select(db.cowPhotos).getSingle();
       expect(row.imageUploaded, isTrue);

@@ -133,6 +133,32 @@ void main() {
       await photos.close();
     });
 
+    test('el permiso de investigación viene apagado y se guarda con la confirmación del veterinario', () async {
+      final photos = cubit(_FakeCapture(Captured(jpegWithLocation())));
+      await photos.add(PhotoSource.camera);
+      final saved = (await repo.watchPhotos('c1').first).single;
+      expect(saved.researchConsent, isFalse);
+      expect(saved.usableForResearch, isFalse);
+
+      await repo.savePhoto(saved.withResearch(
+        vetConfirmed: VetConfirmation.yes,
+        diagnosis: Diagnosis.mastitis,
+        diagnosisNotes: 'Cuarto trasero izquierdo',
+        researchConsent: true,
+      ));
+      final updated = (await repo.watchPhotos('c1').first).single;
+      expect(updated.usableForResearch, isTrue);
+      expect(updated.diagnosisNotes, 'Cuarto trasero izquierdo');
+      expect((await db.select(db.cowPhotos).getSingle()).syncPending, isTrue);
+
+      // Sin confirmación del veterinario o con diagnóstico "Otro" no sirve para entrenar
+      expect(updated.withResearch(vetConfirmed: VetConfirmation.pending, diagnosis: Diagnosis.mastitis,
+          researchConsent: true).usableForResearch, isFalse);
+      expect(updated.withResearch(vetConfirmed: VetConfirmation.yes, diagnosis: Diagnosis.other,
+          researchConsent: true).usableForResearch, isFalse);
+      await photos.close();
+    });
+
     test('al eliminar la cuenta se borran todas las fotos del usuario', () async {
       await store.save('p1', jpegWithLocation());
       await store.deleteAll();
