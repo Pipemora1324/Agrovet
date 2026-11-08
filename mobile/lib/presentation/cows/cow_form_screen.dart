@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/responsive.dart';
+import '../../core/theme.dart';
 import '../../core/validators.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
@@ -141,10 +142,6 @@ class _CowFormScreenState extends State<CowFormScreen> {
                 Text('Estado productivo', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 SegmentedButton<ProductionStatus>(
-                  style: SegmentedButton.styleFrom(
-                    minimumSize: const Size(64, 60),
-                    textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                  ),
                   segments: [
                     for (final status in ProductionStatus.values)
                       ButtonSegment(value: status, label: Text(status.label)),
@@ -154,8 +151,7 @@ class _CowFormScreenState extends State<CowFormScreen> {
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 16),
-                  Text(_error!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 17, fontWeight: FontWeight.w600)),
+                  Text(_error!, style: Theme.of(context).textTheme.formError),
                 ],
                 const SizedBox(height: 28),
                 BigButton(icon: Icons.save, label: 'Guardar', busy: _saving, onPressed: _save),

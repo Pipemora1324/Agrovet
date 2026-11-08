@@ -64,8 +64,8 @@ class _StatusCard extends StatelessWidget {
     final (icon, color, title) = state.hasProblems
         ? (Icons.sync_problem, theme.colorScheme.error, 'Hay un problema')
         : state.pending > 0
-            ? (Icons.cloud_upload, const Color(0xFF7A5600), 'Hay cambios por subir')
-            : (Icons.cloud_done, AppTheme.primary, 'Todo respaldado');
+            ? (Icons.cloud_upload, AppColors.warningText, 'Hay cambios por subir')
+            : (Icons.cloud_done, AppColors.primary, 'Todo respaldado');
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -93,11 +93,11 @@ class _StatusCard extends StatelessWidget {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.errorContainer,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.small),
                 ),
                 child: Text(
                   'Último intento: ${state.lastError} Sus datos siguen guardados en el celular.',
-                  style: TextStyle(fontSize: 17, color: theme.colorScheme.onErrorContainer),
+                  style: theme.textTheme.fieldValue.copyWith(color: theme.colorScheme.onErrorContainer),
                 ),
               ),
             ],
@@ -121,10 +121,10 @@ class _Row extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: AppTheme.primary),
+            Icon(icon, color: AppColors.primary),
             const SizedBox(width: 12),
-            Text('$label: ', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-            Expanded(child: Text(value, style: const TextStyle(fontSize: 17))),
+            Text('$label: ', style: Theme.of(context).textTheme.fieldLabel),
+            Expanded(child: Text(value, style: Theme.of(context).textTheme.fieldValue)),
           ],
         ),
       );
@@ -140,7 +140,7 @@ class _RejectedCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppRadius.card,
         side: BorderSide(color: theme.colorScheme.error, width: 2),
       ),
       child: Padding(
@@ -153,8 +153,7 @@ class _RejectedCard extends StatelessWidget {
             Text('Corrija el dato en la app y se volverá a enviar.', style: theme.textTheme.bodyLarge),
             for (final issue in issues) ...[
               const Divider(height: 24),
-              Text('${issue.kind} · ${issue.label}',
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+              Text('${issue.kind} · ${issue.label}', style: theme.textTheme.fieldLabel),
               const SizedBox(height: 4),
               Text(issue.reason, style: theme.textTheme.bodyLarge),
             ],

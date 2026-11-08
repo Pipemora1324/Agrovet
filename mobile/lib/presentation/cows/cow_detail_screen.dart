@@ -158,10 +158,7 @@ class _SummaryCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(latest!.riskLevel.label,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                                color: latest!.riskLevel == RiskLevel.yellow
-                                    ? const Color(0xFF7A5600)
-                                    : latest!.riskLevel.color)),
+                            style: theme.textTheme.titleMedium?.copyWith(color: latest!.riskLevel.textColor)),
                         Text('Evaluado: ${formatDay(latest!.windowEndDate)}', style: theme.textTheme.bodyLarge),
                       ],
                     ),
@@ -196,10 +193,10 @@ class _InfoRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           children: [
-            Icon(icon, color: AppTheme.primary),
+            Icon(icon, color: AppColors.primary),
             const SizedBox(width: 12),
-            Text('$label: ', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-            Expanded(child: Text(value, style: const TextStyle(fontSize: 17))),
+            Text('$label: ', style: Theme.of(context).textTheme.fieldLabel),
+            Expanded(child: Text(value, style: Theme.of(context).textTheme.fieldValue)),
           ],
         ),
       );
@@ -230,7 +227,7 @@ class _PendingAlerts extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 16),
           child: Card(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: AppRadius.card,
               side: BorderSide(color: alerts.first.riskLevel.color, width: 3),
             ),
             child: Padding(

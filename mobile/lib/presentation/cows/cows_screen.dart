@@ -129,7 +129,7 @@ class _CowCard extends StatelessWidget {
                             summary.lastRecordDate == null
                                 ? 'Sin registros'
                                 : 'Registro: ${formatDay(summary.lastRecordDate!)}',
-                            style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+                            style: theme.textTheme.bodySmall,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
