@@ -1,5 +1,9 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:agrovet/data/local/app_database.dart';
 import 'package:agrovet/data/local/local_repository.dart';
+import 'package:agrovet/data/photos/photo_store.dart';
 import 'package:agrovet/data/sync/sync_service.dart';
 import 'package:agrovet/domain/entities.dart';
 import 'package:dio/dio.dart';
@@ -16,6 +20,10 @@ class FakeGateway implements SyncGateway {
   final int? failWith;
   final Future<void> Function()? beforeAnswer;
   final List<Map<String, dynamic>> batches = [];
+  final List<String> uploaded = [];
+
+  /// Respuesta de la subida de fotos: null = acepta; si no, el código HTTP de error.
+  int? uploadStatus;
 
   @override
   Future<SyncResponse> send(Map<String, dynamic> batch) async {
@@ -33,9 +41,22 @@ class FakeGateway implements SyncGateway {
     Set<String> ids(String key) =>
         {for (final item in batch[key] as List) (item as Map)['id'] as String}..removeAll(reject.keys);
     return SyncResponse(
-      confirmed: {for (final key in ['cows', 'dailyRecords', 'inferences', 'alerts']) key: ids(key)},
+      confirmed: {for (final key in ['cows', 'dailyRecords', 'inferences', 'alerts', 'photos']) key: ids(key)},
       rejected: reject,
     );
+  }
+
+  @override
+  Future<void> uploadPhoto({required String cowId, required String photoId, required List<int> jpeg}) async {
+    if (uploadStatus != null) {
+      final request = RequestOptions(path: '/api/cows/$cowId/photos/$photoId/image');
+      throw DioException(
+        requestOptions: request,
+        response: Response(requestOptions: request, statusCode: uploadStatus, data: {'detail': 'Foto rechazada.'}),
+        type: DioExceptionType.badResponse,
+      );
+    }
+    uploaded.add(photoId);
   }
 }
 
@@ -192,5 +213,84 @@ void main() {
     final gateway = FakeGateway();
     await SyncService(db, gateway, batchSize: 2, sleep: (_) async {}).syncNow();
     expect(gateway.batches.map((b) => (b['cows'] as List).length), [2, 2, 1]);
+  });
+
+  group('fotos', () {
+    late Directory dir;
+    late PhotoStore store;
+
+    setUp(() async {
+      dir = Directory.systemTemp.createTempSync('agrovet_sync_fotos_');
+      store = await PhotoStore.forUser(dir, 'u1');
+    });
+    tearDown(() => dir.deleteSync(recursive: true));
+
+    Future<void> addPhoto(String id) async {
+      final saved = await store.save(id, Uint8List.fromList([0xFF, 0xD8, 0xFF, 0xDA, 0x00, 0x02, 0x01, 0xFF, 0xD9]));
+      await repo.savePhoto(CowPhoto(
+        id: id,
+        cowId: 'c1',
+        takenOn: day,
+        fileName: saved.fileName,
+        sizeBytes: saved.sizeBytes,
+        createdAt: day,
+      ));
+    }
+
+    test('primero viajan los datos y después el archivo; queda pendiente hasta subirlo', () async {
+      await seed();
+      await addPhoto('p1');
+      final sync = SyncService(db, FakeGateway(), photos: store, sleep: (_) async {});
+      expect(await sync.watchPendingCount().first, 3);
+
+      final gateway = FakeGateway();
+      final report = await SyncService(db, gateway, photos: store, sleep: (_) async {}).syncNow();
+      expect(report.ok, isTrue);
+      expect((gateway.batches.first['photos'] as List).single['takenOn'], '2026-03-20');
+      expect(gateway.uploaded, ['p1']);
+      final row = await db.select(db.cowPhotos).getSingle();
+      expect(row.imageUploaded, isTrue);
+      expect(row.syncPending, isFalse);
+      expect(await sync.watchPendingCount().first, 0);
+
+      // Ya subida: no se vuelve a enviar
+      final again = FakeGateway();
+      await SyncService(db, again, photos: store, sleep: (_) async {}).syncNow();
+      expect(again.uploaded, isEmpty);
+    });
+
+    test('un archivo rechazado queda con su motivo y no se reintenta', () async {
+      await seed();
+      await addPhoto('p1');
+      final gateway = FakeGateway()..uploadStatus = 400;
+      final report = await SyncService(db, gateway, photos: store, sleep: (_) async {}).syncNow();
+      expect(report.rejected, 1);
+      final row = await db.select(db.cowPhotos).getSingle();
+      expect(row.imageUploaded, isFalse);
+      expect(row.syncError, 'Foto rechazada.');
+      final issues = await SyncService(db, gateway, photos: store).watchRejected().first;
+      expect(issues.single.kind, 'Foto');
+    });
+
+    test('una falla del servidor al subir se reintenta y luego se avisa', () async {
+      await seed();
+      await addPhoto('p1');
+      final gateway = FakeGateway()..uploadStatus = 503;
+      final report =
+          await SyncService(db, gateway, photos: store, maxAttempts: 3, sleep: (d) async => waits.add(d)).syncNow();
+      expect(report.ok, isFalse);
+      expect(waits, hasLength(2));
+      expect((await db.select(db.cowPhotos).getSingle()).syncError, isNull);
+    });
+
+    test('una foto borrada solo envía el borrado, sin archivo', () async {
+      await seed();
+      await addPhoto('p1');
+      await repo.deletePhoto('p1');
+      final gateway = FakeGateway();
+      await SyncService(db, gateway, photos: store, sleep: (_) async {}).syncNow();
+      expect((gateway.batches.first['photos'] as List).single['deleted'], isTrue);
+      expect(gateway.uploaded, isEmpty);
+    });
   });
 }

@@ -34,13 +34,16 @@ public final class SyncDtos {
             @Size(max = MAX_ITEMS, message = "Máximo 500 inferencias por lote.")
             List<@Valid @NotNull InferenceSync> inferences,
             @Size(max = MAX_ITEMS, message = "Máximo 500 alertas por lote.")
-            List<@Valid @NotNull AlertSync> alerts) {
+            List<@Valid @NotNull AlertSync> alerts,
+            @Size(max = MAX_ITEMS, message = "Máximo 500 fotos por lote.")
+            List<@Valid @NotNull PhotoSync> photos) {
 
         public SyncRequest {
             cows = cows == null ? List.of() : cows;
             dailyRecords = dailyRecords == null ? List.of() : dailyRecords;
             inferences = inferences == null ? List.of() : inferences;
             alerts = alerts == null ? List.of() : alerts;
+            photos = photos == null ? List.of() : photos;
         }
     }
 
@@ -108,10 +111,20 @@ public final class SyncDtos {
             boolean deleted) {
     }
 
+    /** Datos de una foto; el archivo se sube aparte (PUT /api/cows/{cowId}/photos/{id}/image). */
+    public record PhotoSync(
+            @NotNull(message = "Falta el id.") UUID id,
+            @NotNull(message = "Falta la vaca.") UUID cowId,
+            @NotNull(message = "Falta la fecha de la foto.") LocalDate takenOn,
+            @NotNull(message = "Falta la fecha de modificación.") Instant updatedAt,
+            boolean deleted) {
+    }
+
     public record Rejected(String entity, UUID id, String reason) {
     }
 
-    public record Confirmed(List<UUID> cows, List<UUID> dailyRecords, List<UUID> inferences, List<UUID> alerts) {
+    public record Confirmed(List<UUID> cows, List<UUID> dailyRecords, List<UUID> inferences, List<UUID> alerts,
+            List<UUID> photos) {
     }
 
     /** confirmed: guardados o ya presentes en una versión igual o más reciente. rejected: no se guardaron. */
