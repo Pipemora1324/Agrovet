@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import '../../core/validators.dart';
 import '../widgets/big_button.dart';
 import '../widgets/fade_in.dart';
+import '../profile/privacy_notice_screen.dart';
 import '../widgets/notice_box.dart';
 import 'auth_cubit.dart';
 import 'forgot_password_screen.dart';
@@ -24,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _registering = false;
+  bool _acceptedPrivacy = false;
 
   @override
   void dispose() {
@@ -37,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     final auth = context.read<AuthCubit>();
     if (_registering) {
-      auth.register(_name.text, _email.text, _password.text);
+      auth.register(_name.text, _email.text, _password.text, acceptedPrivacy: _acceptedPrivacy);
     } else {
       auth.login(_email.text, _password.text);
     }
@@ -108,6 +110,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     validator: Validators.password,
                     onSubmitted: (_) => _submit(),
                   ),
+                  if (_registering) ...[
+                    const SizedBox(height: 12),
+                    _PrivacyConsent(
+                      value: _acceptedPrivacy,
+                      onChanged: (value) => setState(() => _acceptedPrivacy = value),
+                    ),
+                  ],
                   if (message != null) ...[
                     const SizedBox(height: 16),
                     FadeIn(child: NoticeBox.error(message)),
@@ -170,4 +179,44 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
+
+/// Autorización de tratamiento de datos (Ley 1581 de 2012): casilla obligatoria y enlace al aviso.
+class _PrivacyConsent extends StatelessWidget {
+  const _PrivacyConsent({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) => FormField<bool>(
+        initialValue: value,
+        validator: (_) => value ? null : 'Debe aceptar el aviso de privacidad para crear la cuenta',
+        builder: (field) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            CheckboxListTile(
+              value: value,
+              onChanged: (checked) {
+                onChanged(checked ?? false);
+                field.didChange(checked);
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Leí y acepto el aviso de privacidad y autorizo el tratamiento de mis datos.'),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () =>
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyNoticeScreen())),
+                icon: const Icon(Icons.privacy_tip),
+                label: const Text('Leer el aviso de privacidad'),
+              ),
+            ),
+            if (field.hasError)
+              Text(field.errorText!, style: Theme.of(context).textTheme.formError),
+          ],
+        ),
+      );
 }

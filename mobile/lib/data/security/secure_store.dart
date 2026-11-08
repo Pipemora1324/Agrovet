@@ -48,6 +48,12 @@ class SecureStore {
   Future<void> saveLastSync(String userId, DateTime at) =>
       _storage.write(key: 'last_sync_$userId', value: at.toUtc().toIso8601String());
 
+  /// Olvida todo lo guardado de ese usuario en este celular (al eliminar la cuenta).
+  Future<void> forgetUser(String userId) async {
+    await _storage.delete(key: 'db_key_$userId');
+    await _storage.delete(key: 'last_sync_$userId');
+  }
+
   static String generateHexKey([Random? random]) {
     final rng = random ?? Random.secure();
     return List.generate(32, (_) => rng.nextInt(256).toRadixString(16).padLeft(2, '0')).join();

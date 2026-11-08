@@ -31,7 +31,7 @@ class CowDetailScreen extends StatelessWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            style: AppButtonStyles.dangerFilled(context),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Dar de baja'),
           ),

@@ -239,6 +239,19 @@ class AppTheme {
   }
 }
 
+/// Estilos de botones para acciones destructivas (eliminar, dar de baja).
+class AppButtonStyles {
+  AppButtonStyles._();
+
+  static ButtonStyle dangerFilled(BuildContext context) =>
+      FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error);
+
+  static ButtonStyle dangerOutlined(BuildContext context) {
+    final error = Theme.of(context).colorScheme.error;
+    return OutlinedButton.styleFrom(foregroundColor: error, side: BorderSide(color: error, width: 2));
+  }
+}
+
 /// Colores del semáforo con texto legible encima de cada uno.
 extension RiskColors on RiskLevel {
   Color get color => switch (this) {
