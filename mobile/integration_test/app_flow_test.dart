@@ -79,7 +79,7 @@ void main() {
 
     await tester.tap(find.text('Registro de hoy'));
     await settle(tester);
-    expect(find.text('¿Ve alguno de estos síntomas?'), findsOneWidget);
+    expect(find.text('¿Ve alguno de estos signos en la ubre?'), findsOneWidget);
     expect(find.text('Ya hay un registro para este día: puede corregirlo.'), findsOneWidget);
     await shot(tester, '04_registro');
     await tester.scrollUntilVisible(find.text('Guardar registro'), 300, scrollable: find.byType(Scrollable).first);

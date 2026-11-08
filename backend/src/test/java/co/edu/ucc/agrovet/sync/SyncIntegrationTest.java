@@ -280,6 +280,39 @@ class SyncIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void simpleAnswersAndUdderSignsTravelAndOldAppsStillSync() throws Exception {
+        UUID cowId = UUID.randomUUID();
+        UUID answered = UUID.randomUUID();
+        UUID oldApp = UUID.randomUUID();
+        Map<String, Object> withAnswers = new HashMap<>();
+        withAnswers.put("id", answered);
+        withAnswers.put("cowId", cowId);
+        withAnswers.put("recordDate", LocalDate.now());
+        withAnswers.put("ateNormally", false);
+        withAnswers.put("milkDrop", true);
+        withAnswers.put("udderRedness", true);
+        withAnswers.put("udderHeat", true);
+        withAnswers.put("updatedAt", T1);
+        // Lo que envía una versión anterior de la app: sin los campos nuevos
+        Map<String, Object> previousVersion = record(oldApp, cowId, LocalDate.now().minusDays(1), 12.0, T1);
+
+        JsonNode response = syncOk(ana, Map.of("cows", List.of(cow(cowId, "S-PRE", "LACTATING", T1)),
+                "dailyRecords", List.of(withAnswers, previousVersion)));
+        assertThat(response.get("rejected")).isEmpty();
+        assertThat(jdbc.queryForObject("SELECT NOT ate_normally AND milk_drop AND udder_redness AND udder_heat "
+                + "FROM daily_records WHERE id = ?", Boolean.class, answered)).isTrue();
+        assertThat(jdbc.queryForObject("SELECT ate_normally IS NULL AND milk_drop IS NULL AND NOT udder_redness "
+                + "AND NOT udder_heat FROM daily_records WHERE id = ?", Boolean.class, oldApp)).isTrue();
+
+        mvc.perform(get("/api/cows/" + cowId + "/history").header("Authorization", ana.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.records[1].symptoms.ateNormally").value(false))
+                .andExpect(jsonPath("$.records[1].symptoms.milkDrop").value(true))
+                .andExpect(jsonPath("$.records[1].symptoms.udderRedness").value(true))
+                .andExpect(jsonPath("$.records[0].symptoms.ateNormally").doesNotExist());
+    }
+
+    @Test
     void recordWithoutMeasurementsIsAcceptedAndKeptEmpty() throws Exception {
         UUID cowId = UUID.randomUUID();
         UUID recordId = UUID.randomUUID();

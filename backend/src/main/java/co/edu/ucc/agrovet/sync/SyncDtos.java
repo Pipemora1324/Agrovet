@@ -70,6 +70,11 @@ public final class SyncDtos {
             boolean abnormalMilk,
             boolean udderPain,
             boolean lethargy,
+            // Campos nuevos: una app anterior no los envía y llegan como false / sin respuesta
+            boolean udderRedness,
+            boolean udderHeat,
+            Boolean ateNormally,
+            Boolean milkDrop,
             @Size(max = 500, message = "Las notas admiten máximo 500 caracteres.") String notes,
             @NotNull(message = "Falta la fecha de modificación.") Instant updatedAt,
             boolean deleted) {

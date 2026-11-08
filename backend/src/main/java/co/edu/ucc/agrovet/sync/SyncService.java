@@ -113,7 +113,8 @@ public class SyncService {
         DailyRecord record = existing.orElseGet(() -> new DailyRecord(item.id(), clock.instant()));
         if (existing.isEmpty() || isNewer(item.updatedAt(), record.getUpdatedAt())) {
             record.update(item.cowId(), item.recordDate(), item.temperatureC(), item.milkL(), item.feedKg(),
-                    new Symptoms(item.udderSwelling(), item.abnormalMilk(), item.udderPain(), item.lethargy()),
+                    new Symptoms(item.udderSwelling(), item.abnormalMilk(), item.udderPain(), item.lethargy(),
+                            item.udderRedness(), item.udderHeat(), item.ateNormally(), item.milkDrop()),
                     item.notes(), item.deleted(), item.updatedAt());
             records.saveAndFlush(record);
         }

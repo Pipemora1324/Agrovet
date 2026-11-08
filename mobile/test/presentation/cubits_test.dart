@@ -93,6 +93,28 @@ void main() {
     await again.close();
   });
 
+  test('las preguntas simples se guardan y "sin respuesta" se distingue de "no"', () async {
+    final cubit = DailyRecordCubit(repo, cowId: 'c1', date: today);
+    await cubit.load();
+    cubit.updateSymptoms(cubit.state.symptoms.copyWith(ateNormally: () => false, udderHeat: true));
+    await cubit.save();
+
+    final again = DailyRecordCubit(repo, cowId: 'c1', date: today);
+    await again.load();
+    expect(again.state.symptoms.ateNormally, isFalse);
+    expect(again.state.symptoms.milkDrop, isNull);
+    expect(again.state.symptoms.udderHeat, isTrue);
+    expect(again.state.symptoms.any, isTrue);
+
+    // Volver a "sin respuesta"
+    again.updateSymptoms(again.state.symptoms.copyWith(ateNormally: () => null));
+    await again.save();
+    final row = await db.select(db.dailyRecords).getSingle();
+    expect(row.ateNormally, isNull);
+    await cubit.close();
+    await again.close();
+  });
+
   test('temperatura, leche y alimento son opcionales: se guarda solo con síntomas', () async {
     final cubit = DailyRecordCubit(repo, cowId: 'c1', date: today);
     await cubit.load();
