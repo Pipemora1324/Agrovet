@@ -1,12 +1,13 @@
 import 'entities.dart';
 import 'preprocessor.dart';
 import 'risk_predictor.dart';
+import 'symptom_score.dart';
 
 sealed class RiskOutcome {
   const RiskOutcome();
 }
 
-/// No hay suficientes días registrados para evaluar.
+/// No hay suficientes días con datos numéricos para el modelo.
 class InsufficientData extends RiskOutcome {
   const InsufficientData({required this.recordedDays, required this.requiredDays, required this.windowDays});
 
@@ -15,10 +16,11 @@ class InsufficientData extends RiskOutcome {
   final int windowDays;
 
   String get message =>
-      'Hay $recordedDays de los últimos $windowDays días con datos completos. '
-      'Se necesitan al menos $requiredDays para evaluar.';
+      'Hay $recordedDays de los últimos $windowDays días con temperatura, leche y alimento. '
+      'El modelo necesita al menos $requiredDays.';
 }
 
+/// Resultado del modelo LSTM.
 class RiskResult extends RiskOutcome {
   const RiskResult({required this.probability, required this.level, required this.windowEnd});
 
@@ -27,7 +29,38 @@ class RiskResult extends RiskOutcome {
   final DateTime windowEnd;
 }
 
-/// Arma la ventana de los últimos días, la preprocesa como en Python y consulta el modelo.
+/// Sin registro del día y sin datos para el modelo: no hay nada que evaluar.
+class NothingToEvaluate extends RiskOutcome {
+  const NothingToEvaluate(this.modelMissing);
+
+  final InsufficientData modelMissing;
+}
+
+/// Semáforo final: el más grave entre el modelo y el puntaje por síntomas.
+class CombinedRisk extends RiskOutcome {
+  const CombinedRisk({
+    required this.level,
+    required this.cause,
+    required this.evaluatedOn,
+    this.model,
+    this.modelMissing,
+    this.symptoms,
+  });
+
+  final RiskLevel level;
+  final RiskCause cause;
+  final DateTime evaluatedOn;
+
+  /// Resultado del modelo, o null si faltaron datos ([modelMissing] dice cuántos).
+  final RiskResult? model;
+  final InsufficientData? modelMissing;
+
+  /// Puntaje por síntomas del día, o null si no hay registro de ese día.
+  final SymptomAssessment? symptoms;
+}
+
+/// Arma la ventana de los últimos días, la preprocesa como en Python y consulta el modelo; además
+/// calcula el puntaje por síntomas del día y combina los dos.
 class RiskEvaluator {
   RiskEvaluator(this.predictor) : preprocessor = Preprocessor(predictor.config);
 
@@ -49,6 +82,7 @@ class RiskEvaluator {
     ];
   }
 
+  /// Solo el modelo: RiskResult, o InsufficientData si no hay días suficientes.
   RiskOutcome evaluate(List<DailyRecord> records, DateTime windowEnd) {
     final raw = rawWindow(records, windowEnd);
     final normalized = preprocessor.preprocess(raw);
@@ -64,6 +98,43 @@ class RiskEvaluator {
       probability: probability,
       level: predictor.config.riskLevelFor(probability),
       windowEnd: dateOnly(windowEnd),
+    );
+  }
+
+  /// Semáforo final del día: modelo (si hay datos) y síntomas del registro de ese día (si existe).
+  RiskOutcome evaluateDay(List<DailyRecord> records, DateTime day) {
+    final today = dateOnly(day);
+    final model = evaluate(records, today);
+    final todayRecord = records.where((r) => dateOnly(r.recordDate) == today).firstOrNull;
+    final symptoms = todayRecord == null ? null : SymptomScore.assess(todayRecord);
+    return combine(model: model, symptoms: symptoms, day: today);
+  }
+
+  static RiskOutcome combine({required RiskOutcome model, SymptomAssessment? symptoms, required DateTime day}) {
+    final modelResult = model is RiskResult ? model : null;
+    final missing = model is InsufficientData ? model : null;
+    if (modelResult == null && symptoms == null) return NothingToEvaluate(missing!);
+
+    final RiskLevel level;
+    final RiskCause cause;
+    if (modelResult == null) {
+      (level, cause) = (symptoms!.level, RiskCause.symptoms);
+    } else if (symptoms == null) {
+      (level, cause) = (modelResult.level, RiskCause.model);
+    } else if (modelResult.level == symptoms.level) {
+      (level, cause) = (symptoms.level, RiskCause.both);
+    } else if (modelResult.level.index > symptoms.level.index) {
+      (level, cause) = (modelResult.level, RiskCause.model);
+    } else {
+      (level, cause) = (symptoms.level, RiskCause.symptoms);
+    }
+    return CombinedRisk(
+      level: level,
+      cause: cause,
+      evaluatedOn: dateOnly(day),
+      model: modelResult,
+      modelMissing: missing,
+      symptoms: symptoms,
     );
   }
 }

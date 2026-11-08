@@ -165,12 +165,32 @@ class DailyRecord extends Equatable {
       [id, cowId, recordDate, temperatureC, milkL, feedKg, symptoms, notes, updatedAt];
 }
 
+/// Qué indicador fijó el color final del semáforo.
+enum RiskCause {
+  model('MODEL', 'el modelo'),
+  symptoms('SYMPTOMS', 'los síntomas'),
+  both('BOTH', 'los síntomas y el modelo');
+
+  const RiskCause(this.code, this.label);
+
+  final String code;
+
+  /// Para la frase "Lo indicó …".
+  final String label;
+
+  static RiskCause? fromCode(String? code) => values.where((c) => c.code == code).firstOrNull;
+}
+
+/// Evaluación guardada del semáforo: color final, probabilidad del modelo (si se pudo usar),
+/// puntaje por síntomas (si había registro del día) y cuál de los dos fijó el color.
 class Inference extends Equatable {
   const Inference({
     required this.id,
     required this.cowId,
     required this.windowEndDate,
-    required this.probability,
+    this.probability,
+    this.symptomScore,
+    this.cause,
     required this.riskLevel,
     required this.modelVersion,
     required this.updatedAt,
@@ -179,14 +199,22 @@ class Inference extends Equatable {
   final String id;
   final String cowId;
   final DateTime windowEndDate;
-  final double probability;
+
+  /// null si no había días suficientes con datos numéricos para el modelo.
+  final double? probability;
+
+  /// null en evaluaciones anteriores o sin registro del día.
+  final int? symptomScore;
+
+  /// null en evaluaciones anteriores (solo modelo).
+  final RiskCause? cause;
   final RiskLevel riskLevel;
   final String modelVersion;
   final DateTime updatedAt;
 
   @override
   List<Object?> get props =>
-      [id, cowId, windowEndDate, probability, riskLevel, modelVersion, updatedAt];
+      [id, cowId, windowEndDate, probability, symptomScore, cause, riskLevel, modelVersion, updatedAt];
 }
 
 class CowAlert extends Equatable {

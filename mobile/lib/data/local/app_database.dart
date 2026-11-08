@@ -69,7 +69,15 @@ class Inferences extends Table with SyncColumns {
   TextColumn get id => text()();
   TextColumn get cowId => text().references(Cows, #id)();
   TextColumn get windowEndDate => text()();
-  RealColumn get probability => real()();
+
+  /// Probabilidad del modelo; null si no hubo días suficientes con datos numéricos.
+  RealColumn get probability => real().nullable()();
+
+  /// Puntaje por síntomas del día (reglas provisionales).
+  IntColumn get symptomScore => integer().nullable()();
+
+  /// Qué fijó el color final: MODEL, SYMPTOMS o BOTH.
+  TextColumn get cause => text().nullable()();
   TextColumn get riskLevel => text()();
   TextColumn get modelVersion => text()();
 
@@ -96,7 +104,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -113,6 +121,13 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(dailyRecords, dailyRecords.udderHeat);
             await m.addColumn(dailyRecords, dailyRecords.ateNormally);
             await m.addColumn(dailyRecords, dailyRecords.milkDrop);
+          }
+          if (from < 4) {
+            // SQLite no permite quitar NOT NULL: se reconstruye la tabla copiando las filas
+            await m.alterTable(TableMigration(
+              inferences,
+              newColumns: [inferences.symptomScore, inferences.cause],
+            ));
           }
         },
         beforeOpen: (details) async {

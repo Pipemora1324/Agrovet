@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
 import '../../domain/risk_evaluator.dart';
+import '../../domain/symptom_score.dart';
 
 class RiskState extends Equatable {
   const RiskState({this.evaluating = true, this.outcome, this.todaySymptoms = const Symptoms(), this.error});
@@ -18,8 +19,9 @@ class RiskState extends Equatable {
   List<Object?> get props => [evaluating, outcome, todaySymptoms, error];
 }
 
-/// Evalúa el riesgo con los registros de los últimos 14 días y guarda el resultado
-/// (y una alerta si sale amarillo o rojo) para el historial y la sincronización.
+/// Evalúa el riesgo del día: el modelo con los registros de los últimos 14 días (si hay suficientes
+/// datos numéricos) y el puntaje por síntomas del registro de hoy. Guarda el resultado combinado (y
+/// una alerta si sale amarillo o rojo) para el historial y la sincronización.
 class RiskCubit extends Cubit<RiskState> {
   RiskCubit({
     required this.cowId,
@@ -46,16 +48,19 @@ class RiskCubit extends Cubit<RiskState> {
       final from = today.subtract(Duration(days: _evaluator.windowDays - 1));
       final records = await _records.recordsBetween(cowId, from, today);
       final todayRecord = records.where((r) => r.recordDate == today).firstOrNull;
-      final outcome = _evaluator.evaluate(records, today);
+      final outcome = _evaluator.evaluateDay(records, today);
 
-      if (outcome is RiskResult) {
+      if (outcome is CombinedRisk) {
         final inference = Inference(
           id: _uuid.v4(),
           cowId: cowId,
-          windowEndDate: outcome.windowEnd,
-          probability: outcome.probability,
+          windowEndDate: outcome.evaluatedOn,
+          probability: outcome.model?.probability,
+          symptomScore: outcome.symptoms?.score,
+          cause: outcome.cause,
           riskLevel: outcome.level,
-          modelVersion: _evaluator.predictor.config.modelVersion,
+          // Versión del modelo si se usó; si no, versión de las reglas de síntomas
+          modelVersion: outcome.model != null ? _evaluator.predictor.config.modelVersion : SymptomScore.version,
           updatedAt: _now(),
         );
         final alert = outcome.level == RiskLevel.green
