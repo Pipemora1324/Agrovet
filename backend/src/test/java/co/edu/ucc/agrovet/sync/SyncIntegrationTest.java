@@ -278,4 +278,34 @@ class SyncIntegrationTest extends IntegrationTest {
         mvc.perform(post("/api/sync").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void recordWithoutMeasurementsIsAcceptedAndKeptEmpty() throws Exception {
+        UUID cowId = UUID.randomUUID();
+        UUID recordId = UUID.randomUUID();
+        LocalDate day = LocalDate.now();
+        Map<String, Object> onlySymptoms = new HashMap<>();
+        onlySymptoms.put("id", recordId);
+        onlySymptoms.put("cowId", cowId);
+        onlySymptoms.put("recordDate", day);
+        onlySymptoms.put("temperatureC", null);
+        onlySymptoms.put("milkL", null);
+        onlySymptoms.put("udderSwelling", true);
+        onlySymptoms.put("updatedAt", T1);
+
+        JsonNode response = syncOk(ana, Map.of("cows", List.of(cow(cowId, "S-OPC", "LACTATING", T1)),
+                "dailyRecords", List.of(onlySymptoms)));
+        assertThat(response.get("rejected")).isEmpty();
+        assertThat(jdbc.queryForObject(
+                "SELECT temperature_c IS NULL AND milk_l IS NULL AND feed_kg IS NULL AND udder_swelling "
+                        + "FROM daily_records WHERE id = ?", Boolean.class, recordId)).isTrue();
+
+        // El historial no inventa valores: los campos vacíos no aparecen
+        mvc.perform(get("/api/cows/" + cowId + "/history").header("Authorization", ana.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.records", hasSize(1)))
+                .andExpect(jsonPath("$.records[0].temperatureC").doesNotExist())
+                .andExpect(jsonPath("$.records[0].milkL").doesNotExist())
+                .andExpect(jsonPath("$.records[0].symptoms.udderSwelling").value(true));
+    }
 }
