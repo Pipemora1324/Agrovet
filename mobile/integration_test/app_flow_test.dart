@@ -136,8 +136,7 @@ void main() {
     await tester.enterText(find.widgetWithText(TextFormField, 'Nombre'), 'Ganadero de prueba');
     await tester.enterText(find.widgetWithText(TextFormField, 'Correo'), email);
     await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave-segura-1');
-    await tester.tap(find.text('Crear cuenta'));
-    await settle(tester, seconds: 5);
+    await acceptPrivacyAndRegister(tester);
 
     // Pantalla del código: se lee el correo que recibió Mailpit en el equipo
     expect(find.text('Revise su correo'), findsOneWidget);
@@ -193,10 +192,85 @@ void main() {
     // EMAIL_SINCRONIZADO lo lee la verificación hecha desde el equipo contra PostgreSQL
     debugPrint('EMAIL_SINCRONIZADO=$email');
 
-    await tester.tap(find.byTooltip('Cerrar sesión'));
+    // Cerrar sesión ahora está en "Mi perfil"
+    await tester.tap(find.byTooltip('Mi perfil'));
+    await settle(tester);
+    await reveal(tester, find.text('Cerrar sesión'));
+    await tester.tap(find.text('Cerrar sesión'));
     await settle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Cerrar sesión'));
     await settle(tester, seconds: 3);
     expect(find.text('Ingresar'), findsOneWidget);
   });
+
+  testWidgets('cuenta real: editar el perfil y eliminar la cuenta con sus datos', (tester) async {
+    await app.main();
+    await settle(tester);
+
+    await tester.tap(find.text('No tengo cuenta: crear una'));
+    await settle(tester);
+    final email = 'borrar${DateTime.now().millisecondsSinceEpoch}@correo.co';
+    await tester.enterText(find.widgetWithText(TextFormField, 'Nombre'), 'Cuenta para borrar');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Correo'), email);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave-segura-1');
+    await acceptPrivacyAndRegister(tester);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Código'), await mailpitCode(email));
+    await settle(tester, seconds: 5);
+
+    // Una vaca sincronizada, para comprobar que también se borra del servidor
+    await tester.tap(find.text('Agregar vaca'));
+    await settle(tester);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Identificador (arete) *'), 'B-1');
+    await tester.scrollUntilVisible(find.text('Guardar'), 300, scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text('Guardar'));
+    await settle(tester);
+    await tester.tap(find.byIcon(Icons.cloud_upload));
+    await settle(tester);
+    await tester.tap(find.text('Sincronizar ahora'));
+    await settle(tester, seconds: 5);
+    expect(find.text('Todo respaldado'), findsOneWidget);
+    await back(tester);
+
+    await tester.tap(find.byTooltip('Mi perfil'));
+    await settle(tester, seconds: 3);
+    expect(find.text(email), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Municipio (opcional)'), 'Pasto');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Finca (opcional)'), 'La Esperanza');
+    await reveal(tester, find.text('Guardar cambios'));
+    await tester.tap(find.text('Guardar cambios'));
+    await settle(tester, seconds: 3);
+    await shot(tester, '09_perfil');
+
+    await reveal(tester, find.text('Eliminar mi cuenta'));
+    await tester.tap(find.text('Eliminar mi cuenta'));
+    await settle(tester);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Su contraseña'), 'clave-segura-1');
+    await shot(tester, '10_eliminar_cuenta');
+    await tester.tap(find.widgetWithText(FilledButton, 'Eliminar'));
+    await settle(tester, seconds: 5);
+    expect(find.text('Su cuenta y todos sus datos fueron eliminados.'), findsOneWidget);
+    expect(find.text('Ingresar'), findsOneWidget);
+    // EMAIL_ELIMINADO lo comprueba la verificación hecha desde el equipo contra PostgreSQL
+    debugPrint('EMAIL_ELIMINADO=$email');
+  });
+}
+
+/// Lleva el widget a la vista. ensureVisible desplaza pero no dibuja: sin el pump, el toque usaría
+/// la posición anterior.
+Future<void> reveal(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+}
+
+/// Marca el consentimiento del aviso de privacidad y toca "Crear cuenta".
+Future<void> acceptPrivacyAndRegister(WidgetTester tester) async {
+  await reveal(tester, find.byType(Checkbox));
+  await tester.tap(find.byType(Checkbox));
+  await tester.pumpAndSettle();
+  await reveal(tester, find.text('Crear cuenta'));
+  await tester.tap(find.text('Crear cuenta'));
+  for (var i = 0; i < 50; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+  await tester.pumpAndSettle();
 }
