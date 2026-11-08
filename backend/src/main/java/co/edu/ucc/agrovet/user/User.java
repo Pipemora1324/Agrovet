@@ -24,6 +24,9 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 100)
     private String passwordHash;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -33,12 +36,36 @@ public class User {
     protected User() {
     }
 
+    /** Cuenta nueva, todavía sin verificar el correo. */
     public User(String name, String email, String passwordHash, Instant now) {
         this.id = UUID.randomUUID();
         this.name = name;
         this.email = email;
         this.passwordHash = passwordHash;
         this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    /**
+     * Registro repetido sobre una cuenta sin verificar: nadie ha demostrado ser el dueño del correo,
+     * así que el último registro reemplaza nombre y contraseña.
+     */
+    public void replaceUnverifiedRegistration(String name, String passwordHash, Instant now) {
+        if (emailVerified) {
+            throw new IllegalStateException("La cuenta ya está verificada.");
+        }
+        this.name = name;
+        this.passwordHash = passwordHash;
+        this.updatedAt = now;
+    }
+
+    public void markEmailVerified(Instant now) {
+        this.emailVerified = true;
+        this.updatedAt = now;
+    }
+
+    public void changePassword(String passwordHash, Instant now) {
+        this.passwordHash = passwordHash;
         this.updatedAt = now;
     }
 
@@ -56,5 +83,9 @@ public class User {
 
     public String getPasswordHash() {
         return passwordHash;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
     }
 }

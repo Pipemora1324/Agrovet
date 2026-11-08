@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import co.edu.ucc.agrovet.user.User;
@@ -41,6 +42,41 @@ public final class AuthDtos {
             @NotBlank(message = "Falta el refresh token.")
             @Size(max = 200, message = "El refresh token no es válido.")
             String refreshToken) {
+    }
+
+    /** Solo el correo: reenviar el código o pedir uno para cambiar la contraseña. */
+    public record EmailRequest(
+            @NotBlank(message = "El correo es obligatorio.")
+            @Email(message = "El correo no es válido.")
+            @Size(max = 254, message = "El correo es demasiado largo.")
+            String email) {
+    }
+
+    public record VerifyEmailRequest(
+            @NotBlank(message = "El correo es obligatorio.")
+            @Email(message = "El correo no es válido.")
+            @Size(max = 254, message = "El correo es demasiado largo.")
+            String email,
+            @NotBlank(message = "Escriba el código.")
+            @Pattern(regexp = "\\d{6}", message = "El código tiene 6 números.")
+            String code) {
+    }
+
+    public record ResetPasswordRequest(
+            @NotBlank(message = "El correo es obligatorio.")
+            @Email(message = "El correo no es válido.")
+            @Size(max = 254, message = "El correo es demasiado largo.")
+            String email,
+            @NotBlank(message = "Escriba el código.")
+            @Pattern(regexp = "\\d{6}", message = "El código tiene 6 números.")
+            String code,
+            @NotBlank(message = "La contraseña es obligatoria.")
+            @Size(min = 8, max = 72, message = "La contraseña debe tener entre 8 y 72 caracteres.")
+            String newPassword) {
+    }
+
+    /** Respuesta que no revela si el correo está registrado. */
+    public record MessageResponse(String message) {
     }
 
     public record UserResponse(UUID id, String name, String email) {

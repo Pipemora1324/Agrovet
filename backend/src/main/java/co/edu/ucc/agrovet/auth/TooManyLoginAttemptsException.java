@@ -2,16 +2,11 @@ package co.edu.ucc.agrovet.auth;
 
 import java.time.Duration;
 
-public class TooManyLoginAttemptsException extends RuntimeException {
+import co.edu.ucc.agrovet.common.TooManyRequestsException;
 
-    private final Duration retryAfter;
+public class TooManyLoginAttemptsException extends TooManyRequestsException {
 
     public TooManyLoginAttemptsException(Duration retryAfter) {
-        super("Demasiados intentos de inicio de sesión.");
-        this.retryAfter = retryAfter;
-    }
-
-    public Duration getRetryAfter() {
-        return retryAfter;
+        super("Demasiados intentos de inicio de sesión.", retryAfter);
     }
 }
