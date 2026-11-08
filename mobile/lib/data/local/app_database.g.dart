@@ -1983,9 +1983,29 @@ class $InferencesTable extends Inferences
   late final GeneratedColumn<double> probability = GeneratedColumn<double>(
     'probability',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.double,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _symptomScoreMeta = const VerificationMeta(
+    'symptomScore',
+  );
+  @override
+  late final GeneratedColumn<int> symptomScore = GeneratedColumn<int>(
+    'symptom_score',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _causeMeta = const VerificationMeta('cause');
+  @override
+  late final GeneratedColumn<String> cause = GeneratedColumn<String>(
+    'cause',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _riskLevelMeta = const VerificationMeta(
     'riskLevel',
@@ -2020,6 +2040,8 @@ class $InferencesTable extends Inferences
     cowId,
     windowEndDate,
     probability,
+    symptomScore,
+    cause,
     riskLevel,
     modelVersion,
   ];
@@ -2102,8 +2124,21 @@ class $InferencesTable extends Inferences
           _probabilityMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_probabilityMeta);
+    }
+    if (data.containsKey('symptom_score')) {
+      context.handle(
+        _symptomScoreMeta,
+        symptomScore.isAcceptableOrUnknown(
+          data['symptom_score']!,
+          _symptomScoreMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cause')) {
+      context.handle(
+        _causeMeta,
+        cause.isAcceptableOrUnknown(data['cause']!, _causeMeta),
+      );
     }
     if (data.containsKey('risk_level')) {
       context.handle(
@@ -2168,7 +2203,15 @@ class $InferencesTable extends Inferences
       probability: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}probability'],
-      )!,
+      ),
+      symptomScore: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}symptom_score'],
+      ),
+      cause: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cause'],
+      ),
       riskLevel: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}risk_level'],
@@ -2199,7 +2242,15 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
   final String id;
   final String cowId;
   final String windowEndDate;
-  final double probability;
+
+  /// Probabilidad del modelo; null si no hubo días suficientes con datos numéricos.
+  final double? probability;
+
+  /// Puntaje por síntomas del día (reglas provisionales).
+  final int? symptomScore;
+
+  /// Qué fijó el color final: MODEL, SYMPTOMS o BOTH.
+  final String? cause;
   final String riskLevel;
   final String modelVersion;
   const InferenceRow({
@@ -2211,7 +2262,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     required this.id,
     required this.cowId,
     required this.windowEndDate,
-    required this.probability,
+    this.probability,
+    this.symptomScore,
+    this.cause,
     required this.riskLevel,
     required this.modelVersion,
   });
@@ -2228,7 +2281,15 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     map['id'] = Variable<String>(id);
     map['cow_id'] = Variable<String>(cowId);
     map['window_end_date'] = Variable<String>(windowEndDate);
-    map['probability'] = Variable<double>(probability);
+    if (!nullToAbsent || probability != null) {
+      map['probability'] = Variable<double>(probability);
+    }
+    if (!nullToAbsent || symptomScore != null) {
+      map['symptom_score'] = Variable<int>(symptomScore);
+    }
+    if (!nullToAbsent || cause != null) {
+      map['cause'] = Variable<String>(cause);
+    }
     map['risk_level'] = Variable<String>(riskLevel);
     map['model_version'] = Variable<String>(modelVersion);
     return map;
@@ -2246,7 +2307,15 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
       id: Value(id),
       cowId: Value(cowId),
       windowEndDate: Value(windowEndDate),
-      probability: Value(probability),
+      probability: probability == null && nullToAbsent
+          ? const Value.absent()
+          : Value(probability),
+      symptomScore: symptomScore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(symptomScore),
+      cause: cause == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cause),
       riskLevel: Value(riskLevel),
       modelVersion: Value(modelVersion),
     );
@@ -2266,7 +2335,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
       id: serializer.fromJson<String>(json['id']),
       cowId: serializer.fromJson<String>(json['cowId']),
       windowEndDate: serializer.fromJson<String>(json['windowEndDate']),
-      probability: serializer.fromJson<double>(json['probability']),
+      probability: serializer.fromJson<double?>(json['probability']),
+      symptomScore: serializer.fromJson<int?>(json['symptomScore']),
+      cause: serializer.fromJson<String?>(json['cause']),
       riskLevel: serializer.fromJson<String>(json['riskLevel']),
       modelVersion: serializer.fromJson<String>(json['modelVersion']),
     );
@@ -2283,7 +2354,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
       'id': serializer.toJson<String>(id),
       'cowId': serializer.toJson<String>(cowId),
       'windowEndDate': serializer.toJson<String>(windowEndDate),
-      'probability': serializer.toJson<double>(probability),
+      'probability': serializer.toJson<double?>(probability),
+      'symptomScore': serializer.toJson<int?>(symptomScore),
+      'cause': serializer.toJson<String?>(cause),
       'riskLevel': serializer.toJson<String>(riskLevel),
       'modelVersion': serializer.toJson<String>(modelVersion),
     };
@@ -2298,7 +2371,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     String? id,
     String? cowId,
     String? windowEndDate,
-    double? probability,
+    Value<double?> probability = const Value.absent(),
+    Value<int?> symptomScore = const Value.absent(),
+    Value<String?> cause = const Value.absent(),
     String? riskLevel,
     String? modelVersion,
   }) => InferenceRow(
@@ -2310,7 +2385,9 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     id: id ?? this.id,
     cowId: cowId ?? this.cowId,
     windowEndDate: windowEndDate ?? this.windowEndDate,
-    probability: probability ?? this.probability,
+    probability: probability.present ? probability.value : this.probability,
+    symptomScore: symptomScore.present ? symptomScore.value : this.symptomScore,
+    cause: cause.present ? cause.value : this.cause,
     riskLevel: riskLevel ?? this.riskLevel,
     modelVersion: modelVersion ?? this.modelVersion,
   );
@@ -2331,6 +2408,10 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
       probability: data.probability.present
           ? data.probability.value
           : this.probability,
+      symptomScore: data.symptomScore.present
+          ? data.symptomScore.value
+          : this.symptomScore,
+      cause: data.cause.present ? data.cause.value : this.cause,
       riskLevel: data.riskLevel.present ? data.riskLevel.value : this.riskLevel,
       modelVersion: data.modelVersion.present
           ? data.modelVersion.value
@@ -2350,6 +2431,8 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
           ..write('cowId: $cowId, ')
           ..write('windowEndDate: $windowEndDate, ')
           ..write('probability: $probability, ')
+          ..write('symptomScore: $symptomScore, ')
+          ..write('cause: $cause, ')
           ..write('riskLevel: $riskLevel, ')
           ..write('modelVersion: $modelVersion')
           ..write(')'))
@@ -2367,6 +2450,8 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
     cowId,
     windowEndDate,
     probability,
+    symptomScore,
+    cause,
     riskLevel,
     modelVersion,
   );
@@ -2383,6 +2468,8 @@ class InferenceRow extends DataClass implements Insertable<InferenceRow> {
           other.cowId == this.cowId &&
           other.windowEndDate == this.windowEndDate &&
           other.probability == this.probability &&
+          other.symptomScore == this.symptomScore &&
+          other.cause == this.cause &&
           other.riskLevel == this.riskLevel &&
           other.modelVersion == this.modelVersion);
 }
@@ -2396,7 +2483,9 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
   final Value<String> id;
   final Value<String> cowId;
   final Value<String> windowEndDate;
-  final Value<double> probability;
+  final Value<double?> probability;
+  final Value<int?> symptomScore;
+  final Value<String?> cause;
   final Value<String> riskLevel;
   final Value<String> modelVersion;
   final Value<int> rowid;
@@ -2410,6 +2499,8 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     this.cowId = const Value.absent(),
     this.windowEndDate = const Value.absent(),
     this.probability = const Value.absent(),
+    this.symptomScore = const Value.absent(),
+    this.cause = const Value.absent(),
     this.riskLevel = const Value.absent(),
     this.modelVersion = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2423,7 +2514,9 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     required String id,
     required String cowId,
     required String windowEndDate,
-    required double probability,
+    this.probability = const Value.absent(),
+    this.symptomScore = const Value.absent(),
+    this.cause = const Value.absent(),
     required String riskLevel,
     required String modelVersion,
     this.rowid = const Value.absent(),
@@ -2431,7 +2524,6 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
        id = Value(id),
        cowId = Value(cowId),
        windowEndDate = Value(windowEndDate),
-       probability = Value(probability),
        riskLevel = Value(riskLevel),
        modelVersion = Value(modelVersion);
   static Insertable<InferenceRow> custom({
@@ -2444,6 +2536,8 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     Expression<String>? cowId,
     Expression<String>? windowEndDate,
     Expression<double>? probability,
+    Expression<int>? symptomScore,
+    Expression<String>? cause,
     Expression<String>? riskLevel,
     Expression<String>? modelVersion,
     Expression<int>? rowid,
@@ -2458,6 +2552,8 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
       if (cowId != null) 'cow_id': cowId,
       if (windowEndDate != null) 'window_end_date': windowEndDate,
       if (probability != null) 'probability': probability,
+      if (symptomScore != null) 'symptom_score': symptomScore,
+      if (cause != null) 'cause': cause,
       if (riskLevel != null) 'risk_level': riskLevel,
       if (modelVersion != null) 'model_version': modelVersion,
       if (rowid != null) 'rowid': rowid,
@@ -2473,7 +2569,9 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     Value<String>? id,
     Value<String>? cowId,
     Value<String>? windowEndDate,
-    Value<double>? probability,
+    Value<double?>? probability,
+    Value<int?>? symptomScore,
+    Value<String?>? cause,
     Value<String>? riskLevel,
     Value<String>? modelVersion,
     Value<int>? rowid,
@@ -2488,6 +2586,8 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
       cowId: cowId ?? this.cowId,
       windowEndDate: windowEndDate ?? this.windowEndDate,
       probability: probability ?? this.probability,
+      symptomScore: symptomScore ?? this.symptomScore,
+      cause: cause ?? this.cause,
       riskLevel: riskLevel ?? this.riskLevel,
       modelVersion: modelVersion ?? this.modelVersion,
       rowid: rowid ?? this.rowid,
@@ -2524,6 +2624,12 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
     if (probability.present) {
       map['probability'] = Variable<double>(probability.value);
     }
+    if (symptomScore.present) {
+      map['symptom_score'] = Variable<int>(symptomScore.value);
+    }
+    if (cause.present) {
+      map['cause'] = Variable<String>(cause.value);
+    }
     if (riskLevel.present) {
       map['risk_level'] = Variable<String>(riskLevel.value);
     }
@@ -2548,6 +2654,8 @@ class InferencesCompanion extends UpdateCompanion<InferenceRow> {
           ..write('cowId: $cowId, ')
           ..write('windowEndDate: $windowEndDate, ')
           ..write('probability: $probability, ')
+          ..write('symptomScore: $symptomScore, ')
+          ..write('cause: $cause, ')
           ..write('riskLevel: $riskLevel, ')
           ..write('modelVersion: $modelVersion, ')
           ..write('rowid: $rowid')
@@ -4552,7 +4660,9 @@ typedef $$InferencesTableCreateCompanionBuilder = InferencesCompanion Function({
   required String id,
   required String cowId,
   required String windowEndDate,
-  required double probability,
+  Value<double?> probability,
+  Value<int?> symptomScore,
+  Value<String?> cause,
   required String riskLevel,
   required String modelVersion,
   Value<int> rowid,
@@ -4566,7 +4676,9 @@ typedef $$InferencesTableUpdateCompanionBuilder = InferencesCompanion Function({
   Value<String> id,
   Value<String> cowId,
   Value<String> windowEndDate,
-  Value<double> probability,
+  Value<double?> probability,
+  Value<int?> symptomScore,
+  Value<String?> cause,
   Value<String> riskLevel,
   Value<String> modelVersion,
   Value<int> rowid,
@@ -4659,6 +4771,16 @@ class $$InferencesTableFilterComposer
 
   ColumnFilters<double> get probability => $composableBuilder(
     column: $table.probability,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get symptomScore => $composableBuilder(
+    column: $table.symptomScore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cause => $composableBuilder(
+    column: $table.cause,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4770,6 +4892,16 @@ class $$InferencesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get symptomScore => $composableBuilder(
+    column: $table.symptomScore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cause => $composableBuilder(
+    column: $table.cause,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get riskLevel => $composableBuilder(
     column: $table.riskLevel,
     builder: (column) => ColumnOrderings(column),
@@ -4842,6 +4974,14 @@ class $$InferencesTableAnnotationComposer
     column: $table.probability,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get symptomScore => $composableBuilder(
+    column: $table.symptomScore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get cause =>
+      $composableBuilder(column: $table.cause, builder: (column) => column);
 
   GeneratedColumn<String> get riskLevel =>
       $composableBuilder(column: $table.riskLevel, builder: (column) => column);
@@ -4936,7 +5076,9 @@ class $$InferencesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> cowId = const Value.absent(),
                 Value<String> windowEndDate = const Value.absent(),
-                Value<double> probability = const Value.absent(),
+                Value<double?> probability = const Value.absent(),
+                Value<int?> symptomScore = const Value.absent(),
+                Value<String?> cause = const Value.absent(),
                 Value<String> riskLevel = const Value.absent(),
                 Value<String> modelVersion = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -4950,6 +5092,8 @@ class $$InferencesTableTableManager
                 cowId: cowId,
                 windowEndDate: windowEndDate,
                 probability: probability,
+                symptomScore: symptomScore,
+                cause: cause,
                 riskLevel: riskLevel,
                 modelVersion: modelVersion,
                 rowid: rowid,
@@ -4964,7 +5108,9 @@ class $$InferencesTableTableManager
                 required String id,
                 required String cowId,
                 required String windowEndDate,
-                required double probability,
+                Value<double?> probability = const Value.absent(),
+                Value<int?> symptomScore = const Value.absent(),
+                Value<String?> cause = const Value.absent(),
                 required String riskLevel,
                 required String modelVersion,
                 Value<int> rowid = const Value.absent(),
@@ -4978,6 +5124,8 @@ class $$InferencesTableTableManager
                 cowId: cowId,
                 windowEndDate: windowEndDate,
                 probability: probability,
+                symptomScore: symptomScore,
+                cause: cause,
                 riskLevel: riskLevel,
                 modelVersion: modelVersion,
                 rowid: rowid,

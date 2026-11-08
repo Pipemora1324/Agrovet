@@ -91,6 +91,8 @@ void main() {
     await settle(tester, seconds: 3);
     expect(find.text('Esta herramienta apoya, no reemplaza al veterinario.'), findsOneWidget);
     expect(find.textContaining('Probabilidad estimada'), findsOneWidget);
+    expect(find.text('Grumos o sangre en la leche (+3)'), findsOneWidget);
+    expect(find.textContaining('Lo indicó:'), findsOneWidget);
     await shot(tester, '05_semaforo');
 
     await back(tester);
@@ -117,12 +119,27 @@ void main() {
     await settle(tester);
     await back(tester);
     await settle(tester);
+    // Paloma tiene pocos días con mediciones: el semáforo se apoya en los síntomas de hoy
     await tester.tap(find.text('Paloma'));
     await settle(tester);
     await tester.tap(find.text('Evaluar riesgo'));
     await settle(tester, seconds: 3);
+    expect(find.text('Faltan datos para el modelo'), findsOneWidget);
+    expect(find.text('Evaluado con: los síntomas.'), findsOneWidget);
+    await shot(tester, '07_solo_sintomas');
+
+    // Luna no tiene registros: no hay nada que evaluar
+    await back(tester);
+    await settle(tester);
+    await back(tester);
+    await settle(tester);
+    await tester.scrollUntilVisible(find.text('Luna'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text('Luna'));
+    await settle(tester);
+    await tester.tap(find.text('Evaluar riesgo'));
+    await settle(tester, seconds: 3);
     expect(find.text('Faltan registros'), findsOneWidget);
-    await shot(tester, '07_faltan_datos');
+    await shot(tester, '07b_faltan_registros');
   });
 
   // Requiere el backend del docker-compose corriendo en el equipo (10.0.2.2:8080 desde el emulador)

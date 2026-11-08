@@ -131,10 +131,14 @@ public class SyncService {
             batch.reject("inference", item.id(), COW_NOT_FOUND);
             return;
         }
+        if (item.probability() == null && item.symptomScore() == null) {
+            batch.reject("inference", item.id(), "La evaluación no trae ni probabilidad del modelo ni puntaje de síntomas.");
+            return;
+        }
         Inference inference = existing.orElseGet(() -> new Inference(item.id(), clock.instant()));
         if (existing.isEmpty() || isNewer(item.updatedAt(), inference.getUpdatedAt())) {
-            inference.update(item.cowId(), item.windowEndDate(), item.probability(), item.riskLevel(),
-                    item.modelVersion(), item.deleted(), item.updatedAt());
+            inference.update(item.cowId(), item.windowEndDate(), item.probability(), item.symptomScore(),
+                    item.cause(), item.riskLevel(), item.modelVersion(), item.deleted(), item.updatedAt());
             inferences.saveAndFlush(inference);
         }
         batch.inferences.add(item.id());

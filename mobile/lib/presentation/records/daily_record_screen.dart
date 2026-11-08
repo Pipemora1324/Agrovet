@@ -293,7 +293,7 @@ class _SymptomsChecklist extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      ('Enrojecida', Icons.circle, symptoms.udderRedness, (bool v) => symptoms.copyWith(udderRedness: v)),
+      ('Enrojecida', Icons.flare, symptoms.udderRedness, (bool v) => symptoms.copyWith(udderRedness: v)),
       ('Hinchada', Icons.bubble_chart, symptoms.udderSwelling, (bool v) => symptoms.copyWith(udderSwelling: v)),
       ('Caliente', Icons.local_fire_department, symptoms.udderHeat, (bool v) => symptoms.copyWith(udderHeat: v)),
       ('Dolor al tocar', Icons.back_hand, symptoms.udderPain, (bool v) => symptoms.copyWith(udderPain: v)),

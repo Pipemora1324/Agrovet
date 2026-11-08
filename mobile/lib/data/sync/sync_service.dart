@@ -282,6 +282,8 @@ class _Batch {
               'cowId': i.cowId,
               'windowEndDate': i.windowEndDate,
               'probability': i.probability,
+              'symptomScore': i.symptomScore,
+              'cause': i.cause,
               'riskLevel': i.riskLevel,
               'modelVersion': i.modelVersion,
               'updatedAt': _instant(i.updatedAt),
