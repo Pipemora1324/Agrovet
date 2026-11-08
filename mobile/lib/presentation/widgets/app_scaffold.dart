@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/theme.dart';
 import '../../domain/session.dart';
 
 /// Scaffold común: en la sesión de demostración muestra siempre el rótulo bajo la barra superior.
@@ -44,16 +45,16 @@ class DemoBanner extends StatelessWidget implements PreferredSizeWidget {
         label: 'Datos de demostración',
         child: Container(
           height: preferredSize.height,
-          color: const Color(0xFFFFE082),
+          color: AppColors.demoBanner,
           alignment: Alignment.center,
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.science_outlined, size: 20, color: Color(0xFF3E2C00)),
-              SizedBox(width: 8),
+              const Icon(Icons.science_outlined, size: 20, color: AppColors.onDemoBanner),
+              const SizedBox(width: 8),
               Text(
                 'Datos de demostración',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF3E2C00)),
+                style: Theme.of(context).textTheme.banner.copyWith(color: AppColors.onDemoBanner),
               ),
             ],
           ),

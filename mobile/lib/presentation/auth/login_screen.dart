@@ -66,14 +66,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         Container(
                           width: 96,
                           height: 96,
-                          decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
-                          child: const Icon(Icons.health_and_safety, color: Colors.white, size: 56),
+                          decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                          child: const Icon(Icons.health_and_safety, color: AppColors.onPrimary, size: 56),
                         ),
                         const SizedBox(height: 16),
-                        Text('AgroVet', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+                        Text('AgroVet', style: theme.textTheme.headlineMedium),
                         const SizedBox(height: 4),
-                        Text('Alerta temprana de mastitis',
-                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500)),
+                        Text('Alerta temprana de mastitis', style: theme.textTheme.bodyLarge),
                       ],
                     ),
                   ),
@@ -123,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.errorContainer,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.small),
                         ),
                         child: Row(
                           children: [
@@ -131,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(message,
-                                  style: TextStyle(fontSize: 16, color: theme.colorScheme.onErrorContainer)),
+                                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onErrorContainer)),
                             ),
                           ],
                         ),

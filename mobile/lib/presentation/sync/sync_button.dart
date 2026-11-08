@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/theme.dart';
 import 'sync_cubit.dart';
 import 'sync_screen.dart';
 
@@ -30,7 +31,10 @@ class SyncButton extends StatelessWidget {
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncScreen())),
             icon: state.syncing
                 ? const SizedBox(
-                    width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 3, color: AppColors.onPrimary),
+                  )
                 : Badge(
                     isLabelVisible: state.pending > 0,
                     label: Text('${state.pending}'),
