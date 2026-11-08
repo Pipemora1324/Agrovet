@@ -20,6 +20,8 @@ docker compose up --build -d
 - API: `http://localhost:8080`
 - Documentación (Swagger): `http://localhost:8080/swagger-ui.html`
 - Salud: `http://localhost:8080/actuator/health`
+- Correos de prueba (Mailpit): `http://localhost:8025`. Ahí llegan los códigos de verificación y de
+  recuperación; no sale ningún correo real.
 
 Si ya tiene otro PostgreSQL usando el puerto 5432, cambie `DB_HOST_PORT` en `.env` (por ejemplo,
 a 5433). Para detener: `docker compose down` (agregue `-v` para borrar también los datos).
@@ -73,6 +75,10 @@ En GitHub Actions, `setup-java` crea ese archivo automáticamente. Dentro de Doc
 | `CORS_ALLOWED_ORIGINS` | Orígenes web permitidos, separados por coma. Vacío = ninguno. |
 | `LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW`, `LOGIN_MAX_ATTEMPTS_PER_IP` | Límite de intentos de login (5 por IP y correo, 30 por IP, en 5 minutos). |
 | `API_DOCS_ENABLED` | `false` para ocultar Swagger en producción. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | Servidor de correo saliente. En el docker-compose, Mailpit por defecto. |
+| `SMTP_AUTH`, `SMTP_STARTTLS` | `true` con un proveedor real; `false` con Mailpit. |
+| `MAIL_FROM` | Remitente de los correos. Sin él la aplicación no arranca. |
+| `CODE_MAX_REQUESTS_PER_IP` | Solicitudes de código por IP en una hora (20 por defecto). |
 
 Para pasar a un servidor propio (VPS) solo cambian estas variables: el mismo código y las mismas
 migraciones sirven para cualquier PostgreSQL 15.
@@ -81,11 +87,19 @@ migraciones sirven para cualquier PostgreSQL 15.
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/api/auth/register` | Crea la cuenta y devuelve tokens. |
-| POST | `/api/auth/login` | Inicia sesión (con límite de intentos). |
+| POST | `/api/auth/register` | Crea la cuenta sin verificar y envía un código al correo (202). |
+| POST | `/api/auth/verify-email` | Verifica el correo con el código y devuelve los tokens. |
+| POST | `/api/auth/resend-code` | Envía otro código de verificación (espera de 60 s). |
+| POST | `/api/auth/login` | Inicia sesión (con límite de intentos). Sin verificar: 403 `EMAIL_NOT_VERIFIED`. |
+| POST | `/api/auth/password/forgot` | Envía un código para crear una contraseña nueva (202). |
+| POST | `/api/auth/password/reset` | Cambia la contraseña con el código y cierra todas las sesiones. |
 | POST | `/api/auth/refresh` | Renueva la sesión; el refresh token usado deja de servir. |
 | POST | `/api/auth/logout` | Revoca la sesión. |
-| GET | `/api/auth/me` | Usuario autenticado. |
+| GET | `/api/auth/me` | Perfil del usuario autenticado. |
+| PUT | `/api/auth/me` | Edita nombre, finca, municipio y teléfono. |
+| POST | `/api/auth/me/password` | Cambia la contraseña (pide la actual), cierra todas las sesiones y devuelve una nueva. |
+| POST | `/api/auth/me/privacy` | Registra la aceptación del aviso de privacidad (cuentas anteriores o versión nueva). |
+| DELETE | `/api/auth/me` | Elimina la cuenta y todos sus datos (pide la contraseña). |
 | GET / POST | `/api/cows` | Lista o crea vacas del usuario. |
 | GET / PUT / DELETE | `/api/cows/{id}` | Consulta, edita o da de baja (borrado lógico). |
 | GET | `/api/cows/{id}/history?from=&to=` | Registros, inferencias y alertas (60 días por defecto). |
@@ -99,6 +113,29 @@ migraciones sirven para cualquier PostgreSQL 15.
   uso lo rota. Si se presenta uno ya usado, se revoca toda la sesión (detección de robo).
 - **Contraseñas** con BCrypt (costo 12). Si el correo no existe, igual se compara contra un hash de
   relleno, para no revelar qué correos están registrados.
+- **Verificación de correo**: la cuenta nace sin verificar y no puede iniciar sesión hasta escribir el
+  código de 6 números que llega al correo. El mismo mecanismo sirve para recuperar la contraseña.
+  - El código se guarda como HMAC-SHA256 con una clave derivada de `JWT_SECRET` (un hash simple no
+    basta: solo hay un millón de códigos posibles). El HMAC incluye el usuario y el propósito, así que
+    un código de verificación no sirve para cambiar la contraseña ni para otra cuenta.
+  - Vence en 15 minutos, admite 5 intentos y pedir uno nuevo anula el anterior. Se emiten como máximo
+    10 códigos por cuenta y propósito al día, lo que limita los intentos posibles a 50 diarios.
+  - Entre dos solicitudes para el mismo correo hay que esperar 60 s (por correo escrito, exista o no
+    la cuenta), y hay un tope por IP.
+  - Registro, reenvío y recuperación responden siempre `202` con el mismo mensaje. El correo sale en
+    segundo plano después de guardar, para que el tiempo de respuesta tampoco revele si la cuenta
+    existe. Si alguien intenta registrar un correo ya verificado, solo se avisa a su dueño.
+  - Registrar de nuevo un correo que nadie ha verificado reemplaza el nombre y la contraseña: así
+    nadie puede "apartar" el correo de otra persona.
+  - Las cuentas creadas antes de esta función quedaron verificadas en la migración V7.
+  - Cambiar la contraseña con el código cierra todas las sesiones abiertas.
+- **Consentimiento** (Ley 1581 de 2012): el registro exige `acceptPrivacyPolicy = true` y guarda la
+  versión del aviso y la fecha de aceptación.
+- **Eliminación de la cuenta**: borrado definitivo (no lógico) de alertas, evaluaciones, registros,
+  vacas, sesiones, códigos y el usuario, en una sola transacción y después de confirmar la contraseña.
+  Un token de acceso ya emitido sigue siendo válido hasta que vence (15 minutos), pero ya no hay datos
+  que leer.
+- Cambiar la contraseña y eliminar la cuenta usan el mismo límite de intentos que el login.
 - **Límite de intentos** de login en memoria, por IP + correo y por IP; responde 429 con `Retry-After`.
   Vale para una sola instancia; detrás de un proxy hay que configurar
   `server.forward-headers-strategy` para tomar la IP real.

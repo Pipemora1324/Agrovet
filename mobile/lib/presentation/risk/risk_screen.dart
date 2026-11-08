@@ -110,7 +110,7 @@ class _Insufficient extends StatelessWidget {
           child: FadeIn(
             child: Column(
               children: [
-                const Icon(Icons.event_busy, size: 72, color: Color(0xFF7A5600)),
+                const Icon(Icons.event_busy, size: 72, color: AppColors.warningText),
                 const SizedBox(height: 16),
                 Text('Faltan registros', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 12),
@@ -148,14 +148,13 @@ class _Result extends StatelessWidget {
           index: 1,
           child: Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: level.color, borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(color: level.color, borderRadius: AppRadius.card),
             child: Row(
               children: [
                 Icon(level.icon, color: level.onColor, size: 36),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(level.label,
-                      style: TextStyle(color: level.onColor, fontSize: 26, fontWeight: FontWeight.w800)),
+                  child: Text(level.label, style: theme.textTheme.headlineSmall?.copyWith(color: level.onColor)),
                 ),
               ],
             ),
@@ -182,7 +181,7 @@ class _Result extends StatelessWidget {
                         children: [
                           const Padding(
                             padding: EdgeInsets.only(top: 3),
-                            child: Icon(Icons.arrow_right, size: 24, color: AppTheme.primary),
+                            child: Icon(Icons.arrow_right, size: 24, color: AppColors.primary),
                           ),
                           const SizedBox(width: 4),
                           Expanded(child: Text(step, style: theme.textTheme.bodyLarge)),
@@ -230,17 +229,11 @@ class _ProbabilityBar extends StatelessWidget {
         builder: (context, value, _) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Probabilidad estimada: ${formatPercent(value)}',
-                style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700)),
+            Text('Probabilidad estimada: ${formatPercent(value)}', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
-                value: value,
-                minHeight: 18,
-                color: level.color,
-                backgroundColor: const Color(0xFFE3E7DF),
-              ),
+              borderRadius: BorderRadius.circular(AppRadius.small),
+              child: LinearProgressIndicator(value: value, minHeight: 18, color: level.color),
             ),
           ],
         ),
@@ -254,15 +247,15 @@ class _Disclaimer extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        color: const Color(0xFF263238),
-        child: const Row(
+        color: AppColors.notice,
+        child: Row(
           children: [
-            Icon(Icons.medical_services, color: Colors.white, size: 26),
-            SizedBox(width: 12),
+            const Icon(Icons.medical_services, color: AppColors.onNotice, size: 26),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 RiskAdvice.disclaimer,
-                style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(color: AppColors.onNotice),
               ),
             ),
           ],

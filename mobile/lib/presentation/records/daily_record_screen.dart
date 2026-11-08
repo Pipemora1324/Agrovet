@@ -140,7 +140,7 @@ class _DailyRecordViewState extends State<_DailyRecordView> {
                           if (state.existing != null) ...[
                             const SizedBox(height: 12),
                             Text('Ya hay un registro para este día: puede corregirlo.',
-                                style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                                style: theme.textTheme.emphasis),
                           ],
                           const SizedBox(height: 20),
                           _NumberField(
@@ -185,9 +185,7 @@ class _DailyRecordViewState extends State<_DailyRecordView> {
                           ),
                           if (_formError != null) ...[
                             const SizedBox(height: 8),
-                            Text(_formError!,
-                                style: TextStyle(
-                                    color: theme.colorScheme.error, fontSize: 17, fontWeight: FontWeight.w700)),
+                            Text(_formError!, style: theme.textTheme.formError),
                           ],
                           const SizedBox(height: 20),
                           BigButton(
@@ -216,15 +214,16 @@ class _DayChip extends StatelessWidget {
   final IconData? icon;
 
   @override
-  Widget build(BuildContext context) => ChoiceChip(
-        label: Text(label, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: selected ? Colors.white : AppTheme.ink)),
-        avatar: icon == null ? null : Icon(icon, color: selected ? Colors.white : AppTheme.ink),
-        selected: selected,
-        showCheckmark: false,
-        selectedColor: AppTheme.primary,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        onSelected: (_) => onTap(),
-      );
+  Widget build(BuildContext context) {
+    final foreground = selected ? AppColors.onPrimary : AppColors.ink;
+    return ChoiceChip(
+      label: Text(label, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: foreground)),
+      avatar: icon == null ? null : Icon(icon, color: foreground),
+      selected: selected,
+      showCheckmark: false,
+      onSelected: (_) => onTap(),
+    );
+  }
 }
 
 class _NumberField extends StatelessWidget {
@@ -248,13 +247,13 @@ class _NumberField extends StatelessWidget {
   Widget build(BuildContext context) => TextFormField(
         controller: controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+        style: Theme.of(context).textTheme.numberInput,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           prefixIcon: Icon(icon, size: 28),
           suffixText: unit,
-          suffixStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.ink),
+          suffixStyle: Theme.of(context).textTheme.numberUnit,
         ),
         validator: validator,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -285,9 +284,9 @@ class _SymptomsChecklist extends StatelessWidget {
             child: AnimatedContainer(
               duration: Responsive.motion(context, const Duration(milliseconds: 200)),
               decoration: BoxDecoration(
-                color: value ? const Color(0xFFFFF3CD) : Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: value ? const Color(0xFFB07A00) : const Color(0xFFC9D0C2), width: 2),
+                color: value ? AppColors.highlightSurface : AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.small),
+                border: Border.all(color: value ? AppColors.highlightBorder : AppColors.outlineSoft, width: 2),
               ),
               // Material propio para que el efecto al tocar se vea sobre el fondo de color
               child: Material(
@@ -295,11 +294,11 @@ class _SymptomsChecklist extends StatelessWidget {
                 child: CheckboxListTile(
                   value: value,
                   onChanged: (v) => onChanged(update(v ?? false)),
-                  secondary: Icon(icon, size: 30, color: AppTheme.ink),
-                  title: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  secondary: Icon(icon, size: 30, color: AppColors.ink),
+                  title: Text(label, style: Theme.of(context).textTheme.bodyLarge),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   controlAffinity: ListTileControlAffinity.trailing,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.small)),
                 ),
               ),
             ),

@@ -29,6 +29,39 @@ Desde el emulador, la app lo busca en `http://10.0.2.2:8080`. Otra dirección se
 flutter run --dart-define=API_BASE_URL=https://mi-servidor.example.org
 ```
 
+En un celular conectado por USB, la forma más simple es redirigir los puertos del equipo
+(`localhost` está permitido en debug):
+
+```bash
+adb reverse tcp:8080 tcp:8080   # backend
+adb reverse tcp:8025 tcp:8025   # Mailpit, para leer los códigos en el navegador del celular
+flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
+```
+
+## Cuenta
+
+- **Registro**: nombre, correo, contraseña y la casilla obligatoria de autorización de datos
+  (Ley 1581 de 2012), con enlace al aviso de privacidad completo. El servidor guarda la versión del
+  aviso aceptada y la fecha.
+- **Verificación del correo**: después del registro llega un código de 6 números (en desarrollo, a
+  Mailpit: `http://localhost:8025`). La pantalla del código lo verifica apenas se escriben los 6
+  números y permite reenviarlo con una cuenta regresiva de 60 s, que se ajusta al `Retry-After` del
+  servidor. Si alguien intenta ingresar sin haber verificado, la app lo lleva a esa pantalla.
+- **Olvidé mi contraseña**: código al correo, contraseña nueva y la app inicia sesión sola.
+- **Internet**: registro, verificación, recuperación y cambios del perfil necesitan conexión. Una vez
+  abierta, la sesión queda guardada y la app funciona sin internet.
+- **Mi perfil** (ícono de la persona en "Mis vacas"):
+  - ver y editar nombre, finca, municipio y teléfono opcional (se guarda una copia para verlo sin
+    conexión);
+  - cambiar la contraseña, lo que cierra la sesión en los demás celulares;
+  - leer el aviso de privacidad (las cuentas creadas antes del aviso deben aceptarlo aquí);
+  - cerrar sesión;
+  - **eliminar la cuenta**: pide la contraseña, borra todo en el servidor y luego, en el celular, la
+    base cifrada y sus claves.
+
+El texto del aviso está en `lib/domain/privacy_notice.dart`. Si cambia de forma sustancial, hay que
+subir su versión para que la app lo pida de nuevo.
+
 ### APK para instalar
 
 ```bash
@@ -61,6 +94,11 @@ flutter analyze
 flutter test
 # En el emulador o un celular conectado:
 flutter test integration_test/test_vectors_on_device_test.dart -d <dispositivo>
+# Recorrido completo (demo, cuenta real con verificación, perfil y eliminación). Necesita el backend
+# y Mailpit del docker-compose; en un celular por USB, con adb reverse de 8080 y 8025:
+flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_flow_test.dart \
+  -d <dispositivo> --keep-app-running
+#   celular por USB: --dart-define=API_BASE_URL=http://localhost:8080 --dart-define=MAILPIT_URL=http://localhost:8025
 ```
 
 - `test/model/test_vectors_test.dart` es la **prueba bloqueante**: la app reproduce los 8 casos de
@@ -80,10 +118,16 @@ Al actualizar el modelo hay que copiar `ml/models/mastitis_lstm.tflite` y `model
 ```
 lib/
   core/          tema, diseño adaptable, validaciones, formatos y configuración
-  domain/        entidades, preprocesamiento (réplica de Python), semáforo, recomendaciones
+  domain/        entidades, preprocesamiento (réplica de Python), semáforo, recomendaciones, aviso de privacidad
   data/          base local (Drift + SQLCipher), almacenamiento seguro, API, modelo TFLite, demo
-  presentation/  pantallas y cubits (login, vacas, registro diario, riesgo, historial)
+  presentation/  pantallas y cubits (cuenta, perfil, vacas, registro diario, riesgo, historial, respaldo)
 ```
+
+**Tema**: colores, tipografía, radios y estilos de botones viven solo en `lib/core/theme.dart`
+(`AppColors`, `AppTextStyles`, `AppRadius`, `AppButtonStyles` y el `ThemeData` de Material 3). Las
+pantallas usan esos nombres y los roles de Material. La prueba `test/architecture_test.dart` falla si
+algún archivo fuera del tema escribe un color o un tamaño de letra, para que el rediseño se haga
+cambiando un solo archivo.
 
 ## Seguridad
 
@@ -98,6 +142,9 @@ lib/
   las claves no salgan del celular.
 - Al cerrar sesión se borran los tokens, pero los datos cifrados se conservan para no perder lo que
   falte sincronizar.
+- Al eliminar la cuenta, primero se borra en el servidor; luego se cierra la base, se borran su
+  archivo (y los auxiliares `-wal`/`-shm`) y se olvidan su clave y la fecha de la última
+  sincronización.
 
 ## Sincronización
 

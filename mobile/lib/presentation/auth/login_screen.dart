@@ -6,7 +6,11 @@ import '../../core/theme.dart';
 import '../../core/validators.dart';
 import '../widgets/big_button.dart';
 import '../widgets/fade_in.dart';
+import '../profile/privacy_notice_screen.dart';
+import '../widgets/notice_box.dart';
 import 'auth_cubit.dart';
+import 'forgot_password_screen.dart';
+import 'password_field.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _registering = false;
-  bool _showPassword = false;
+  bool _acceptedPrivacy = false;
 
   @override
   void dispose() {
@@ -35,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     final auth = context.read<AuthCubit>();
     if (_registering) {
-      auth.register(_name.text, _email.text, _password.text);
+      auth.register(_name.text, _email.text, _password.text, acceptedPrivacy: _acceptedPrivacy);
     } else {
       auth.login(_email.text, _password.text);
     }
@@ -66,14 +70,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         Container(
                           width: 96,
                           height: 96,
-                          decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
-                          child: const Icon(Icons.health_and_safety, color: Colors.white, size: 56),
+                          decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                          child: const Icon(Icons.health_and_safety, color: AppColors.onPrimary, size: 56),
                         ),
                         const SizedBox(height: 16),
-                        Text('AgroVet', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+                        Text('AgroVet', style: theme.textTheme.headlineMedium),
                         const SizedBox(height: 4),
-                        Text('Alerta temprana de mastitis',
-                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500)),
+                        Text('Alerta temprana de mastitis', style: theme.textTheme.bodyLarge),
                       ],
                     ),
                   ),
@@ -100,43 +103,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     validator: Validators.email,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
+                  PasswordField(
                     controller: _password,
-                    obscureText: !_showPassword,
-                    autofillHints: const [AutofillHints.password],
-                    decoration: InputDecoration(
-                      labelText: 'Contraseña',
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        tooltip: _showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña',
-                        icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () => setState(() => _showPassword = !_showPassword),
-                      ),
-                    ),
+                    label: 'Contraseña',
+                    newPassword: _registering,
                     validator: Validators.password,
-                    onFieldSubmitted: (_) => _submit(),
+                    onSubmitted: (_) => _submit(),
                   ),
+                  if (_registering) ...[
+                    const SizedBox(height: 12),
+                    _PrivacyConsent(
+                      value: _acceptedPrivacy,
+                      onChanged: (value) => setState(() => _acceptedPrivacy = value),
+                    ),
+                  ],
                   if (message != null) ...[
                     const SizedBox(height: 16),
-                    FadeIn(
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.error_outline, color: theme.colorScheme.onErrorContainer),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(message,
-                                  style: TextStyle(fontSize: 16, color: theme.colorScheme.onErrorContainer)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    FadeIn(child: NoticeBox.error(message)),
                   ],
                   const SizedBox(height: 24),
                   BigButton(
@@ -145,6 +128,29 @@ class _LoginScreenState extends State<LoginScreen> {
                     busy: busy,
                     onPressed: _submit,
                   ),
+                  if (_registering) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Le enviaremos un código al correo para confirmar que es suyo. Necesita internet para '
+                      'crear la cuenta; después, la app funciona sin conexión.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ] else
+                    TextButton(
+                      onPressed: busy
+                          ? null
+                          : () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ForgotPasswordScreen(
+                                    api: context.read<AuthCubit>().api,
+                                    initialEmail: _email.text,
+                                  ),
+                                ),
+                              ),
+                      child: const Text('Olvidé mi contraseña'),
+                    ),
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: busy ? null : () => setState(() => _registering = !_registering),
@@ -173,4 +179,44 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
+
+/// Autorización de tratamiento de datos (Ley 1581 de 2012): casilla obligatoria y enlace al aviso.
+class _PrivacyConsent extends StatelessWidget {
+  const _PrivacyConsent({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) => FormField<bool>(
+        initialValue: value,
+        validator: (_) => value ? null : 'Debe aceptar el aviso de privacidad para crear la cuenta',
+        builder: (field) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            CheckboxListTile(
+              value: value,
+              onChanged: (checked) {
+                onChanged(checked ?? false);
+                field.didChange(checked);
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Leí y acepto el aviso de privacidad y autorizo el tratamiento de mis datos.'),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () =>
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyNoticeScreen())),
+                icon: const Icon(Icons.privacy_tip),
+                label: const Text('Leer el aviso de privacidad'),
+              ),
+            ),
+            if (field.hasError)
+              Text(field.errorText!, style: Theme.of(context).textTheme.formError),
+          ],
+        ),
+      );
 }

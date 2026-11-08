@@ -19,7 +19,7 @@ class TrafficLight extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(size * 0.18),
         decoration: BoxDecoration(
-          color: const Color(0xFF1F2420),
+          color: AppColors.trafficLightBody,
           borderRadius: BorderRadius.circular(size),
         ),
         child: Column(
@@ -58,19 +58,18 @@ class RiskChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = level?.color ?? const Color(0xFFE3E7DF);
-    final onColor = level?.onColor ?? const Color(0xFF3B4639);
+    final color = level?.color ?? AppColors.riskNone;
+    final onColor = level?.onColor ?? AppColors.inkMuted;
     return AnimatedContainer(
       duration: Responsive.motion(context, const Duration(milliseconds: 300)),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(24)),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(AppRadius.pill)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(level?.icon ?? Icons.help_outline, size: 18, color: onColor),
           const SizedBox(width: 6),
-          Text(level?.label ?? 'Sin evaluar',
-              style: TextStyle(color: onColor, fontWeight: FontWeight.w800, fontSize: 15)),
+          Text(level?.label ?? 'Sin evaluar', style: Theme.of(context).textTheme.chip.copyWith(color: onColor)),
         ],
       ),
     );

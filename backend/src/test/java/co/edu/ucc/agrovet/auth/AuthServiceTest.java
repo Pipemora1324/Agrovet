@@ -23,8 +23,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import co.edu.ucc.agrovet.auth.AuthDtos.LoginRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.RegisterRequest;
-import co.edu.ucc.agrovet.common.ConflictException;
+import co.edu.ucc.agrovet.auth.code.CodePurpose;
+import co.edu.ucc.agrovet.auth.code.CodeRequestLimiter;
+import co.edu.ucc.agrovet.auth.code.EmailCodeService;
 import co.edu.ucc.agrovet.config.JwtProperties;
+import co.edu.ucc.agrovet.mail.AccountMailer;
+import co.edu.ucc.agrovet.user.AccountDeletionService;
 import co.edu.ucc.agrovet.user.User;
 import co.edu.ucc.agrovet.user.UserRepository;
 
@@ -37,6 +41,9 @@ class AuthServiceTest {
     private final PasswordEncoder encoder = mock(PasswordEncoder.class);
     private final TokenService tokenService = mock(TokenService.class);
     private final LoginRateLimiter rateLimiter = mock(LoginRateLimiter.class);
+    private final EmailCodeService codes = mock(EmailCodeService.class);
+    private final CodeRequestLimiter codeLimiter = mock(CodeRequestLimiter.class);
+    private final AccountMailer mailer = mock(AccountMailer.class);
     private AuthService service;
 
     @BeforeEach
@@ -45,16 +52,49 @@ class AuthServiceTest {
         when(tokenService.newRefreshTokenValue()).thenReturn("nuevo-refresh");
         when(tokenService.createAccessToken(any(), any())).thenReturn("access");
         when(refreshTokens.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(users.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(codes.canIssue(any(), any())).thenReturn(true);
+        when(codes.issue(any(), any())).thenReturn("123456");
+        when(codes.ttl()).thenReturn(Duration.ofMinutes(15));
         JwtProperties props = new JwtProperties("x", "agrovet", Duration.ofMinutes(15), Duration.ofDays(14));
-        service = new AuthService(users, refreshTokens, encoder, tokenService, rateLimiter, props,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+        service = new AuthService(users, refreshTokens, encoder, tokenService, rateLimiter, codes, codeLimiter,
+                mailer, mock(AccountDeletionService.class), props, Clock.fixed(NOW, ZoneOffset.UTC));
+    }
+
+    private static User verifiedUser() {
+        User user = new User("Ana", "ana@correo.co", "hash", NOW);
+        user.markEmailVerified(NOW);
+        return user;
     }
 
     @Test
-    void registerRejectsDuplicateEmailIgnoringCase() {
-        when(users.existsByEmail("ana@correo.co")).thenReturn(true);
-        assertThatThrownBy(() -> service.register(new RegisterRequest("Ana", " ANA@correo.co ", "clave-segura")))
-                .isInstanceOf(ConflictException.class);
+    void registerOfVerifiedEmailOnlyWarnsTheOwner() {
+        when(users.findByEmail("ana@correo.co")).thenReturn(Optional.of(verifiedUser()));
+        service.register(new RegisterRequest("Otra", " ANA@correo.co ", "clave-segura", true, "2026-11"), "1.1.1.1");
+
+        verify(mailer).sendAccountAlreadyExists("ana@correo.co", "Ana");
+        verify(codes, never()).issue(any(), any());
+        // La contraseña se procesa igual, para que el tiempo de respuesta no delate la cuenta
+        verify(encoder).encode("clave-segura");
+    }
+
+    @Test
+    void registerOfNewEmailCreatesUnverifiedUserAndSendsCode() {
+        when(users.findByEmail("nuevo@correo.co")).thenReturn(Optional.empty());
+        service.register(new RegisterRequest("Nuevo", "nuevo@correo.co", "clave-segura", true, "2026-11"), "1.1.1.1");
+
+        verify(codeLimiter).acquire("1.1.1.1", "nuevo@correo.co", CodePurpose.VERIFY_EMAIL);
+        verify(users).save(any(User.class));
+        verify(mailer).sendVerificationCode("nuevo@correo.co", "Nuevo", "123456", Duration.ofMinutes(15));
+    }
+
+    @Test
+    void dailyCodeLimitSkipsSendingWithoutError() {
+        when(users.findByEmail("nuevo@correo.co")).thenReturn(Optional.empty());
+        when(codes.canIssue(any(), eq(CodePurpose.VERIFY_EMAIL))).thenReturn(false);
+        service.register(new RegisterRequest("Nuevo", "nuevo@correo.co", "clave-segura", true, "2026-11"), "1.1.1.1");
+        verify(codes, never()).issue(any(), any());
+        verify(mailer, never()).sendVerificationCode(anyString(), anyString(), anyString(), any());
     }
 
     @Test
@@ -65,6 +105,20 @@ class AuthServiceTest {
         verify(encoder).matches(eq("x"), anyString());
         verify(rateLimiter).registerAttempt("1.1.1.1", "nadie@correo.co");
         verify(rateLimiter, never()).reset(anyString(), anyString());
+    }
+
+    @Test
+    void loginOfUnverifiedUserIsRefusedWithoutTokens() {
+        User user = new User("Ana", "ana@correo.co", "hash", NOW);
+        when(users.findByEmail("ana@correo.co")).thenReturn(Optional.of(user));
+        when(encoder.matches("clave", "hash")).thenReturn(true);
+        when(codes.hasActiveCode(user.getId(), CodePurpose.VERIFY_EMAIL)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.login(new LoginRequest("ana@correo.co", "clave"), "1.1.1.1"))
+                .isInstanceOf(EmailNotVerifiedException.class);
+        verify(tokenService, never()).createAccessToken(any(), any());
+        // Ya tenía un código vigente: no se envía otro
+        verify(codes, never()).issue(any(), any());
     }
 
     @Test
@@ -90,7 +144,7 @@ class AuthServiceTest {
 
     @Test
     void refreshRotatesToken() {
-        User user = new User("Ana", "ana@correo.co", "hash", NOW);
+        User user = verifiedUser();
         RefreshToken current = new RefreshToken(user.getId(), UUID.randomUUID(), "h", NOW.minusSeconds(60),
                 NOW.plus(Duration.ofDays(1)));
         when(refreshTokens.findByTokenHash(TokenService.hash("vigente"))).thenReturn(Optional.of(current));

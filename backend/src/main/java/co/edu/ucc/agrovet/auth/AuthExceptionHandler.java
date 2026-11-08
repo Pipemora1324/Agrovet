@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import co.edu.ucc.agrovet.common.TooManyRequestsException;
+
 @RestControllerAdvice
 class AuthExceptionHandler {
 
@@ -17,11 +19,29 @@ class AuthExceptionHandler {
         return problem;
     }
 
-    @ExceptionHandler(TooManyLoginAttemptsException.class)
-    ResponseEntity<ProblemDetail> handleTooManyAttempts(TooManyLoginAttemptsException ex) {
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    ProblemDetail handleEmailNotVerified(EmailNotVerifiedException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problem.setTitle("Correo sin verificar");
+        problem.setProperty("code", EmailNotVerifiedException.CODE);
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidCodeException.class)
+    ProblemDetail handleInvalidCode(InvalidCodeException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Código inválido");
+        return problem;
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    ResponseEntity<ProblemDetail> handleTooManyRequests(TooManyRequestsException ex) {
         long seconds = Math.max(1, ex.getRetryAfter().toSeconds());
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS,
-                "Demasiados intentos. Espere " + Math.max(1, seconds / 60) + " minuto(s) e intente de nuevo.");
+        String wait = seconds < 60 ? seconds + " segundos" : Math.max(1, seconds / 60) + " minuto(s)";
+        String detail = ex instanceof TooManyLoginAttemptsException
+                ? "Demasiados intentos. Espere " + wait + " e intente de nuevo."
+                : ex.getMessage() + " Intente de nuevo en " + wait + ".";
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, detail);
         problem.setTitle("Demasiados intentos");
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .header(HttpHeaders.RETRY_AFTER, String.valueOf(seconds))

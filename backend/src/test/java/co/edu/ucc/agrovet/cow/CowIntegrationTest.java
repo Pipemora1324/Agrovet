@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.edu.ucc.agrovet.IntegrationTest;
+import co.edu.ucc.agrovet.RecordingEmailSender;
 import co.edu.ucc.agrovet.TestUsers;
 import co.edu.ucc.agrovet.TestUsers.TestUser;
 
@@ -34,14 +35,16 @@ class CowIntegrationTest extends IntegrationTest {
     ObjectMapper json;
     @Autowired
     JdbcTemplate jdbc;
+    @Autowired
+    RecordingEmailSender mail;
 
     private TestUser ana;
     private TestUser beto;
 
     @BeforeEach
     void setUp() throws Exception {
-        ana = TestUsers.register(mvc, json);
-        beto = TestUsers.register(mvc, json);
+        ana = TestUsers.register(mvc, json, mail);
+        beto = TestUsers.register(mvc, json, mail);
     }
 
     private ResultActions postCow(TestUser user, String body) throws Exception {

@@ -1,33 +1,45 @@
 package co.edu.ucc.agrovet.auth;
 
-import java.util.UUID;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.ucc.agrovet.auth.AuthDtos.AcceptPrivacyRequest;
+import co.edu.ucc.agrovet.auth.AuthDtos.ChangePasswordRequest;
+import co.edu.ucc.agrovet.auth.AuthDtos.DeleteAccountRequest;
+import co.edu.ucc.agrovet.auth.AuthDtos.EmailRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.LoginRequest;
+import co.edu.ucc.agrovet.auth.AuthDtos.MessageResponse;
 import co.edu.ucc.agrovet.auth.AuthDtos.RefreshRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.RegisterRequest;
+import co.edu.ucc.agrovet.auth.AuthDtos.ResetPasswordRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.TokenResponse;
+import co.edu.ucc.agrovet.auth.AuthDtos.UpdateProfileRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.UserResponse;
+import co.edu.ucc.agrovet.auth.AuthDtos.VerifyEmailRequest;
+import co.edu.ucc.agrovet.common.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+/** La IP es la de la conexión; detrás de un proxy hay que configurar forward-headers-strategy. */
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Autenticación")
 public class AuthController {
+
+    private static final MessageResponse CODE_SENT = new MessageResponse(AuthService.CODE_SENT);
 
     private final AuthService authService;
 
@@ -36,17 +48,48 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Crea una cuenta y devuelve los tokens de sesión")
-    public TokenResponse register(@Valid @RequestBody RegisterRequest request) {
-        return authService.register(request);
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Crea la cuenta sin verificar y envía un código al correo",
+            description = "La respuesta es la misma si el correo ya estaba registrado.")
+    public MessageResponse register(@Valid @RequestBody RegisterRequest request, HttpServletRequest http) {
+        authService.register(request, http.getRemoteAddr());
+        return CODE_SENT;
+    }
+
+    @PostMapping("/verify-email")
+    @Operation(summary = "Verifica el correo con el código de 6 números y abre la sesión")
+    public TokenResponse verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        return authService.verifyEmail(request);
+    }
+
+    @PostMapping("/resend-code")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Envía un código nuevo para verificar el correo (con espera entre envíos)")
+    public MessageResponse resendCode(@Valid @RequestBody EmailRequest request, HttpServletRequest http) {
+        authService.resendVerificationCode(request.email(), http.getRemoteAddr());
+        return CODE_SENT;
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Inicia sesión (con límite de intentos)")
+    @Operation(summary = "Inicia sesión (con límite de intentos)",
+            description = "Si el correo no está verificado responde 403 con code = EMAIL_NOT_VERIFIED.")
     public TokenResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest http) {
-        // Se usa la IP de la conexión; detrás de un proxy hay que configurar forward-headers-strategy
         return authService.login(request, http.getRemoteAddr());
+    }
+
+    @PostMapping("/password/forgot")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Envía un código para crear una contraseña nueva")
+    public MessageResponse forgotPassword(@Valid @RequestBody EmailRequest request, HttpServletRequest http) {
+        authService.requestPasswordReset(request.email(), http.getRemoteAddr());
+        return CODE_SENT;
+    }
+
+    @PostMapping("/password/reset")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Cambia la contraseña con el código y cierra todas las sesiones")
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
     }
 
     @PostMapping("/refresh")
@@ -64,8 +107,41 @@ public class AuthController {
 
     @GetMapping("/me")
     @SecurityRequirement(name = "bearer")
-    @Operation(summary = "Datos del usuario autenticado")
+    @Operation(summary = "Perfil del usuario autenticado")
     public UserResponse me(@AuthenticationPrincipal Jwt jwt) {
-        return authService.currentUser(UUID.fromString(jwt.getSubject()));
+        return authService.currentUser(CurrentUser.id(jwt));
+    }
+
+    @PutMapping("/me")
+    @SecurityRequirement(name = "bearer")
+    @Operation(summary = "Edita nombre, finca, municipio y teléfono")
+    public UserResponse updateProfile(@AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        return authService.updateProfile(CurrentUser.id(jwt), request);
+    }
+
+    @PostMapping("/me/privacy")
+    @SecurityRequirement(name = "bearer")
+    @Operation(summary = "Registra la aceptación del aviso de privacidad (cuentas anteriores o versión nueva)")
+    public UserResponse acceptPrivacy(@AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody AcceptPrivacyRequest request) {
+        return authService.acceptPrivacyPolicy(CurrentUser.id(jwt), request.privacyPolicyVersion());
+    }
+
+    @PostMapping("/me/password")
+    @SecurityRequirement(name = "bearer")
+    @Operation(summary = "Cambia la contraseña, cierra todas las sesiones y devuelve una nueva")
+    public TokenResponse changePassword(@AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ChangePasswordRequest request, HttpServletRequest http) {
+        return authService.changePassword(CurrentUser.id(jwt), request, http.getRemoteAddr());
+    }
+
+    @DeleteMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @SecurityRequirement(name = "bearer")
+    @Operation(summary = "Elimina la cuenta y todos sus datos (requiere la contraseña)")
+    public void deleteAccount(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody DeleteAccountRequest request,
+            HttpServletRequest http) {
+        authService.deleteAccount(CurrentUser.id(jwt), request.password(), http.getRemoteAddr());
     }
 }

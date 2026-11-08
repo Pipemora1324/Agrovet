@@ -47,7 +47,7 @@ class _HistoryView extends StatelessWidget {
             _MetricChart(
               title: 'Temperatura (°C)',
               icon: Icons.thermostat,
-              color: const Color(0xFFC62828),
+              color: AppColors.chartTemperature,
               from: from,
               days: state.days,
               values: {for (final r in state.records) r.recordDate: r.temperatureC},
@@ -55,7 +55,7 @@ class _HistoryView extends StatelessWidget {
             _MetricChart(
               title: 'Leche (L)',
               icon: Icons.water_drop,
-              color: const Color(0xFF1565C0),
+              color: AppColors.chartMilk,
               from: from,
               days: state.days,
               values: {for (final r in state.records) r.recordDate: r.milkL},
@@ -63,7 +63,7 @@ class _HistoryView extends StatelessWidget {
             _MetricChart(
               title: 'Alimento (kg)',
               icon: Icons.grass,
-              color: const Color(0xFF6D4C1F),
+              color: AppColors.chartFeed,
               from: from,
               days: state.days,
               values: {for (final r in state.records) r.recordDate: r.feedKg},
@@ -78,10 +78,6 @@ class _HistoryView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SegmentedButton<int>(
-                      style: SegmentedButton.styleFrom(
-                        minimumSize: const Size(64, 56),
-                        textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                      ),
                       segments: const [
                         ButtonSegment(value: 14, label: Text('14 días')),
                         ButtonSegment(value: 30, label: Text('30 días')),
@@ -128,10 +124,8 @@ class _HistoryView extends StatelessWidget {
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: Icon(inference.riskLevel.icon, color: inference.riskLevel.color, size: 32),
-                            title: Text(formatDay(inference.windowEndDate),
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                            subtitle: Text('Probabilidad ${formatPercent(inference.probability)}',
-                                style: const TextStyle(fontSize: 16)),
+                            title: Text(formatDay(inference.windowEndDate)),
+                            subtitle: Text('Probabilidad ${formatPercent(inference.probability)}'),
                             trailing: RiskChip(level: inference.riskLevel),
                           ),
                         ),
@@ -226,8 +220,7 @@ class _MetricChart extends StatelessWidget {
                             ? const SizedBox.shrink()
                             : SideTitleWidget(
                                 meta: meta,
-                                child: Text(formatNumber(value),
-                                    style: const TextStyle(fontSize: 13, color: AppTheme.ink)),
+                                child: Text(formatNumber(value), style: Theme.of(context).textTheme.axis),
                               ),
                       ),
                     ),
@@ -245,7 +238,7 @@ class _MetricChart extends StatelessWidget {
                           final date = DateTime(from.year, from.month, from.day + index);
                           return SideTitleWidget(
                             meta: meta,
-                            child: Text(formatShortDay(date), style: const TextStyle(fontSize: 13, color: AppTheme.ink)),
+                            child: Text(formatShortDay(date), style: Theme.of(context).textTheme.axis),
                           );
                         },
                       ),
