@@ -1,15 +1,19 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../data/demo/demo_seed.dart';
 import '../data/local/app_database.dart';
 import '../data/local/database_opener.dart';
 import '../data/local/local_data_wiper.dart';
 import '../data/local/local_repository.dart';
+import '../data/photos/photo_capture.dart';
+import '../data/photos/photo_store.dart';
 import '../data/remote/api_client.dart';
 import '../data/remote/profile_api.dart';
 import '../data/security/secure_store.dart';
@@ -31,7 +35,15 @@ class SessionScope extends StatefulWidget {
     required this.child,
     this.openDatabase,
     this.connectivity,
+    this.photosRoot,
+    this.photoCapture,
   });
+
+  /// Carpeta base de las fotos; por defecto, el almacenamiento privado de la app.
+  final Future<Directory> Function()? photosRoot;
+
+  /// Captura de fotos; por defecto, la cámara y la galería del sistema.
+  final PhotoCapture? photoCapture;
 
   final Session session;
   final Future<RiskPredictor> predictor;
@@ -85,12 +97,17 @@ class _SessionScopeState extends State<SessionScope> {
             loadLastSync: () => store.lastSyncFor(session.userId),
             saveLastSync: (at) => store.saveLastSync(session.userId, at),
           )..syncNow(silent: true));
+    final photos = await PhotoStore.forUser(
+      widget.photosRoot != null ? await widget.photosRoot!() : await getApplicationSupportDirectory(),
+      session.userId,
+    );
     final wiper = LocalDataWiper(() async {
       await _closeDatabase();
       if (widget.openDatabase == null) await DatabaseOpener.deleteForUser(session.userId);
+      await photos.deleteAll();
       await store.forgetUser(session.userId);
     });
-    return _SessionDeps(repository, RiskEvaluator(await widget.predictor), sync, wiper);
+    return _SessionDeps(repository, RiskEvaluator(await widget.predictor), sync, wiper, photos);
   }
 
   /// Cierra la base una sola vez. Salir de la sesión y borrar los datos esperan el mismo cierre, así
@@ -128,6 +145,9 @@ class _SessionScopeState extends State<SessionScope> {
               RepositoryProvider<AlertRepository>.value(value: deps.repository),
               RepositoryProvider<RiskEvaluator>.value(value: deps.evaluator),
               RepositoryProvider<LocalDataWiper>.value(value: deps.wiper),
+              RepositoryProvider<PhotoRepository>.value(value: deps.repository),
+              RepositoryProvider<PhotoStore>.value(value: deps.photos),
+              RepositoryProvider<PhotoCapture>(create: (_) => widget.photoCapture ?? SystemPhotoCapture()),
               RepositoryProvider<ProfileApi>(create: (context) => ProfileApi(context.read<ApiClient>())),
             ],
             child: BlocProvider<SyncCubit>.value(value: deps.sync, child: widget.child),
@@ -137,10 +157,11 @@ class _SessionScopeState extends State<SessionScope> {
 }
 
 class _SessionDeps {
-  _SessionDeps(this.repository, this.evaluator, this.sync, this.wiper);
+  _SessionDeps(this.repository, this.evaluator, this.sync, this.wiper, this.photos);
 
   final LocalRepository repository;
   final RiskEvaluator evaluator;
   final SyncCubit sync;
   final LocalDataWiper wiper;
+  final PhotoStore photos;
 }
