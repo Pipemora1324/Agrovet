@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 
 import '../local/app_database.dart';
 import '../local/local_repository.dart';
+import '../photos/photo_store.dart';
 import '../remote/api_client.dart';
 
 /// Respuesta del servidor: ids confirmados por tipo y elementos rechazados con su motivo.
@@ -31,6 +32,9 @@ class SyncResponse {
 /// Envío del lote al servidor; separado para poder probar el servicio sin red.
 abstract interface class SyncGateway {
   Future<SyncResponse> send(Map<String, dynamic> batch);
+
+  /// Sube el archivo de una foto cuyos datos el servidor ya confirmó.
+  Future<void> uploadPhoto({required String cowId, required String photoId, required List<int> jpeg});
 }
 
 class SyncApi implements SyncGateway {
@@ -43,6 +47,14 @@ class SyncApi implements SyncGateway {
     final response = await _client.dio.post<Map<String, dynamic>>('/api/sync', data: batch);
     return SyncResponse.fromJson(response.data!);
   }
+
+  @override
+  Future<void> uploadPhoto({required String cowId, required String photoId, required List<int> jpeg}) =>
+      _client.dio.put<void>(
+        '/api/cows/$cowId/photos/$photoId/image',
+        data: FormData.fromMap({'file': MultipartFile.fromBytes(jpeg, filename: '$photoId.jpg')}),
+        options: Options(contentType: 'multipart/form-data', sendTimeout: const Duration(minutes: 2)),
+      );
 }
 
 /// Elemento que el servidor no aceptó; se muestra al ganadero para que lo corrija.
@@ -82,6 +94,7 @@ class SyncService {
   SyncService(
     this.db,
     this.gateway, {
+    this.photos,
     this.batchSize = 200,
     this.maxAttempts = 4,
     this.baseDelay = const Duration(seconds: 2),
@@ -92,6 +105,9 @@ class SyncService {
 
   final AppDatabase db;
   final SyncGateway gateway;
+
+  /// Archivos de las fotos; sin él solo viajan los datos (por ejemplo, en pruebas).
+  final PhotoStore? photos;
   final int batchSize;
   final int maxAttempts;
   final Duration baseDelay;
@@ -107,8 +123,11 @@ class SyncService {
       '(SELECT count(*) FROM cows WHERE sync_pending = 1 AND is_demo = 0) + '
       '(SELECT count(*) FROM daily_records WHERE sync_pending = 1 AND is_demo = 0) + '
       '(SELECT count(*) FROM inferences WHERE sync_pending = 1 AND is_demo = 0) + '
-      '(SELECT count(*) FROM alerts WHERE sync_pending = 1 AND is_demo = 0) AS pending',
-      readsFrom: {db.cows, db.dailyRecords, db.inferences, db.alerts},
+      '(SELECT count(*) FROM alerts WHERE sync_pending = 1 AND is_demo = 0) + '
+      // Una foto cuenta como pendiente mientras falten sus datos o su archivo
+      '(SELECT count(*) FROM cow_photos WHERE is_demo = 0 AND sync_error IS NULL AND '
+      ' (sync_pending = 1 OR (image_uploaded = 0 AND deleted = 0))) AS pending',
+      readsFrom: {db.cows, db.dailyRecords, db.inferences, db.alerts, db.cowPhotos},
     );
     return query.watchSingle().map((row) => row.read<int>('pending'));
   }
@@ -123,8 +142,10 @@ class SyncService {
       "UNION ALL SELECT 'Evaluación', c.tag || ' · ' || i.window_end_date, i.sync_error FROM inferences i "
       'JOIN cows c ON c.id = i.cow_id WHERE i.sync_error IS NOT NULL AND i.is_demo = 0 '
       "UNION ALL SELECT 'Alerta', c.tag, a.sync_error FROM alerts a "
-      'JOIN cows c ON c.id = a.cow_id WHERE a.sync_error IS NOT NULL AND a.is_demo = 0',
-      readsFrom: {db.cows, db.dailyRecords, db.inferences, db.alerts},
+      'JOIN cows c ON c.id = a.cow_id WHERE a.sync_error IS NOT NULL AND a.is_demo = 0 '
+      "UNION ALL SELECT 'Foto', c.tag || ' · ' || p.taken_on, p.sync_error FROM cow_photos p "
+      'JOIN cows c ON c.id = p.cow_id WHERE p.sync_error IS NOT NULL AND p.is_demo = 0',
+      readsFrom: {db.cows, db.dailyRecords, db.inferences, db.alerts, db.cowPhotos},
     );
     return query.watch().map(
       (rows) => [
@@ -156,7 +177,64 @@ class SyncService {
       // Si nada avanzó (todo cambió mientras se enviaba), se deja para el próximo intento
       if (result.confirmed + result.rejected == 0) break;
     }
+    try {
+      final uploaded = await _uploadImages();
+      confirmed += uploaded.confirmed;
+      rejected += uploaded.rejected;
+    } on ApiException catch (e) {
+      return SyncReport(sent: sent, confirmed: confirmed, rejected: rejected, error: e.message);
+    }
     return SyncReport(sent: sent, confirmed: confirmed, rejected: rejected);
+  }
+
+  /// Sube los archivos de las fotos cuyos datos ya confirmó el servidor. Un archivo que el servidor
+  /// rechaza (dañado, demasiado grande) queda con su motivo y no se reintenta.
+  Future<({int confirmed, int rejected})> _uploadImages() async {
+    final store = photos;
+    if (store == null) return (confirmed: 0, rejected: 0);
+    final rows = await (db.select(db.cowPhotos)
+          ..where((p) =>
+              p.imageUploaded.equals(false) &
+              p.deleted.equals(false) &
+              p.syncPending.equals(false) &
+              p.syncError.isNull() &
+              p.isDemo.equals(false)))
+        .get();
+    var confirmed = 0, rejected = 0;
+    for (final row in rows) {
+      final file = store.fileFor(row.fileName);
+      if (!await file.exists()) continue;
+      final bytes = await file.readAsBytes();
+      try {
+        await _withRetry(() => gateway.uploadPhoto(cowId: row.cowId, photoId: row.id, jpeg: bytes));
+      } on _Rejected catch (e) {
+        await (db.update(db.cowPhotos)..where((p) => p.id.equals(row.id)))
+            .write(CowPhotosCompanion(syncError: Value(e.reason)));
+        rejected++;
+        continue;
+      }
+      await (db.update(db.cowPhotos)..where((p) => p.id.equals(row.id)))
+          .write(const CowPhotosCompanion(imageUploaded: Value(true)));
+      confirmed++;
+    }
+    return (confirmed: confirmed, rejected: rejected);
+  }
+
+  /// Reintenta fallas de red y del servidor; otro 4xx es un rechazo definitivo de ese elemento.
+  Future<T> _withRetry<T>(Future<T> Function() call) async {
+    for (var attempt = 1;; attempt++) {
+      try {
+        return await call();
+      } on DioException catch (e) {
+        final status = e.response?.statusCode;
+        if (status != null && status >= 400 && status < 500 && status != 401 && status != 429) {
+          throw _Rejected(ApiClient.describe(e).message);
+        }
+        if (attempt >= maxAttempts) throw ApiClient.describe(e);
+        final factor = 0.8 + _random.nextDouble() * 0.4;
+        await _sleep(baseDelay * (pow(2, attempt - 1) * factor));
+      }
+    }
   }
 
   Future<SyncResponse> _sendWithRetry(Map<String, dynamic> payload) async {
@@ -191,7 +269,11 @@ class SyncService {
           ..where((t) => t.syncPending.equals(true) & t.isDemo.equals(false))
           ..limit(batchSize))
         .get();
-    return _Batch(cows, records, inferences, alerts);
+    final photos = await (db.select(db.cowPhotos)
+          ..where((t) => t.syncPending.equals(true) & t.isDemo.equals(false))
+          ..limit(batchSize))
+        .get();
+    return _Batch(cows, records, inferences, alerts, photos);
   }
 
   Future<({int confirmed, int rejected})> _apply(_Batch batch, SyncResponse response) async {
@@ -218,20 +300,22 @@ class SyncService {
       await mark(db.dailyRecords, 'dailyRecords', batch.records.map((r) => (id: r.id, updatedAt: r.updatedAt)));
       await mark(db.inferences, 'inferences', batch.inferences.map((r) => (id: r.id, updatedAt: r.updatedAt)));
       await mark(db.alerts, 'alerts', batch.alerts.map((r) => (id: r.id, updatedAt: r.updatedAt)));
+      await mark(db.cowPhotos, 'photos', batch.photos.map((r) => (id: r.id, updatedAt: r.updatedAt)));
     });
     return (confirmed: confirmed, rejected: rejected);
   }
 }
 
 class _Batch {
-  _Batch(this.cows, this.records, this.inferences, this.alerts);
+  _Batch(this.cows, this.records, this.inferences, this.alerts, this.photos);
 
   final List<CowRow> cows;
   final List<DailyRecordRow> records;
   final List<InferenceRow> inferences;
   final List<AlertRow> alerts;
+  final List<CowPhotoRow> photos;
 
-  int get size => cows.length + records.length + inferences.length + alerts.length;
+  int get size => cows.length + records.length + inferences.length + alerts.length + photos.length;
 
   bool get isEmpty => size == 0;
 
@@ -303,5 +387,21 @@ class _Batch {
               'deleted': a.deleted,
             },
         ],
+        'photos': [
+          for (final p in photos)
+            {
+              'id': p.id,
+              'cowId': p.cowId,
+              'takenOn': p.takenOn,
+              'updatedAt': _instant(p.updatedAt),
+              'deleted': p.deleted,
+            },
+        ],
       };
+}
+
+class _Rejected implements Exception {
+  _Rejected(this.reason);
+
+  final String reason;
 }

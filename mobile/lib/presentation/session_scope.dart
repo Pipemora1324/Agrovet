@@ -88,19 +88,19 @@ class _SessionScopeState extends State<SessionScope> {
     if (session.isDemo && kDebugMode) {
       await DemoSeed(repository).seedIfEmpty();
     }
+    final photos = await PhotoStore.forUser(
+      widget.photosRoot != null ? await widget.photosRoot!() : await getApplicationSupportDirectory(),
+      session.userId,
+    );
     final sync = session.isDemo
         ? SyncCubit.disabled()
         : (SyncCubit(
-            SyncService(db, SyncApi(api)),
+            SyncService(db, SyncApi(api), photos: photos),
             connectivity: widget.connectivity ?? _online(),
             appResumed: _resumed.stream,
             loadLastSync: () => store.lastSyncFor(session.userId),
             saveLastSync: (at) => store.saveLastSync(session.userId, at),
           )..syncNow(silent: true));
-    final photos = await PhotoStore.forUser(
-      widget.photosRoot != null ? await widget.photosRoot!() : await getApplicationSupportDirectory(),
-      session.userId,
-    );
     final wiper = LocalDataWiper(() async {
       await _closeDatabase();
       if (widget.openDatabase == null) await DatabaseOpener.deleteForUser(session.userId);

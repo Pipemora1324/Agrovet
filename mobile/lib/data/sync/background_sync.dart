@@ -1,8 +1,11 @@
 import 'package:flutter/widgets.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../../core/config.dart';
+
 import '../local/database_opener.dart';
+import '../photos/photo_store.dart';
 import '../remote/api_client.dart';
 import '../security/secure_store.dart';
 import 'sync_service.dart';
@@ -32,7 +35,8 @@ Future<bool> runBackgroundSync() async {
   );
   try {
     final client = ApiClient(baseUrl: AppConfig.apiBaseUrl, store: store);
-    final report = await SyncService(db, SyncApi(client)).syncNow();
+    final photos = await PhotoStore.forUser(await getApplicationSupportDirectory(), session.userId);
+    final report = await SyncService(db, SyncApi(client), photos: photos).syncNow();
     // Igual que en la app: solo cuenta si el servidor confirmó algo
     if (report.ok && report.sent > 0) await store.saveLastSync(session.userId, DateTime.now());
     return report.ok;
