@@ -1,14 +1,39 @@
-// Recorrido completo en el emulador con la app real (almacenamiento seguro, SQLCipher y modelo TFLite).
+// Recorrido completo en el dispositivo con la app real (almacenamiento seguro, SQLCipher y modelo TFLite).
 // Uso: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_flow_test.dart
 // Las capturas quedan en build/screenshots (o en SCREENSHOT_DIR).
+//
+// La prueba de cuenta real lee el código de verificación en Mailpit. En el emulador Mailpit está en
+// 10.0.2.2:8025; en un celular por USB, `adb reverse tcp:8025 tcp:8025` y
+// --dart-define=MAILPIT_URL=http://localhost:8025.
 import 'package:agrovet/main.dart' as app;
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+const _mailpitUrl = String.fromEnvironment('MAILPIT_URL', defaultValue: 'http://10.0.2.2:8025');
+
+/// Código de 6 números del último correo que llegó a Mailpit para esa dirección.
+Future<String> mailpitCode(String email) async {
+  final dio = Dio(BaseOptions(baseUrl: _mailpitUrl));
+  for (var attempt = 0; attempt < 20; attempt++) {
+    final search = await dio.get<Map<String, dynamic>>('/api/v1/search', queryParameters: {'query': 'to:"$email"'});
+    final messages = (search.data!['messages'] as List).cast<Map<String, dynamic>>();
+    if (messages.isNotEmpty) {
+      final message = await dio.get<Map<String, dynamic>>('/api/v1/message/${messages.first['ID']}');
+      final match = RegExp(r'\b(\d{6})\b').firstMatch(message.data!['Text'] as String);
+      if (match != null) return match.group(1)!;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+  }
+  throw StateError('No llegó el código a Mailpit para $email');
+}
+
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   var surfaceConverted = false;
+  // El binding revierte la conversión de la superficie al terminar cada prueba
+  setUp(() => surfaceConverted = false);
 
   Future<void> shot(WidgetTester tester, String name) async {
     await tester.pumpAndSettle();
@@ -112,6 +137,14 @@ void main() {
     await tester.enterText(find.widgetWithText(TextFormField, 'Correo'), email);
     await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave-segura-1');
     await tester.tap(find.text('Crear cuenta'));
+    await settle(tester, seconds: 5);
+
+    // Pantalla del código: se lee el correo que recibió Mailpit en el equipo
+    expect(find.text('Revise su correo'), findsOneWidget);
+    expect(find.textContaining('Reenviar código en'), findsOneWidget);
+    await shot(tester, '08_verificar_correo');
+    final code = await mailpitCode(email);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Código'), code);
     await settle(tester, seconds: 5);
     expect(find.text('Todavía no hay vacas'), findsOneWidget);
     expect(find.text('Datos de demostración'), findsNothing);
