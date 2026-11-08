@@ -914,6 +914,64 @@ class $DailyRecordsTable extends DailyRecords
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _udderRednessMeta = const VerificationMeta(
+    'udderRedness',
+  );
+  @override
+  late final GeneratedColumn<bool> udderRedness = GeneratedColumn<bool>(
+    'udder_redness',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("udder_redness" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _udderHeatMeta = const VerificationMeta(
+    'udderHeat',
+  );
+  @override
+  late final GeneratedColumn<bool> udderHeat = GeneratedColumn<bool>(
+    'udder_heat',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("udder_heat" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _ateNormallyMeta = const VerificationMeta(
+    'ateNormally',
+  );
+  @override
+  late final GeneratedColumn<bool> ateNormally = GeneratedColumn<bool>(
+    'ate_normally',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("ate_normally" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _milkDropMeta = const VerificationMeta(
+    'milkDrop',
+  );
+  @override
+  late final GeneratedColumn<bool> milkDrop = GeneratedColumn<bool>(
+    'milk_drop',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("milk_drop" IN (0, 1))',
+    ),
+  );
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -940,6 +998,10 @@ class $DailyRecordsTable extends DailyRecords
     abnormalMilk,
     udderPain,
     lethargy,
+    udderRedness,
+    udderHeat,
+    ateNormally,
+    milkDrop,
     notes,
   ];
   @override
@@ -1061,6 +1123,36 @@ class $DailyRecordsTable extends DailyRecords
         lethargy.isAcceptableOrUnknown(data['lethargy']!, _lethargyMeta),
       );
     }
+    if (data.containsKey('udder_redness')) {
+      context.handle(
+        _udderRednessMeta,
+        udderRedness.isAcceptableOrUnknown(
+          data['udder_redness']!,
+          _udderRednessMeta,
+        ),
+      );
+    }
+    if (data.containsKey('udder_heat')) {
+      context.handle(
+        _udderHeatMeta,
+        udderHeat.isAcceptableOrUnknown(data['udder_heat']!, _udderHeatMeta),
+      );
+    }
+    if (data.containsKey('ate_normally')) {
+      context.handle(
+        _ateNormallyMeta,
+        ateNormally.isAcceptableOrUnknown(
+          data['ate_normally']!,
+          _ateNormallyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('milk_drop')) {
+      context.handle(
+        _milkDropMeta,
+        milkDrop.isAcceptableOrUnknown(data['milk_drop']!, _milkDropMeta),
+      );
+    }
     if (data.containsKey('notes')) {
       context.handle(
         _notesMeta,
@@ -1140,6 +1232,22 @@ class $DailyRecordsTable extends DailyRecords
         DriftSqlType.bool,
         data['${effectivePrefix}lethargy'],
       )!,
+      udderRedness: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}udder_redness'],
+      )!,
+      udderHeat: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}udder_heat'],
+      )!,
+      ateNormally: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}ate_normally'],
+      ),
+      milkDrop: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}milk_drop'],
+      ),
       notes: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
@@ -1174,7 +1282,17 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
   final bool udderSwelling;
   final bool abnormalMilk;
   final bool udderPain;
+
+  /// Casilla de versiones anteriores ("decaída, come poco"); ya no se pregunta pero se conserva.
   final bool lethargy;
+  final bool udderRedness;
+  final bool udderHeat;
+
+  /// ¿Comió normal? null = sin respuesta.
+  final bool? ateNormally;
+
+  /// ¿Produjo menos leche de lo usual? null = sin respuesta.
+  final bool? milkDrop;
   final String? notes;
   const DailyRecordRow({
     required this.updatedAt,
@@ -1192,6 +1310,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     required this.abnormalMilk,
     required this.udderPain,
     required this.lethargy,
+    required this.udderRedness,
+    required this.udderHeat,
+    this.ateNormally,
+    this.milkDrop,
     this.notes,
   });
   @override
@@ -1220,6 +1342,14 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     map['abnormal_milk'] = Variable<bool>(abnormalMilk);
     map['udder_pain'] = Variable<bool>(udderPain);
     map['lethargy'] = Variable<bool>(lethargy);
+    map['udder_redness'] = Variable<bool>(udderRedness);
+    map['udder_heat'] = Variable<bool>(udderHeat);
+    if (!nullToAbsent || ateNormally != null) {
+      map['ate_normally'] = Variable<bool>(ateNormally);
+    }
+    if (!nullToAbsent || milkDrop != null) {
+      map['milk_drop'] = Variable<bool>(milkDrop);
+    }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
@@ -1251,6 +1381,14 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       abnormalMilk: Value(abnormalMilk),
       udderPain: Value(udderPain),
       lethargy: Value(lethargy),
+      udderRedness: Value(udderRedness),
+      udderHeat: Value(udderHeat),
+      ateNormally: ateNormally == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ateNormally),
+      milkDrop: milkDrop == null && nullToAbsent
+          ? const Value.absent()
+          : Value(milkDrop),
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
@@ -1278,6 +1416,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       abnormalMilk: serializer.fromJson<bool>(json['abnormalMilk']),
       udderPain: serializer.fromJson<bool>(json['udderPain']),
       lethargy: serializer.fromJson<bool>(json['lethargy']),
+      udderRedness: serializer.fromJson<bool>(json['udderRedness']),
+      udderHeat: serializer.fromJson<bool>(json['udderHeat']),
+      ateNormally: serializer.fromJson<bool?>(json['ateNormally']),
+      milkDrop: serializer.fromJson<bool?>(json['milkDrop']),
       notes: serializer.fromJson<String?>(json['notes']),
     );
   }
@@ -1300,6 +1442,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       'abnormalMilk': serializer.toJson<bool>(abnormalMilk),
       'udderPain': serializer.toJson<bool>(udderPain),
       'lethargy': serializer.toJson<bool>(lethargy),
+      'udderRedness': serializer.toJson<bool>(udderRedness),
+      'udderHeat': serializer.toJson<bool>(udderHeat),
+      'ateNormally': serializer.toJson<bool?>(ateNormally),
+      'milkDrop': serializer.toJson<bool?>(milkDrop),
       'notes': serializer.toJson<String?>(notes),
     };
   }
@@ -1320,6 +1466,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     bool? abnormalMilk,
     bool? udderPain,
     bool? lethargy,
+    bool? udderRedness,
+    bool? udderHeat,
+    Value<bool?> ateNormally = const Value.absent(),
+    Value<bool?> milkDrop = const Value.absent(),
     Value<String?> notes = const Value.absent(),
   }) => DailyRecordRow(
     updatedAt: updatedAt ?? this.updatedAt,
@@ -1337,6 +1487,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     abnormalMilk: abnormalMilk ?? this.abnormalMilk,
     udderPain: udderPain ?? this.udderPain,
     lethargy: lethargy ?? this.lethargy,
+    udderRedness: udderRedness ?? this.udderRedness,
+    udderHeat: udderHeat ?? this.udderHeat,
+    ateNormally: ateNormally.present ? ateNormally.value : this.ateNormally,
+    milkDrop: milkDrop.present ? milkDrop.value : this.milkDrop,
     notes: notes.present ? notes.value : this.notes,
   );
   DailyRecordRow copyWithCompanion(DailyRecordsCompanion data) {
@@ -1366,6 +1520,14 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           : this.abnormalMilk,
       udderPain: data.udderPain.present ? data.udderPain.value : this.udderPain,
       lethargy: data.lethargy.present ? data.lethargy.value : this.lethargy,
+      udderRedness: data.udderRedness.present
+          ? data.udderRedness.value
+          : this.udderRedness,
+      udderHeat: data.udderHeat.present ? data.udderHeat.value : this.udderHeat,
+      ateNormally: data.ateNormally.present
+          ? data.ateNormally.value
+          : this.ateNormally,
+      milkDrop: data.milkDrop.present ? data.milkDrop.value : this.milkDrop,
       notes: data.notes.present ? data.notes.value : this.notes,
     );
   }
@@ -1388,6 +1550,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           ..write('abnormalMilk: $abnormalMilk, ')
           ..write('udderPain: $udderPain, ')
           ..write('lethargy: $lethargy, ')
+          ..write('udderRedness: $udderRedness, ')
+          ..write('udderHeat: $udderHeat, ')
+          ..write('ateNormally: $ateNormally, ')
+          ..write('milkDrop: $milkDrop, ')
           ..write('notes: $notes')
           ..write(')'))
         .toString();
@@ -1410,6 +1576,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     abnormalMilk,
     udderPain,
     lethargy,
+    udderRedness,
+    udderHeat,
+    ateNormally,
+    milkDrop,
     notes,
   );
   @override
@@ -1431,6 +1601,10 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           other.abnormalMilk == this.abnormalMilk &&
           other.udderPain == this.udderPain &&
           other.lethargy == this.lethargy &&
+          other.udderRedness == this.udderRedness &&
+          other.udderHeat == this.udderHeat &&
+          other.ateNormally == this.ateNormally &&
+          other.milkDrop == this.milkDrop &&
           other.notes == this.notes);
 }
 
@@ -1450,6 +1624,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
   final Value<bool> abnormalMilk;
   final Value<bool> udderPain;
   final Value<bool> lethargy;
+  final Value<bool> udderRedness;
+  final Value<bool> udderHeat;
+  final Value<bool?> ateNormally;
+  final Value<bool?> milkDrop;
   final Value<String?> notes;
   final Value<int> rowid;
   const DailyRecordsCompanion({
@@ -1468,6 +1646,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     this.abnormalMilk = const Value.absent(),
     this.udderPain = const Value.absent(),
     this.lethargy = const Value.absent(),
+    this.udderRedness = const Value.absent(),
+    this.udderHeat = const Value.absent(),
+    this.ateNormally = const Value.absent(),
+    this.milkDrop = const Value.absent(),
     this.notes = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1487,6 +1669,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     this.abnormalMilk = const Value.absent(),
     this.udderPain = const Value.absent(),
     this.lethargy = const Value.absent(),
+    this.udderRedness = const Value.absent(),
+    this.udderHeat = const Value.absent(),
+    this.ateNormally = const Value.absent(),
+    this.milkDrop = const Value.absent(),
     this.notes = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : updatedAt = Value(updatedAt),
@@ -1509,6 +1695,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     Expression<bool>? abnormalMilk,
     Expression<bool>? udderPain,
     Expression<bool>? lethargy,
+    Expression<bool>? udderRedness,
+    Expression<bool>? udderHeat,
+    Expression<bool>? ateNormally,
+    Expression<bool>? milkDrop,
     Expression<String>? notes,
     Expression<int>? rowid,
   }) {
@@ -1528,6 +1718,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
       if (abnormalMilk != null) 'abnormal_milk': abnormalMilk,
       if (udderPain != null) 'udder_pain': udderPain,
       if (lethargy != null) 'lethargy': lethargy,
+      if (udderRedness != null) 'udder_redness': udderRedness,
+      if (udderHeat != null) 'udder_heat': udderHeat,
+      if (ateNormally != null) 'ate_normally': ateNormally,
+      if (milkDrop != null) 'milk_drop': milkDrop,
       if (notes != null) 'notes': notes,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1549,6 +1743,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     Value<bool>? abnormalMilk,
     Value<bool>? udderPain,
     Value<bool>? lethargy,
+    Value<bool>? udderRedness,
+    Value<bool>? udderHeat,
+    Value<bool?>? ateNormally,
+    Value<bool?>? milkDrop,
     Value<String?>? notes,
     Value<int>? rowid,
   }) {
@@ -1568,6 +1766,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
       abnormalMilk: abnormalMilk ?? this.abnormalMilk,
       udderPain: udderPain ?? this.udderPain,
       lethargy: lethargy ?? this.lethargy,
+      udderRedness: udderRedness ?? this.udderRedness,
+      udderHeat: udderHeat ?? this.udderHeat,
+      ateNormally: ateNormally ?? this.ateNormally,
+      milkDrop: milkDrop ?? this.milkDrop,
       notes: notes ?? this.notes,
       rowid: rowid ?? this.rowid,
     );
@@ -1621,6 +1823,18 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     if (lethargy.present) {
       map['lethargy'] = Variable<bool>(lethargy.value);
     }
+    if (udderRedness.present) {
+      map['udder_redness'] = Variable<bool>(udderRedness.value);
+    }
+    if (udderHeat.present) {
+      map['udder_heat'] = Variable<bool>(udderHeat.value);
+    }
+    if (ateNormally.present) {
+      map['ate_normally'] = Variable<bool>(ateNormally.value);
+    }
+    if (milkDrop.present) {
+      map['milk_drop'] = Variable<bool>(milkDrop.value);
+    }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
@@ -1648,6 +1862,10 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
           ..write('abnormalMilk: $abnormalMilk, ')
           ..write('udderPain: $udderPain, ')
           ..write('lethargy: $lethargy, ')
+          ..write('udderRedness: $udderRedness, ')
+          ..write('udderHeat: $udderHeat, ')
+          ..write('ateNormally: $ateNormally, ')
+          ..write('milkDrop: $milkDrop, ')
           ..write('notes: $notes, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3728,6 +3946,10 @@ typedef $$DailyRecordsTableCreateCompanionBuilder =
       Value<bool> abnormalMilk,
       Value<bool> udderPain,
       Value<bool> lethargy,
+      Value<bool> udderRedness,
+      Value<bool> udderHeat,
+      Value<bool?> ateNormally,
+      Value<bool?> milkDrop,
       Value<String?> notes,
       Value<int> rowid,
     });
@@ -3748,6 +3970,10 @@ typedef $$DailyRecordsTableUpdateCompanionBuilder =
       Value<bool> abnormalMilk,
       Value<bool> udderPain,
       Value<bool> lethargy,
+      Value<bool> udderRedness,
+      Value<bool> udderHeat,
+      Value<bool?> ateNormally,
+      Value<bool?> milkDrop,
       Value<String?> notes,
       Value<int> rowid,
     });
@@ -3850,6 +4076,26 @@ class $$DailyRecordsTableFilterComposer
 
   ColumnFilters<bool> get lethargy => $composableBuilder(
     column: $table.lethargy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get udderRedness => $composableBuilder(
+    column: $table.udderRedness,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get udderHeat => $composableBuilder(
+    column: $table.udderHeat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get ateNormally => $composableBuilder(
+    column: $table.ateNormally,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get milkDrop => $composableBuilder(
+    column: $table.milkDrop,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3961,6 +4207,26 @@ class $$DailyRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get udderRedness => $composableBuilder(
+    column: $table.udderRedness,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get udderHeat => $composableBuilder(
+    column: $table.udderHeat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get ateNormally => $composableBuilder(
+    column: $table.ateNormally,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get milkDrop => $composableBuilder(
+    column: $table.milkDrop,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get notes => $composableBuilder(
     column: $table.notes,
     builder: (column) => ColumnOrderings(column),
@@ -4051,6 +4317,22 @@ class $$DailyRecordsTableAnnotationComposer
   GeneratedColumn<bool> get lethargy =>
       $composableBuilder(column: $table.lethargy, builder: (column) => column);
 
+  GeneratedColumn<bool> get udderRedness => $composableBuilder(
+    column: $table.udderRedness,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get udderHeat =>
+      $composableBuilder(column: $table.udderHeat, builder: (column) => column);
+
+  GeneratedColumn<bool> get ateNormally => $composableBuilder(
+    column: $table.ateNormally,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get milkDrop =>
+      $composableBuilder(column: $table.milkDrop, builder: (column) => column);
+
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
@@ -4121,6 +4403,10 @@ class $$DailyRecordsTableTableManager
                 Value<bool> abnormalMilk = const Value.absent(),
                 Value<bool> udderPain = const Value.absent(),
                 Value<bool> lethargy = const Value.absent(),
+                Value<bool> udderRedness = const Value.absent(),
+                Value<bool> udderHeat = const Value.absent(),
+                Value<bool?> ateNormally = const Value.absent(),
+                Value<bool?> milkDrop = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DailyRecordsCompanion(
@@ -4139,6 +4425,10 @@ class $$DailyRecordsTableTableManager
                 abnormalMilk: abnormalMilk,
                 udderPain: udderPain,
                 lethargy: lethargy,
+                udderRedness: udderRedness,
+                udderHeat: udderHeat,
+                ateNormally: ateNormally,
+                milkDrop: milkDrop,
                 notes: notes,
                 rowid: rowid,
               ),
@@ -4159,6 +4449,10 @@ class $$DailyRecordsTableTableManager
                 Value<bool> abnormalMilk = const Value.absent(),
                 Value<bool> udderPain = const Value.absent(),
                 Value<bool> lethargy = const Value.absent(),
+                Value<bool> udderRedness = const Value.absent(),
+                Value<bool> udderHeat = const Value.absent(),
+                Value<bool?> ateNormally = const Value.absent(),
+                Value<bool?> milkDrop = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DailyRecordsCompanion.insert(
@@ -4177,6 +4471,10 @@ class $$DailyRecordsTableTableManager
                 abnormalMilk: abnormalMilk,
                 udderPain: udderPain,
                 lethargy: lethargy,
+                udderRedness: udderRedness,
+                udderHeat: udderHeat,
+                ateNormally: ateNormally,
+                milkDrop: milkDrop,
                 notes: notes,
                 rowid: rowid,
               ),
