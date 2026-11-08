@@ -58,6 +58,15 @@ agrovet:
     from: ${MAIL_FROM}
     # false solo en pruebas: el correo sale en el mismo hilo
     async: true
+  # Asistente con IA. Sin GEMINI_API_KEY queda apagado (responde 503) y la app muestra consejos fijos.
+  assistant:
+    provider: ${ASSISTANT_PROVIDER:gemini}
+    api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-2.5-flash}
+    base-url: https://generativelanguage.googleapis.com
+    timeout: PT30S
+    max-per-hour: ${ASSISTANT_MAX_PER_HOUR:20}
+    max-per-day: ${ASSISTANT_MAX_PER_DAY:60}
   photos:
     storage-dir: ${PHOTO_STORAGE_DIR}
     max-size: 5MB
