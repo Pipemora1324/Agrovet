@@ -51,6 +51,10 @@ services:
       SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
       MAIL_FROM: ${MAIL_FROM:-AgroVet <no-responder@agrovet.local>}
       PHOTO_STORAGE_DIR: /app/data/photos
+      # Asistente: sin clave queda apagado. La clave va solo en backend/.env, nunca en la app
+      ASSISTANT_PROVIDER: ${ASSISTANT_PROVIDER:-gemini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
     volumes:
       - photos:/app/data/photos
     ports:

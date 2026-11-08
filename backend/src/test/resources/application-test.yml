@@ -16,6 +16,9 @@ agrovet:
   login-rate-limit:
     # MockMvc siempre usa 127.0.0.1: el límite por IP se prueba en LoginRateLimiterTest
     max-attempts-per-ip: 10000
+  assistant:
+    max-per-hour: 3
+    max-per-day: 5
   photos:
     storage-dir: ${java.io.tmpdir}/agrovet-test-photos
   mail:

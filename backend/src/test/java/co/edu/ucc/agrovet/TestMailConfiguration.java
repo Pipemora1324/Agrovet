@@ -19,4 +19,10 @@ public class TestMailConfiguration {
     MutableClock testClock() {
         return new MutableClock();
     }
+
+    @Bean
+    @Primary
+    FakeLlmClient fakeLlmClient() {
+        return new FakeLlmClient();
+    }
 }
