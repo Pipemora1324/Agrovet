@@ -16,7 +16,8 @@ DateTime parseDateKey(String value) {
 
 /// Repositorio local sobre la base cifrada. Todo cambio queda pendiente de sincronizar;
 /// en la sesión de demostración se marca isDemo y nunca se envía al servidor.
-class LocalRepository implements CowRepository, RecordRepository, InferenceRepository, AlertRepository {
+class LocalRepository
+    implements CowRepository, RecordRepository, InferenceRepository, AlertRepository, PhotoRepository {
   LocalRepository(this.db, {this.isDemo = false, DateTime Function()? clock}) : _now = clock ?? DateTime.now;
 
   final AppDatabase db;
@@ -280,6 +281,62 @@ class LocalRepository implements CowRepository, RecordRepository, InferenceRepos
       ),
     );
   }
+
+  // ---- Fotos ----
+
+  @override
+  Stream<List<CowPhoto>> watchPhotos(String cowId) =>
+      (db.select(db.cowPhotos)
+            ..where((p) => p.cowId.equals(cowId) & p.deleted.equals(false))
+            ..orderBy([(p) => OrderingTerm.desc(p.takenOn), (p) => OrderingTerm.desc(p.createdAt)]))
+          .watch()
+          .map((rows) => rows.map(_toPhoto).toList());
+
+  @override
+  Future<List<CowPhoto>> photosBetween(String cowId, DateTime from, DateTime to) async {
+    final rows = await (db.select(db.cowPhotos)
+          ..where((p) =>
+              p.cowId.equals(cowId) & p.deleted.equals(false) & p.takenOn.isBetweenValues(dateKey(from), dateKey(to)))
+          ..orderBy([(p) => OrderingTerm.desc(p.takenOn), (p) => OrderingTerm.desc(p.createdAt)]))
+        .get();
+    return rows.map(_toPhoto).toList();
+  }
+
+  @override
+  Future<void> savePhoto(CowPhoto photo) => db.into(db.cowPhotos).insertOnConflictUpdate(
+        CowPhotosCompanion.insert(
+          id: photo.id,
+          cowId: photo.cowId,
+          takenOn: dateKey(photo.takenOn),
+          fileName: photo.fileName,
+          sizeBytes: photo.sizeBytes,
+          createdAt: photo.createdAt,
+          imageUploaded: Value(photo.imageUploaded),
+          updatedAt: _now(),
+          syncPending: const Value(true),
+          syncError: const Value(null),
+          isDemo: Value(isDemo),
+        ),
+      );
+
+  @override
+  Future<void> deletePhoto(String photoId) =>
+      (db.update(db.cowPhotos)..where((p) => p.id.equals(photoId))).write(CowPhotosCompanion(
+        deleted: const Value(true),
+        updatedAt: Value(_now()),
+        syncPending: const Value(true),
+        syncError: const Value(null),
+      ));
+
+  CowPhoto _toPhoto(CowPhotoRow row) => CowPhoto(
+        id: row.id,
+        cowId: row.cowId,
+        takenOn: parseDateKey(row.takenOn),
+        fileName: row.fileName,
+        sizeBytes: row.sizeBytes,
+        createdAt: row.createdAt,
+        imageUploaded: row.imageUploaded,
+      );
 
   CowAlert _toAlert(AlertRow row) => CowAlert(
     id: row.id,

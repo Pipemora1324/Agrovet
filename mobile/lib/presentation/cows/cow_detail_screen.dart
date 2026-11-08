@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
 import '../history/history_screen.dart';
+import '../photos/cow_photos_screen.dart';
 import '../records/daily_record_screen.dart';
 import '../risk/risk_screen.dart';
 import '../widgets/app_scaffold.dart';
@@ -293,6 +294,14 @@ class _Actions extends StatelessWidget {
             label: 'Evaluar riesgo',
             onPressed: () =>
                 Navigator.push(context, MaterialPageRoute(builder: (_) => RiskScreen(cow: cow))),
+          ),
+          const SizedBox(height: 12),
+          BigButton(
+            icon: Icons.photo_camera,
+            label: 'Fotos',
+            outlined: true,
+            onPressed: () =>
+                Navigator.push(context, MaterialPageRoute(builder: (_) => CowPhotosScreen(cow: cow))),
           ),
           const SizedBox(height: 12),
           BigButton(

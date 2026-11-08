@@ -42,3 +42,13 @@ abstract interface class AlertRepository {
   /// Marca la alerta como atendida; queda pendiente de sincronizar.
   Future<void> markAlertAttended(String alertId);
 }
+
+abstract interface class PhotoRepository {
+  /// Fotos de la vaca, de la más reciente a la más antigua.
+  Stream<List<CowPhoto>> watchPhotos(String cowId);
+  Future<List<CowPhoto>> photosBetween(String cowId, DateTime from, DateTime to);
+  Future<void> savePhoto(CowPhoto photo);
+
+  /// Borrado lógico (para sincronizar); el archivo lo borra quien llama.
+  Future<void> deletePhoto(String photoId);
+}

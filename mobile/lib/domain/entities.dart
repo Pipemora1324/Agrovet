@@ -242,3 +242,29 @@ class CowAlert extends Equatable {
 
 /// Fecha sin hora, en hora local.
 DateTime dateOnly(DateTime value) => DateTime(value.year, value.month, value.day);
+
+/// Foto de una vaca. El archivo está en el almacenamiento privado de la app, sin metadatos.
+class CowPhoto extends Equatable {
+  const CowPhoto({
+    required this.id,
+    required this.cowId,
+    required this.takenOn,
+    required this.fileName,
+    required this.sizeBytes,
+    required this.createdAt,
+    this.imageUploaded = false,
+  });
+
+  final String id;
+  final String cowId;
+
+  /// Día de la foto (sin hora).
+  final DateTime takenOn;
+  final String fileName;
+  final int sizeBytes;
+  final DateTime createdAt;
+  final bool imageUploaded;
+
+  @override
+  List<Object?> get props => [id, cowId, takenOn, fileName, sizeBytes, createdAt, imageUploaded];
+}
