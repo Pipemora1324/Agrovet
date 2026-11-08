@@ -17,13 +17,13 @@ class FlywayMigrationIntegrationTest extends IntegrationTest {
     void allMigrationsAreApplied() {
         List<String> versions = jdbc.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank", String.class);
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7");
     }
 
     @Test
     void expectedTablesExist() {
         List<String> tables = jdbc.queryForList(
                 "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'", String.class);
-        assertThat(tables).contains("users", "cows", "daily_records", "inferences", "alerts", "refresh_tokens");
+        assertThat(tables).contains("users", "cows", "daily_records", "inferences", "alerts", "refresh_tokens", "email_codes");
     }
 }

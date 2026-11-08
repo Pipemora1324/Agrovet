@@ -4,6 +4,9 @@ spring:
     url: jdbc:postgresql://placeholder/test
     username: test
     password: test
+  mail:
+    # No se conecta nunca: las pruebas reemplazan el remitente por RecordingEmailSender
+    host: localhost
 
 agrovet:
   jwt:
@@ -13,3 +16,9 @@ agrovet:
   login-rate-limit:
     # MockMvc siempre usa 127.0.0.1: el límite por IP se prueba en LoginRateLimiterTest
     max-attempts-per-ip: 10000
+  mail:
+    from: AgroVet <no-responder@agrovet.test>
+    async: false
+  email-codes:
+    # Mismo motivo: el límite por IP se prueba en CodeRequestLimiterTest
+    max-requests-per-ip: 10000

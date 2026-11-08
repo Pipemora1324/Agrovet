@@ -5,10 +5,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
-/** Base de las pruebas de integración: aplicación completa contra PostgreSQL 15 en Testcontainers. */
+/**
+ * Base de las pruebas de integración: aplicación completa contra PostgreSQL 15 en Testcontainers.
+ * Los correos no salen: quedan en {@link RecordingEmailSender}.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import(TestcontainersConfiguration.class)
+@Import({ TestcontainersConfiguration.class, TestMailConfiguration.class })
 public abstract class IntegrationTest {
 }
