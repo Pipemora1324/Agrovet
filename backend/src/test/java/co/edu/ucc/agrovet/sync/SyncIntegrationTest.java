@@ -313,6 +313,41 @@ class SyncIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void evaluationBySymptomsOnlyIsStoredWithItsCause() throws Exception {
+        UUID cowId = UUID.randomUUID();
+        UUID bySymptoms = UUID.randomUUID();
+        UUID empty = UUID.randomUUID();
+        Map<String, Object> symptomsOnly = new HashMap<>();
+        symptomsOnly.put("id", bySymptoms);
+        symptomsOnly.put("cowId", cowId);
+        symptomsOnly.put("windowEndDate", LocalDate.of(2026, 3, 2));
+        symptomsOnly.put("probability", null);
+        symptomsOnly.put("symptomScore", 5);
+        symptomsOnly.put("cause", "SYMPTOMS");
+        symptomsOnly.put("riskLevel", "RED");
+        symptomsOnly.put("modelVersion", "sintomas-provisional-1");
+        symptomsOnly.put("updatedAt", T1);
+        Map<String, Object> withoutIndicators = new HashMap<>(symptomsOnly);
+        withoutIndicators.put("id", empty);
+        withoutIndicators.put("symptomScore", null);
+
+        JsonNode response = syncOk(ana, Map.of("cows", List.of(cow(cowId, "S-SIN", "LACTATING", T1)),
+                "inferences", List.of(symptomsOnly, withoutIndicators)));
+
+        assertThat(response.get("confirmed").get("inferences")).hasSize(1);
+        assertThat(response.get("rejected")).hasSize(1);
+        assertThat(response.get("rejected").get(0).get("id").asText()).isEqualTo(empty.toString());
+        assertThat(jdbc.queryForObject("SELECT probability IS NULL AND symptom_score = 5 AND cause = 'SYMPTOMS' "
+                + "FROM inferences WHERE id = ?", Boolean.class, bySymptoms)).isTrue();
+        mvc.perform(get("/api/cows/" + cowId + "/history?from=2026-03-01&to=2026-03-03")
+                        .header("Authorization", ana.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.inferences[0].symptomScore").value(5))
+                .andExpect(jsonPath("$.inferences[0].cause").value("SYMPTOMS"))
+                .andExpect(jsonPath("$.inferences[0].probability").doesNotExist());
+    }
+
+    @Test
     void recordWithoutMeasurementsIsAcceptedAndKeptEmpty() throws Exception {
         UUID cowId = UUID.randomUUID();
         UUID recordId = UUID.randomUUID();

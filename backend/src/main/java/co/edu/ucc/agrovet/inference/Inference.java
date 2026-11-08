@@ -11,7 +11,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-/** Resultado del modelo LSTM ejecutado en el celular. */
+/**
+ * Evaluación del semáforo hecha en el celular: el color final es el más grave entre el modelo LSTM y
+ * el puntaje por síntomas, y {@code cause} dice cuál lo fijó.
+ */
 @Entity
 @Table(name = "inferences")
 public class Inference {
@@ -25,8 +28,17 @@ public class Inference {
     @Column(name = "window_end_date", nullable = false)
     private LocalDate windowEndDate;
 
-    @Column(nullable = false)
-    private double probability;
+    /** Probabilidad del modelo; null si no hubo días suficientes con datos numéricos. */
+    @Column
+    private Double probability;
+
+    /** Puntaje por síntomas del día (reglas provisionales); null en evaluaciones anteriores. */
+    @Column(name = "symptom_score")
+    private Integer symptomScore;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private RiskCause cause;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "risk_level", nullable = false, length = 10)
@@ -53,11 +65,13 @@ public class Inference {
         this.updatedAt = createdAt;
     }
 
-    public void update(UUID cowId, LocalDate windowEndDate, double probability, RiskLevel riskLevel,
-            String modelVersion, boolean deleted, Instant updatedAt) {
+    public void update(UUID cowId, LocalDate windowEndDate, Double probability, Integer symptomScore,
+            RiskCause cause, RiskLevel riskLevel, String modelVersion, boolean deleted, Instant updatedAt) {
         this.cowId = cowId;
         this.windowEndDate = windowEndDate;
         this.probability = probability;
+        this.symptomScore = symptomScore;
+        this.cause = cause;
         this.riskLevel = riskLevel;
         this.modelVersion = modelVersion;
         this.deleted = deleted;
@@ -76,8 +90,16 @@ public class Inference {
         return windowEndDate;
     }
 
-    public double getProbability() {
+    public Double getProbability() {
         return probability;
+    }
+
+    public Integer getSymptomScore() {
+        return symptomScore;
+    }
+
+    public RiskCause getCause() {
+        return cause;
     }
 
     public RiskLevel getRiskLevel() {

@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import co.edu.ucc.agrovet.cow.ProductionStatus;
+import co.edu.ucc.agrovet.inference.RiskCause;
 import co.edu.ucc.agrovet.inference.RiskLevel;
 
 public final class SyncDtos {
@@ -84,8 +85,12 @@ public final class SyncDtos {
             @NotNull(message = "Falta el id.") UUID id,
             @NotNull(message = "Falta la vaca.") UUID cowId,
             @NotNull(message = "Falta la fecha de la ventana.") LocalDate windowEndDate,
-            @NotNull @DecimalMin(value = "0", message = "Probabilidad fuera de rango.")
+            // null si no hubo días suficientes para el modelo; entonces debe venir el puntaje por síntomas
+            @DecimalMin(value = "0", message = "Probabilidad fuera de rango.")
             @DecimalMax(value = "1", message = "Probabilidad fuera de rango.") Double probability,
+            @Min(value = 0, message = "Puntaje de síntomas fuera de rango.")
+            @Max(value = 30, message = "Puntaje de síntomas fuera de rango.") Integer symptomScore,
+            RiskCause cause,
             @NotNull(message = "Falta el color del semáforo.") RiskLevel riskLevel,
             @NotBlank @Size(max = 40) String modelVersion,
             @NotNull(message = "Falta la fecha de modificación.") Instant updatedAt,
