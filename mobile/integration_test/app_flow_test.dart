@@ -162,9 +162,9 @@ void main() {
     await settle(tester);
     await tester.tap(find.text('Registro de hoy'));
     await settle(tester);
-    await tester.enterText(find.widgetWithText(TextFormField, 'Temperatura'), '38,7');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Leche del día'), '11,5');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Alimento consumido'), '9');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Temperatura (opcional)'), '38,7');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Leche del día (opcional)'), '11,5');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Alimento consumido (opcional)'), '9');
     await tester.scrollUntilVisible(find.text('Guardar registro'), 300, scrollable: find.byType(Scrollable).first);
     await tester.tap(find.text('Guardar registro'));
     await settle(tester);

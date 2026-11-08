@@ -92,4 +92,17 @@ void main() {
     await cubit.close();
     await again.close();
   });
+
+  test('temperatura, leche y alimento son opcionales: se guarda solo con síntomas', () async {
+    final cubit = DailyRecordCubit(repo, cowId: 'c1', date: today);
+    await cubit.load();
+    cubit.updateSymptoms(const Symptoms(udderPain: true));
+    await cubit.save();
+
+    final row = await db.select(db.dailyRecords).getSingle();
+    expect([row.temperatureC, row.milkL, row.feedKg], everyElement(isNull));
+    expect(row.udderPain, isTrue);
+    expect(row.syncPending, isTrue);
+    await cubit.close();
+  });
 }

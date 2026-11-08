@@ -145,7 +145,7 @@ class _DailyRecordViewState extends State<_DailyRecordView> {
                           const SizedBox(height: 20),
                           _NumberField(
                             controller: _temperature,
-                            label: 'Temperatura',
+                            label: 'Temperatura (opcional)',
                             unit: '°C',
                             hint: 'Ej.: 38,6',
                             icon: Icons.thermostat,
@@ -154,7 +154,7 @@ class _DailyRecordViewState extends State<_DailyRecordView> {
                           const SizedBox(height: 16),
                           _NumberField(
                             controller: _milk,
-                            label: 'Leche del día',
+                            label: 'Leche del día (opcional)',
                             unit: 'L',
                             hint: 'Ej.: 12,5',
                             icon: Icons.water_drop,
@@ -163,7 +163,7 @@ class _DailyRecordViewState extends State<_DailyRecordView> {
                           const SizedBox(height: 16),
                           _NumberField(
                             controller: _feed,
-                            label: 'Alimento consumido',
+                            label: 'Alimento consumido (opcional)',
                             unit: 'kg',
                             hint: 'Ej.: 10',
                             icon: Icons.grass,
@@ -251,6 +251,7 @@ class _NumberField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
+          helperText: 'Déjelo vacío si hoy no lo midió',
           prefixIcon: Icon(icon, size: 28),
           suffixText: unit,
           suffixStyle: Theme.of(context).textTheme.numberUnit,
