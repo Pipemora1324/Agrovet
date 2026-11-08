@@ -32,6 +32,14 @@ class Validators {
     return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(text.trim()) ? null : 'El correo no es válido';
   }
 
+  /// Opcional; si se escribe, solo números (y + al comienzo), entre 7 y 19 caracteres.
+  static String? phone(String? text) {
+    if (text == null || text.trim().isEmpty) return null;
+    return RegExp(r'^\+?[0-9][0-9 ]{6,18}$').hasMatch(text.trim())
+        ? null
+        : 'Escriba el teléfono solo con números, por ejemplo 3001234567';
+  }
+
   static String? password(String? text) {
     if (text == null || text.length < 8) return 'La contraseña debe tener al menos 8 caracteres';
     if (text.length > 72) return 'La contraseña es demasiado larga';

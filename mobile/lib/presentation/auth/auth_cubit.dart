@@ -116,10 +116,10 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  Future<void> register(String name, String email, String password) async {
+  Future<void> register(String name, String email, String password, {required bool acceptedPrivacy}) async {
     emit(const Unauthenticated(busy: true));
     try {
-      await api.register(name, email, password);
+      await api.register(name, email, password, acceptedPrivacy: acceptedPrivacy);
       // La pantalla ya dice a qué correo se envió: no hace falta otro aviso
       emit(AwaitingVerification(email: email.trim(), resendAvailableAt: _now().add(resendCooldown)));
     } on ApiException catch (e) {
@@ -165,6 +165,19 @@ class AuthCubit extends Cubit<AuthState> {
 
   /// Sesión abierta desde otra pantalla (por ejemplo, al terminar de cambiar la contraseña).
   Future<void> openSession(Session session) => _open(session);
+
+  /// Guarda el perfil o los tokens nuevos de la sesión actual (mismo usuario).
+  Future<void> updateSession(Session session) async {
+    final current = state;
+    if (current is! Authenticated || current.session.userId != session.userId) return;
+    await _open(session);
+  }
+
+  /// La cuenta se eliminó en el servidor (y sus datos locales ya se borraron).
+  Future<void> accountDeleted() async {
+    await store.clearSession();
+    emit(const Unauthenticated(message: 'Su cuenta y todos sus datos fueron eliminados.'));
+  }
 
   Future<void> _open(Session session) async {
     await store.saveSession(session);

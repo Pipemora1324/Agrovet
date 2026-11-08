@@ -28,6 +28,7 @@ import co.edu.ucc.agrovet.auth.code.CodeRequestLimiter;
 import co.edu.ucc.agrovet.auth.code.EmailCodeService;
 import co.edu.ucc.agrovet.config.JwtProperties;
 import co.edu.ucc.agrovet.mail.AccountMailer;
+import co.edu.ucc.agrovet.user.AccountDeletionService;
 import co.edu.ucc.agrovet.user.User;
 import co.edu.ucc.agrovet.user.UserRepository;
 
@@ -57,7 +58,7 @@ class AuthServiceTest {
         when(codes.ttl()).thenReturn(Duration.ofMinutes(15));
         JwtProperties props = new JwtProperties("x", "agrovet", Duration.ofMinutes(15), Duration.ofDays(14));
         service = new AuthService(users, refreshTokens, encoder, tokenService, rateLimiter, codes, codeLimiter,
-                mailer, props, Clock.fixed(NOW, ZoneOffset.UTC));
+                mailer, mock(AccountDeletionService.class), props, Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     private static User verifiedUser() {
@@ -69,7 +70,7 @@ class AuthServiceTest {
     @Test
     void registerOfVerifiedEmailOnlyWarnsTheOwner() {
         when(users.findByEmail("ana@correo.co")).thenReturn(Optional.of(verifiedUser()));
-        service.register(new RegisterRequest("Otra", " ANA@correo.co ", "clave-segura"), "1.1.1.1");
+        service.register(new RegisterRequest("Otra", " ANA@correo.co ", "clave-segura", true, "2026-11"), "1.1.1.1");
 
         verify(mailer).sendAccountAlreadyExists("ana@correo.co", "Ana");
         verify(codes, never()).issue(any(), any());
@@ -80,7 +81,7 @@ class AuthServiceTest {
     @Test
     void registerOfNewEmailCreatesUnverifiedUserAndSendsCode() {
         when(users.findByEmail("nuevo@correo.co")).thenReturn(Optional.empty());
-        service.register(new RegisterRequest("Nuevo", "nuevo@correo.co", "clave-segura"), "1.1.1.1");
+        service.register(new RegisterRequest("Nuevo", "nuevo@correo.co", "clave-segura", true, "2026-11"), "1.1.1.1");
 
         verify(codeLimiter).acquire("1.1.1.1", "nuevo@correo.co", CodePurpose.VERIFY_EMAIL);
         verify(users).save(any(User.class));
@@ -91,7 +92,7 @@ class AuthServiceTest {
     void dailyCodeLimitSkipsSendingWithoutError() {
         when(users.findByEmail("nuevo@correo.co")).thenReturn(Optional.empty());
         when(codes.canIssue(any(), eq(CodePurpose.VERIFY_EMAIL))).thenReturn(false);
-        service.register(new RegisterRequest("Nuevo", "nuevo@correo.co", "clave-segura"), "1.1.1.1");
+        service.register(new RegisterRequest("Nuevo", "nuevo@correo.co", "clave-segura", true, "2026-11"), "1.1.1.1");
         verify(codes, never()).issue(any(), any());
         verify(mailer, never()).sendVerificationCode(anyString(), anyString(), anyString(), any());
     }

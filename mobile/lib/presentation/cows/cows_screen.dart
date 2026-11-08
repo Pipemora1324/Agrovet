@@ -6,7 +6,7 @@ import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
-import '../auth/auth_cubit.dart';
+import '../profile/profile_screen.dart';
 import '../sync/sync_button.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/fade_in.dart';
@@ -28,21 +28,6 @@ class CowsScreen extends StatelessWidget {
 class _CowsView extends StatelessWidget {
   const _CowsView();
 
-  Future<void> _confirmLogout(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Cerrar sesión?'),
-        content: const Text('Sus datos quedan guardados y cifrados en este celular.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Cerrar sesión')),
-        ],
-      ),
-    );
-    if (confirmed == true && context.mounted) await context.read<AuthCubit>().logout();
-  }
-
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
@@ -50,9 +35,9 @@ class _CowsView extends StatelessWidget {
       actions: [
         const SyncButton(),
         IconButton(
-          tooltip: 'Cerrar sesión',
-          icon: const Icon(Icons.logout),
-          onPressed: () => _confirmLogout(context),
+          tooltip: 'Mi perfil',
+          icon: const Icon(Icons.account_circle),
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
         ),
       ],
       floatingActionButton: FloatingActionButton.extended(

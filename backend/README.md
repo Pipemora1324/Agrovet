@@ -95,7 +95,11 @@ migraciones sirven para cualquier PostgreSQL 15.
 | POST | `/api/auth/password/reset` | Cambia la contraseña con el código y cierra todas las sesiones. |
 | POST | `/api/auth/refresh` | Renueva la sesión; el refresh token usado deja de servir. |
 | POST | `/api/auth/logout` | Revoca la sesión. |
-| GET | `/api/auth/me` | Usuario autenticado. |
+| GET | `/api/auth/me` | Perfil del usuario autenticado. |
+| PUT | `/api/auth/me` | Edita nombre, finca, municipio y teléfono. |
+| POST | `/api/auth/me/password` | Cambia la contraseña (pide la actual), cierra todas las sesiones y devuelve una nueva. |
+| POST | `/api/auth/me/privacy` | Registra la aceptación del aviso de privacidad (cuentas anteriores o versión nueva). |
+| DELETE | `/api/auth/me` | Elimina la cuenta y todos sus datos (pide la contraseña). |
 | GET / POST | `/api/cows` | Lista o crea vacas del usuario. |
 | GET / PUT / DELETE | `/api/cows/{id}` | Consulta, edita o da de baja (borrado lógico). |
 | GET | `/api/cows/{id}/history?from=&to=` | Registros, inferencias y alertas (60 días por defecto). |
@@ -125,6 +129,13 @@ migraciones sirven para cualquier PostgreSQL 15.
     nadie puede "apartar" el correo de otra persona.
   - Las cuentas creadas antes de esta función quedaron verificadas en la migración V7.
   - Cambiar la contraseña con el código cierra todas las sesiones abiertas.
+- **Consentimiento** (Ley 1581 de 2012): el registro exige `acceptPrivacyPolicy = true` y guarda la
+  versión del aviso y la fecha de aceptación.
+- **Eliminación de la cuenta**: borrado definitivo (no lógico) de alertas, evaluaciones, registros,
+  vacas, sesiones, códigos y el usuario, en una sola transacción y después de confirmar la contraseña.
+  Un token de acceso ya emitido sigue siendo válido hasta que vence (15 minutos), pero ya no hay datos
+  que leer.
+- Cambiar la contraseña y eliminar la cuenta usan el mismo límite de intentos que el login.
 - **Límite de intentos** de login en memoria, por IP + correo y por IP; responde 429 con `Retry-After`.
   Vale para una sola instancia; detrás de un proxy hay que configurar
   `server.forward-headers-strategy` para tomar la IP real.

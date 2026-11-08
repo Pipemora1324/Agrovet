@@ -57,9 +57,9 @@ void main() {
 
   group('AuthCubit', () {
     test('registrarse lleva a escribir el código, con espera de 60 s para reenviar', () async {
-      when(() => api.register('Ana', 'ana@correo.co', 'clave-segura-1')).thenAnswer((_) async {});
+      when(() => api.register('Ana', 'ana@correo.co', 'clave-segura-1', acceptedPrivacy: true)).thenAnswer((_) async {});
       final auth = cubit();
-      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1');
+      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1', acceptedPrivacy: true);
 
       final state = auth.state as AwaitingVerification;
       expect(state.email, 'ana@correo.co');
@@ -79,10 +79,10 @@ void main() {
     });
 
     test('el código correcto abre la sesión y la guarda para usarla sin conexión', () async {
-      when(() => api.register(any(), any(), any())).thenAnswer((_) async {});
+      when(() => api.register(any(), any(), any(), acceptedPrivacy: any(named: 'acceptedPrivacy'))).thenAnswer((_) async {});
       when(() => api.verifyEmail('ana@correo.co', '123456')).thenAnswer((_) async => _session);
       final auth = cubit();
-      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1');
+      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1', acceptedPrivacy: true);
       await auth.verify('123456');
 
       expect(auth.state, const Authenticated(_session));
@@ -90,11 +90,11 @@ void main() {
     });
 
     test('un código incorrecto deja el mensaje y sigue esperando', () async {
-      when(() => api.register(any(), any(), any())).thenAnswer((_) async {});
+      when(() => api.register(any(), any(), any(), acceptedPrivacy: any(named: 'acceptedPrivacy'))).thenAnswer((_) async {});
       when(() => api.verifyEmail(any(), any()))
           .thenThrow(const ApiException('El código no es válido o ya venció.', statusCode: 400));
       final auth = cubit();
-      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1');
+      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1', acceptedPrivacy: true);
       await auth.verify('000000');
 
       final state = auth.state as AwaitingVerification;
@@ -116,18 +116,18 @@ void main() {
     });
 
     test('no reenvía antes de tiempo', () async {
-      when(() => api.register(any(), any(), any())).thenAnswer((_) async {});
+      when(() => api.register(any(), any(), any(), acceptedPrivacy: any(named: 'acceptedPrivacy'))).thenAnswer((_) async {});
       final auth = cubit();
-      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1');
+      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1', acceptedPrivacy: true);
       await auth.resendCode();
       verifyNever(() => api.resendCode(any()));
     });
 
     test('sin internet el registro muestra el error y no avanza', () async {
-      when(() => api.register(any(), any(), any())).thenThrow(
+      when(() => api.register(any(), any(), any(), acceptedPrivacy: any(named: 'acceptedPrivacy'))).thenThrow(
           const ApiException('No hay conexión con el servidor. Revise su internet e intente de nuevo.'));
       final auth = cubit();
-      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1');
+      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1', acceptedPrivacy: true);
       expect(auth.state, isA<Unauthenticated>());
       expect((auth.state as Unauthenticated).message, contains('No hay conexión'));
     });
@@ -173,10 +173,10 @@ void main() {
   group('pantallas', () {
     testWidgets('la pantalla del código muestra el correo, la cuenta regresiva y verifica al completar',
         (tester) async {
-      when(() => api.register(any(), any(), any())).thenAnswer((_) async {});
+      when(() => api.register(any(), any(), any(), acceptedPrivacy: any(named: 'acceptedPrivacy'))).thenAnswer((_) async {});
       when(() => api.verifyEmail('ana@correo.co', '123456')).thenAnswer((_) async => _session);
       final auth = AuthCubit(store: store, api: api, allowDemo: false);
-      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1');
+      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1', acceptedPrivacy: true);
 
       await tester.pumpWidget(_app(auth, const VerifyEmailScreen()));
       await tester.pump();

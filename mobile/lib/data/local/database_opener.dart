@@ -16,10 +16,21 @@ import 'app_database.dart';
 class DatabaseOpener {
   static final _hexKey = RegExp(r'^[0-9a-f]{64}$');
 
-  static Future<AppDatabase> openForUser({required String userId, required String hexKey}) async {
+  static Future<AppDatabase> openForUser({required String userId, required String hexKey}) async =>
+      AppDatabase(openFile(await _fileFor(userId), hexKey));
+
+  /// Borra el archivo de la base del usuario y sus archivos auxiliares. La base debe estar cerrada.
+  static Future<void> deleteForUser(String userId) async {
+    final file = await _fileFor(userId);
+    for (final path in [file.path, '${file.path}-wal', '${file.path}-shm', '${file.path}-journal']) {
+      final candidate = File(path);
+      if (await candidate.exists()) await candidate.delete();
+    }
+  }
+
+  static Future<File> _fileFor(String userId) async {
     final dir = await getApplicationSupportDirectory();
-    final file = File(p.join(dir.path, 'agrovet_${_safeName(userId)}.db'));
-    return AppDatabase(openFile(file, hexKey));
+    return File(p.join(dir.path, 'agrovet_${_safeName(userId)}.db'));
   }
 
   static QueryExecutor openFile(File file, String hexKey) {

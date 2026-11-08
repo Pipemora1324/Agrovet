@@ -1,20 +1,23 @@
 package co.edu.ucc.agrovet.auth;
 
-import java.util.UUID;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.ucc.agrovet.auth.AuthDtos.AcceptPrivacyRequest;
+import co.edu.ucc.agrovet.auth.AuthDtos.ChangePasswordRequest;
+import co.edu.ucc.agrovet.auth.AuthDtos.DeleteAccountRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.EmailRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.LoginRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.MessageResponse;
@@ -22,8 +25,10 @@ import co.edu.ucc.agrovet.auth.AuthDtos.RefreshRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.RegisterRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.ResetPasswordRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.TokenResponse;
+import co.edu.ucc.agrovet.auth.AuthDtos.UpdateProfileRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.UserResponse;
 import co.edu.ucc.agrovet.auth.AuthDtos.VerifyEmailRequest;
+import co.edu.ucc.agrovet.common.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -102,8 +107,41 @@ public class AuthController {
 
     @GetMapping("/me")
     @SecurityRequirement(name = "bearer")
-    @Operation(summary = "Datos del usuario autenticado")
+    @Operation(summary = "Perfil del usuario autenticado")
     public UserResponse me(@AuthenticationPrincipal Jwt jwt) {
-        return authService.currentUser(UUID.fromString(jwt.getSubject()));
+        return authService.currentUser(CurrentUser.id(jwt));
+    }
+
+    @PutMapping("/me")
+    @SecurityRequirement(name = "bearer")
+    @Operation(summary = "Edita nombre, finca, municipio y teléfono")
+    public UserResponse updateProfile(@AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        return authService.updateProfile(CurrentUser.id(jwt), request);
+    }
+
+    @PostMapping("/me/privacy")
+    @SecurityRequirement(name = "bearer")
+    @Operation(summary = "Registra la aceptación del aviso de privacidad (cuentas anteriores o versión nueva)")
+    public UserResponse acceptPrivacy(@AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody AcceptPrivacyRequest request) {
+        return authService.acceptPrivacyPolicy(CurrentUser.id(jwt), request.privacyPolicyVersion());
+    }
+
+    @PostMapping("/me/password")
+    @SecurityRequirement(name = "bearer")
+    @Operation(summary = "Cambia la contraseña, cierra todas las sesiones y devuelve una nueva")
+    public TokenResponse changePassword(@AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ChangePasswordRequest request, HttpServletRequest http) {
+        return authService.changePassword(CurrentUser.id(jwt), request, http.getRemoteAddr());
+    }
+
+    @DeleteMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @SecurityRequirement(name = "bearer")
+    @Operation(summary = "Elimina la cuenta y todos sus datos (requiere la contraseña)")
+    public void deleteAccount(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody DeleteAccountRequest request,
+            HttpServletRequest http) {
+        authService.deleteAccount(CurrentUser.id(jwt), request.password(), http.getRemoteAddr());
     }
 }
