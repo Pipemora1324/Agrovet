@@ -9,7 +9,7 @@ RUN ./mvnw -B -q -DskipToolchain -DskipTests package
 
 # Etapa de ejecución: solo el JRE y un usuario sin privilegios
 FROM eclipse-temurin:21-jre-alpine
-RUN addgroup -S agrovet && adduser -S agrovet -G agrovet
+RUN addgroup -S agrovet && adduser -S agrovet -G agrovet     && mkdir -p /app/data/photos && chown -R agrovet:agrovet /app/data
 WORKDIR /app
 COPY --from=build /app/target/agrovet-backend-*.jar app.jar
 USER agrovet

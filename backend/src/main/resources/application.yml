@@ -19,6 +19,11 @@ spring:
     enabled: true
   jackson:
     default-property-inclusion: non_null
+  servlet:
+    multipart:
+      # Un poco más que agrovet.photos.max-size, para que el mensaje claro lo dé la aplicación
+      max-file-size: 6MB
+      max-request-size: 6MB
   # Correo saliente (códigos de verificación y de recuperación). En desarrollo, Mailpit del docker-compose.
   mail:
     host: ${SMTP_HOST}
@@ -53,6 +58,10 @@ agrovet:
     from: ${MAIL_FROM}
     # false solo en pruebas: el correo sale en el mismo hilo
     async: true
+  photos:
+    storage-dir: ${PHOTO_STORAGE_DIR}
+    max-size: 5MB
+    max-dimension: 6000
   email-codes:
     ttl: PT15M
     max-attempts: 5
