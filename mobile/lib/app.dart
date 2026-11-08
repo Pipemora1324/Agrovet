@@ -11,6 +11,7 @@ import 'data/security/secure_store.dart';
 import 'domain/risk_predictor.dart';
 import 'presentation/auth/auth_cubit.dart';
 import 'presentation/auth/login_screen.dart';
+import 'presentation/auth/verify_email_screen.dart';
 import 'presentation/cows/cows_screen.dart';
 import 'presentation/session_scope.dart';
 import 'presentation/widgets/loading_view.dart';
@@ -81,6 +82,7 @@ class _AuthGate extends StatelessWidget {
           child: switch (state) {
             AuthChecking() => const LoadingView(key: ValueKey('checking'), message: 'Cargando…'),
             Unauthenticated() => const LoginScreen(key: ValueKey('login')),
+            AwaitingVerification() => const VerifyEmailScreen(key: ValueKey('verify')),
             Authenticated(:final session) => SessionScope(
                 key: ValueKey('session-${session.userId}'),
                 session: session,

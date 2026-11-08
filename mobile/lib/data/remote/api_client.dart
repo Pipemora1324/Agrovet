@@ -7,12 +7,23 @@ import '../security/secure_store.dart';
 
 /// Error de la API con un mensaje listo para mostrar al ganadero.
 class ApiException implements Exception {
-  const ApiException(this.message, {this.statusCode});
+  const ApiException(this.message, {this.statusCode, this.code, this.retryAfter});
 
   final String message;
   final int? statusCode;
 
+  /// Código de error del servidor (por ejemplo, EMAIL_NOT_VERIFIED).
+  final String? code;
+
+  /// Espera indicada por el servidor en la cabecera Retry-After (respuestas 429).
+  final Duration? retryAfter;
+
+  static const emailNotVerified = 'EMAIL_NOT_VERIFIED';
+
   bool get isUnauthorized => statusCode == 401;
+  bool get isEmailNotVerified => code == emailNotVerified;
+  bool get isTooManyRequests => statusCode == 429;
+  bool get isOffline => statusCode == null;
 
   @override
   String toString() => message;
@@ -37,7 +48,15 @@ class ApiClient {
   /// Se llama cuando el servidor rechaza el refresh token: hay que volver a iniciar sesión.
   void Function()? onSessionExpired;
 
-  static const _publicPaths = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh'];
+  static const _publicPaths = [
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/verify-email',
+    '/api/auth/resend-code',
+    '/api/auth/password/forgot',
+    '/api/auth/password/reset',
+    '/api/auth/refresh',
+  ];
 
   static BaseOptions _options(String baseUrl) => BaseOptions(
         baseUrl: baseUrl,
@@ -105,13 +124,15 @@ class ApiClient {
       return const ApiException('No hay conexión con el servidor. Revise su internet e intente de nuevo.');
     }
     final data = response.data;
+    final code = data is Map && data['code'] is String ? data['code'] as String : null;
+    final retrySeconds = int.tryParse(response.headers.value('retry-after') ?? '');
+    final retryAfter = retrySeconds == null ? null : Duration(seconds: retrySeconds);
+    ApiException build(String message) =>
+        ApiException(message, statusCode: response.statusCode, code: code, retryAfter: retryAfter);
     if (data is Map && data['errors'] is Map && (data['errors'] as Map).isNotEmpty) {
-      return ApiException((data['errors'] as Map).values.first.toString(), statusCode: response.statusCode);
+      return build((data['errors'] as Map).values.first.toString());
     }
-    if (data is Map && data['detail'] is String) {
-      return ApiException(data['detail'] as String, statusCode: response.statusCode);
-    }
-    return ApiException('El servidor respondió con un error (${response.statusCode}).',
-        statusCode: response.statusCode);
+    if (data is Map && data['detail'] is String) return build(data['detail'] as String);
+    return build('El servidor respondió con un error (${response.statusCode}).');
   }
 }

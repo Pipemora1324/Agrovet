@@ -6,7 +6,10 @@ import '../../core/theme.dart';
 import '../../core/validators.dart';
 import '../widgets/big_button.dart';
 import '../widgets/fade_in.dart';
+import '../widgets/notice_box.dart';
 import 'auth_cubit.dart';
+import 'forgot_password_screen.dart';
+import 'password_field.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,7 +24,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _registering = false;
-  bool _showPassword = false;
 
   @override
   void dispose() {
@@ -99,43 +101,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     validator: Validators.email,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
+                  PasswordField(
                     controller: _password,
-                    obscureText: !_showPassword,
-                    autofillHints: const [AutofillHints.password],
-                    decoration: InputDecoration(
-                      labelText: 'Contraseña',
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        tooltip: _showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña',
-                        icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () => setState(() => _showPassword = !_showPassword),
-                      ),
-                    ),
+                    label: 'Contraseña',
+                    newPassword: _registering,
                     validator: Validators.password,
-                    onFieldSubmitted: (_) => _submit(),
+                    onSubmitted: (_) => _submit(),
                   ),
                   if (message != null) ...[
                     const SizedBox(height: 16),
-                    FadeIn(
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer,
-                          borderRadius: BorderRadius.circular(AppRadius.small),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.error_outline, color: theme.colorScheme.onErrorContainer),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(message,
-                                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onErrorContainer)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    FadeIn(child: NoticeBox.error(message)),
                   ],
                   const SizedBox(height: 24),
                   BigButton(
@@ -144,6 +119,29 @@ class _LoginScreenState extends State<LoginScreen> {
                     busy: busy,
                     onPressed: _submit,
                   ),
+                  if (_registering) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Le enviaremos un código al correo para confirmar que es suyo. Necesita internet para '
+                      'crear la cuenta; después, la app funciona sin conexión.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ] else
+                    TextButton(
+                      onPressed: busy
+                          ? null
+                          : () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ForgotPasswordScreen(
+                                    api: context.read<AuthCubit>().api,
+                                    initialEmail: _email.text,
+                                  ),
+                                ),
+                              ),
+                      child: const Text('Olvidé mi contraseña'),
+                    ),
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: busy ? null : () => setState(() => _registering = !_registering),
