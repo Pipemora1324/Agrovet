@@ -51,10 +51,12 @@ def build_cnn(weights="imagenet"):
     return tf.keras.Model(inputs, outputs, name="udder_cnn"), backbone
 
 
-def train(images_dir, epochs, fine_tune_epochs):
+def train(images_dir, epochs, fine_tune_epochs, model_path=MODEL_PATH, tflite_path=TFLITE_PATH,
+          weights="imagenet", batch_size=16):
+    """Entrena, ajusta y exporta. weights=None y rutas temporales solo en la prueba de humo."""
     train_ds, val_ds = tf.keras.utils.image_dataset_from_directory(
         images_dir, labels="inferred", label_mode="binary", class_names=list(CLASSES),
-        image_size=IMAGE_SIZE, batch_size=16, validation_split=0.2, subset="both", seed=SEED)
+        image_size=IMAGE_SIZE, batch_size=batch_size, validation_split=0.2, subset="both", seed=SEED)
     augment = tf.keras.Sequential([
         tf.keras.layers.RandomFlip("horizontal"),
         tf.keras.layers.RandomRotation(0.05),
@@ -63,7 +65,7 @@ def train(images_dir, epochs, fine_tune_epochs):
     train_ds = train_ds.map(lambda x, y: (augment(x, training=True), y)).prefetch(tf.data.AUTOTUNE)
     val_ds = val_ds.prefetch(tf.data.AUTOTUNE)
 
-    model, backbone = build_cnn()
+    model, backbone = build_cnn(weights=weights)
     metrics = [tf.keras.metrics.AUC(name="auc"), tf.keras.metrics.Recall(name="recall")]
     model.compile(optimizer=tf.keras.optimizers.Adam(1e-3), loss="binary_crossentropy", metrics=metrics)
     model.fit(train_ds, validation_data=val_ds, epochs=epochs)
@@ -75,11 +77,11 @@ def train(images_dir, epochs, fine_tune_epochs):
     model.compile(optimizer=tf.keras.optimizers.Adam(1e-5), loss="binary_crossentropy", metrics=metrics)
     history = model.fit(train_ds, validation_data=val_ds, epochs=fine_tune_epochs)
 
-    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    model.save(MODEL_PATH)
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    model.save(model_path)
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS]
-    TFLITE_PATH.write_bytes(converter.convert())
+    tflite_path.write_bytes(converter.convert())
     return {name: float(values[-1]) for name, values in history.history.items()}
 
 

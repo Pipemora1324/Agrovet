@@ -119,8 +119,35 @@ a TFLite solo con operaciones nativas.
 
 **Está desactivada** porque no hay fotos reales etiquetadas. Sin al menos 50 imágenes por clase en
 `data/udder_images/healthy/` y `data/udder_images/mastitis/` (carpetas que no se versionan), el
-script termina sin entrenar. No se usan imágenes sintéticas ni descargadas para rellenar. La app no
-tiene la función de foto hasta que exista un modelo validado.
+script termina sin entrenar. No se usan imágenes sintéticas ni descargadas para rellenar.
+
+La app ya toma fotos de la ubre (sin ubicación) y las sube al servidor, pero **no usa la CNN**: el
+modelo sigue desactivado en la app hasta que exista uno validado.
+
+### De dónde salen las fotos para entrenar
+
+Cada foto tiene, en la app, "¿Un veterinario confirmó el diagnóstico?" (Sí / No / Pendiente), el
+diagnóstico (Mastitis / Sana / Otro) y el interruptor "Permitir usar esta foto para investigación",
+**apagado por defecto**. `src/build_cnn_dataset.py` arma `data/udder_images/` solo con las fotos que
+tienen el permiso activado, confirmación del veterinario y diagnóstico Mastitis o Sana:
+
+```bash
+# Desde backend/: manifiesto (no se versiona) y copia de las fotos del volumen
+docker compose exec -T db psql -U agrovet -d agrovet -c "\copy (SELECT id, vet_confirmed, diagnosis, research_consent, deleted, stored FROM cow_photos) TO STDOUT CSV HEADER" > ../ml/data/fotos.csv
+docker compose cp backend:/app/data/photos ../ml/data/fotos_servidor
+# Desde ml/:
+python src/build_cnn_dataset.py --manifest data/fotos.csv --photos data/fotos_servidor
+python src/train_cnn.py
+```
+
+Los archivos copiados se nombran solo con el id de la foto, sin datos del ganadero.
+
+### Prueba de humo (sin valor científico)
+
+`tests/test_train_cnn.py::test_smoke_training_runs_end_to_end_without_scientific_value` genera 10
+imágenes de ruido y corre el pipeline completo (entrenamiento, ajuste fino y exportación a TFLite)
+sin descargar pesos. **Solo comprueba que el código funciona**: sus números no significan nada y no
+se guardan en `reports/`.
 
 ## Artefactos que usa la app
 
