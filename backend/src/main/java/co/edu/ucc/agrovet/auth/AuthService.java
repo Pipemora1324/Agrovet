@@ -12,7 +12,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.ucc.agrovet.auth.AuthDtos.ChangePasswordRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.LoginRequest;
+import co.edu.ucc.agrovet.auth.AuthDtos.UpdateProfileRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.RegisterRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.ResetPasswordRequest;
 import co.edu.ucc.agrovet.auth.AuthDtos.TokenResponse;
@@ -24,6 +26,7 @@ import co.edu.ucc.agrovet.auth.code.EmailCodeService;
 import co.edu.ucc.agrovet.common.NotFoundException;
 import co.edu.ucc.agrovet.config.JwtProperties;
 import co.edu.ucc.agrovet.mail.AccountMailer;
+import co.edu.ucc.agrovet.user.AccountDeletionService;
 import co.edu.ucc.agrovet.user.User;
 import co.edu.ucc.agrovet.user.UserRepository;
 
@@ -39,6 +42,7 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     static final String INVALID_CREDENTIALS = "Correo o contraseña incorrectos.";
     static final String INVALID_SESSION = "La sesión no es válida o expiró. Inicie sesión de nuevo.";
+    static final String WRONG_PASSWORD = "La contraseña no es correcta.";
     public static final String CODE_SENT = "Si el correo es correcto, le llegará un código de 6 números. "
             + "Revise también la carpeta de correo no deseado.";
 
@@ -50,6 +54,7 @@ public class AuthService {
     private final EmailCodeService codes;
     private final CodeRequestLimiter codeLimiter;
     private final AccountMailer mailer;
+    private final AccountDeletionService accountDeletion;
     private final JwtProperties jwtProperties;
     private final Clock clock;
     // Hash de relleno: si el correo no existe se compara igual, para no delatarlo por el tiempo de respuesta
@@ -57,7 +62,8 @@ public class AuthService {
 
     public AuthService(UserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder passwordEncoder,
             TokenService tokenService, LoginRateLimiter rateLimiter, EmailCodeService codes,
-            CodeRequestLimiter codeLimiter, AccountMailer mailer, JwtProperties jwtProperties, Clock clock) {
+            CodeRequestLimiter codeLimiter, AccountMailer mailer, AccountDeletionService accountDeletion,
+            JwtProperties jwtProperties, Clock clock) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.passwordEncoder = passwordEncoder;
@@ -66,6 +72,7 @@ public class AuthService {
         this.codes = codes;
         this.codeLimiter = codeLimiter;
         this.mailer = mailer;
+        this.accountDeletion = accountDeletion;
         this.jwtProperties = jwtProperties;
         this.clock = clock;
         this.dummyHash = passwordEncoder.encode(UUID.randomUUID().toString());
@@ -93,7 +100,64 @@ public class AuthService {
             u.replaceUnverifiedRegistration(name, hash, now);
             return u;
         }).orElseGet(() -> users.save(new User(name, email, hash, now)));
+        user.acceptPrivacyPolicy(request.privacyPolicyVersion().trim(), now);
         sendCode(user, CodePurpose.VERIFY_EMAIL);
+    }
+
+    // ---- Perfil (con la sesión abierta) ----
+
+    @Transactional
+    public UserResponse updateProfile(UUID userId, UpdateProfileRequest request) {
+        User user = findUser(userId);
+        user.updateProfile(request.name().trim(), blankToNull(request.farmName()),
+                blankToNull(request.municipality()), blankToNull(request.phone()), clock.instant());
+        return UserResponse.from(user);
+    }
+
+    @Transactional
+    public UserResponse acceptPrivacyPolicy(UUID userId, String version) {
+        User user = findUser(userId);
+        user.acceptPrivacyPolicy(version.trim(), clock.instant());
+        return UserResponse.from(user);
+    }
+
+    /**
+     * Cambia la contraseña conociendo la actual. Cierra todas las sesiones (incluidas las de otros
+     * celulares) y devuelve una sesión nueva para este.
+     */
+    @Transactional
+    public TokenResponse changePassword(UUID userId, ChangePasswordRequest request, String clientIp) {
+        User user = checkPassword(userId, request.currentPassword(), clientIp);
+        Instant now = clock.instant();
+        user.changePassword(passwordEncoder.encode(request.newPassword()), now);
+        refreshTokens.revokeAllForUser(user.getId(), now);
+        return issueTokens(user, UUID.randomUUID(), now);
+    }
+
+    /** Elimina la cuenta y todos sus datos, después de confirmar la contraseña. */
+    @Transactional
+    public void deleteAccount(UUID userId, String password, String clientIp) {
+        checkPassword(userId, password, clientIp);
+        accountDeletion.deleteEverything(userId);
+    }
+
+    /** Comprueba la contraseña con el mismo límite de intentos del login. */
+    private User checkPassword(UUID userId, String password, String clientIp) {
+        User user = findUser(userId);
+        rateLimiter.registerAttempt(clientIp, user.getEmail());
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new AuthenticationFailedException(WRONG_PASSWORD);
+        }
+        rateLimiter.reset(clientIp, user.getEmail());
+        return user;
+    }
+
+    private User findUser(UUID userId) {
+        return users.findById(userId).orElseThrow(() -> new NotFoundException("El usuario no existe."));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     /** El código correcto verifica el correo y abre la sesión. */

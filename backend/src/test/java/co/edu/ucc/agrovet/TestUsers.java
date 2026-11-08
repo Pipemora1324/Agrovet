@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public final class TestUsers {
 
     public static final String PASSWORD = "clave-segura-1";
+    public static final String PRIVACY_VERSION = "2026-11";
 
     private TestUsers() {
     }
@@ -42,6 +43,7 @@ public final class TestUsers {
     }
 
     public static String registerBody(String name, String email, String password) {
-        return "{\"name\":\"" + name + "\",\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
+        return "{\"name\":\"" + name + "\",\"email\":\"" + email + "\",\"password\":\"" + password
+                + "\",\"acceptPrivacyPolicy\":true,\"privacyPolicyVersion\":\"" + PRIVACY_VERSION + "\"}";
     }
 }
