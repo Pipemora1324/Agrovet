@@ -205,6 +205,28 @@ imágenes de ruido y corre el pipeline completo (entrenamiento, ajuste fino y ex
 sin descargar pesos. **Solo comprueba que el código funciona**: sus números no significan nada y no
 se guardan en `reports/`.
 
+## Prueba de concepto: pocillos de leche (no se usa en la app)
+
+`src/milk_public_poc.py` clasifica cada pocillo de la paleta como leche normal o anormal con la
+misma CNN, usando el dataset público de leche de Roboflow (CC BY 4.0, ver
+[docs/datasets_publicos.md](../docs/datasets_publicos.md)). Se ignoran los splits de Roboflow (40
+grupos de frames casi idénticos estaban repartidos entre train, valid y test) y se agrupa por pHash:
+640 pocillos (189 normales, 451 anormales) en 200 grupos. Validación `StratifiedGroupKFold` 5 × 1 (una
+sola repetición, por tiempo) y una prueba extra: entrenar sin la sesión de fotos de teléfono (PXL) y
+evaluar solo en ella. Detalle en `reports/milk_poc_public.json`.
+
+| Evaluación (umbral 0,5) | Pocillos | Sensibilidad (IC 95 %) | Especificidad (IC 95 %) | AUC (IC 95 %) |
+|---|---|---|---|---|
+| Validación cruzada por grupos | 640 | 0,96 (0,94–0,97) | 1,00 (0,98–1,00) | 0,999 (0,996–1,000) |
+| Sin la sesión PXL, evaluada solo en ella | 113 | 1,00 (0,86–1,00) | 1,00 (0,96–1,00) | 1,00 |
+
+No cae al sacar la sesión PXL, así que no parece haber aprendido la sesión. Los 18 pocillos anormales
+que no detecta son casi todos "Curd like" (17 de 116). **Advertencia**: la tarea es fácil en estas
+condiciones (sangre roja, grumos o líquido oscuro frente a leche blanca, misma paleta, mismo suelo y
+misma luz). No hay casos sutiles, las etiquetas son del autor sin laboratorio y la prueba PXL es
+pequeña (24 anormales). No dice nada de cómo funcionaría con otra paleta, otra luz u otra cámara, ni
+sobre la mastitis subclínica, que no cambia el aspecto de la leche.
+
 ## Artefactos que usa la app
 
 Se versionan `models/mastitis_lstm.tflite`, `models/model_config.json` y `models/test_vectors.json`.
