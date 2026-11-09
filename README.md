@@ -90,6 +90,28 @@ docker compose up -d
 Documentación de la API en `http://localhost:8080/swagger-ui.html`; los correos de prueba (códigos de
 verificación) llegan a Mailpit en `http://localhost:8025`.
 
+**Correo: Mailpit o Gmail.** El backend elige solo, según `backend/.env`:
+
+- *Mailpit (desarrollo)*: deje `MAIL_USERNAME` y `MAIL_PASSWORD` vacíos. Ningún correo sale del
+  equipo; todos se ven en `http://localhost:8025`.
+- *Gmail (correos de verdad)*: active la verificación en dos pasos de la cuenta, cree una
+  *contraseña de aplicación* (Cuenta de Google → Seguridad → Contraseñas de aplicaciones) y póngala
+  en `.env`:
+
+  ```
+  MAIL_HOST=smtp.gmail.com
+  MAIL_PORT=587
+  MAIL_USERNAME=su.cuenta@gmail.com
+  MAIL_PASSWORD=abcdefghijklmnop     # los 16 caracteres, sin espacios
+  MAIL_FROM=AgroVet <su.cuenta@gmail.com>
+  ```
+
+  El envío usa STARTTLS obligatorio. Para volver a Mailpit, vacíe `MAIL_USERNAME` y `MAIL_PASSWORD`.
+  Después de cambiar `.env`: `docker compose up -d backend`. El log de arranque dice qué modo quedó
+  (`Correo: Mailpit ...` o `Correo: SMTP smtp.gmail.com:587 con STARTTLS`).
+
+`.env` está en `.gitignore`: las claves (Gmail, `GEMINI_API_KEY`, `JWT_SECRET`) nunca se suben.
+
 **Aplicación (mobile/)**: requiere Flutter y un dispositivo o emulador Android (API 24+).
 
 ```bash

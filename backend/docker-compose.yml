@@ -42,14 +42,15 @@ services:
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-PT15M}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-P14D}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
-      # Por defecto, Mailpit. Para correo real, defina SMTP_* en .env
-      SMTP_HOST: ${SMTP_HOST:-mailpit}
-      SMTP_PORT: ${SMTP_PORT:-1025}
-      SMTP_USERNAME: ${SMTP_USERNAME:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      SMTP_AUTH: ${SMTP_AUTH:-false}
-      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
-      MAIL_FROM: ${MAIL_FROM:-AgroVet <no-responder@agrovet.local>}
+      # Con MAIL_USERNAME y MAIL_PASSWORD vacíos en .env los correos van a Mailpit;
+      # con valores, salen por el SMTP real (Gmail) con STARTTLS
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      MAILPIT_HOST: mailpit
+      MAILPIT_SMTP_PORT: 1025
       PHOTO_STORAGE_DIR: /app/data/photos
       # Asistente: sin clave queda apagado. La clave va solo en backend/.env, nunca en la app
       ASSISTANT_PROVIDER: ${ASSISTANT_PROVIDER:-gemini}
