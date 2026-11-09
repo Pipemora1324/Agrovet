@@ -17,6 +17,8 @@ import jakarta.validation.constraints.Size;
 import co.edu.ucc.agrovet.cow.ProductionStatus;
 import co.edu.ucc.agrovet.inference.RiskCause;
 import co.edu.ucc.agrovet.inference.RiskLevel;
+import co.edu.ucc.agrovet.photo.Diagnosis;
+import co.edu.ucc.agrovet.photo.VetConfirmation;
 
 public final class SyncDtos {
 
@@ -34,13 +36,16 @@ public final class SyncDtos {
             @Size(max = MAX_ITEMS, message = "Máximo 500 inferencias por lote.")
             List<@Valid @NotNull InferenceSync> inferences,
             @Size(max = MAX_ITEMS, message = "Máximo 500 alertas por lote.")
-            List<@Valid @NotNull AlertSync> alerts) {
+            List<@Valid @NotNull AlertSync> alerts,
+            @Size(max = MAX_ITEMS, message = "Máximo 500 fotos por lote.")
+            List<@Valid @NotNull PhotoSync> photos) {
 
         public SyncRequest {
             cows = cows == null ? List.of() : cows;
             dailyRecords = dailyRecords == null ? List.of() : dailyRecords;
             inferences = inferences == null ? List.of() : inferences;
             alerts = alerts == null ? List.of() : alerts;
+            photos = photos == null ? List.of() : photos;
         }
     }
 
@@ -108,10 +113,25 @@ public final class SyncDtos {
             boolean deleted) {
     }
 
+    /** Datos de una foto; el archivo se sube aparte (PUT /api/cows/{cowId}/photos/{id}/image). */
+    public record PhotoSync(
+            @NotNull(message = "Falta el id.") UUID id,
+            @NotNull(message = "Falta la vaca.") UUID cowId,
+            @NotNull(message = "Falta la fecha de la foto.") LocalDate takenOn,
+            VetConfirmation vetConfirmed,
+            Diagnosis diagnosis,
+            @Size(max = 300, message = "El diagnóstico admite máximo 300 caracteres.") String diagnosisNotes,
+            // Apagado si no viene: el consentimiento siempre es expreso
+            boolean researchConsent,
+            @NotNull(message = "Falta la fecha de modificación.") Instant updatedAt,
+            boolean deleted) {
+    }
+
     public record Rejected(String entity, UUID id, String reason) {
     }
 
-    public record Confirmed(List<UUID> cows, List<UUID> dailyRecords, List<UUID> inferences, List<UUID> alerts) {
+    public record Confirmed(List<UUID> cows, List<UUID> dailyRecords, List<UUID> inferences, List<UUID> alerts,
+            List<UUID> photos) {
     }
 
     /** confirmed: guardados o ya presentes en una versión igual o más reciente. rejected: no se guardaron. */

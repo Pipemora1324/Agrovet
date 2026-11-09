@@ -50,8 +50,12 @@ services:
       SMTP_AUTH: ${SMTP_AUTH:-false}
       SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
       MAIL_FROM: ${MAIL_FROM:-AgroVet <no-responder@agrovet.local>}
+      PHOTO_STORAGE_DIR: /app/data/photos
+    volumes:
+      - photos:/app/data/photos
     ports:
       - "8080:8080"
 
 volumes:
   pgdata:
+  photos:

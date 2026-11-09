@@ -242,3 +242,91 @@ class CowAlert extends Equatable {
 
 /// Fecha sin hora, en hora local.
 DateTime dateOnly(DateTime value) => DateTime(value.year, value.month, value.day);
+
+/// Foto de una vaca. El archivo está en el almacenamiento privado de la app, sin metadatos.
+class CowPhoto extends Equatable {
+  const CowPhoto({
+    required this.id,
+    required this.cowId,
+    required this.takenOn,
+    required this.fileName,
+    required this.sizeBytes,
+    required this.createdAt,
+    this.imageUploaded = false,
+    this.vetConfirmed,
+    this.diagnosis,
+    this.diagnosisNotes,
+    this.researchConsent = false,
+  });
+
+  final String id;
+  final String cowId;
+
+  /// Día de la foto (sin hora).
+  final DateTime takenOn;
+  final String fileName;
+  final int sizeBytes;
+  final DateTime createdAt;
+  final bool imageUploaded;
+  final VetConfirmation? vetConfirmed;
+  final Diagnosis? diagnosis;
+  final String? diagnosisNotes;
+
+  /// Permiso expreso para usar la foto en investigación (apagado por defecto).
+  final bool researchConsent;
+
+  /// Sirve para entrenar la CNN: permiso dado, confirmada por un veterinario y diagnóstico claro.
+  bool get usableForResearch =>
+      researchConsent && vetConfirmed == VetConfirmation.yes &&
+      (diagnosis == Diagnosis.mastitis || diagnosis == Diagnosis.healthy);
+
+  CowPhoto withResearch({
+    VetConfirmation? vetConfirmed,
+    Diagnosis? diagnosis,
+    String? diagnosisNotes,
+    required bool researchConsent,
+  }) =>
+      CowPhoto(
+        id: id,
+        cowId: cowId,
+        takenOn: takenOn,
+        fileName: fileName,
+        sizeBytes: sizeBytes,
+        createdAt: createdAt,
+        imageUploaded: imageUploaded,
+        vetConfirmed: vetConfirmed,
+        diagnosis: diagnosis,
+        diagnosisNotes: diagnosisNotes,
+        researchConsent: researchConsent,
+      );
+
+  @override
+  List<Object?> get props => [id, cowId, takenOn, fileName, sizeBytes, createdAt, imageUploaded, vetConfirmed,
+        diagnosis, diagnosisNotes, researchConsent];
+}
+
+enum VetConfirmation {
+  yes('YES', 'Sí'),
+  no('NO', 'No'),
+  pending('PENDING', 'Pendiente');
+
+  const VetConfirmation(this.code, this.label);
+
+  final String code;
+  final String label;
+
+  static VetConfirmation? fromCode(String? code) => values.where((v) => v.code == code).firstOrNull;
+}
+
+enum Diagnosis {
+  mastitis('MASTITIS', 'Mastitis'),
+  healthy('HEALTHY', 'Sana'),
+  other('OTHER', 'Otro');
+
+  const Diagnosis(this.code, this.label);
+
+  final String code;
+  final String label;
+
+  static Diagnosis? fromCode(String? code) => values.where((v) => v.code == code).firstOrNull;
+}

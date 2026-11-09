@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /** Convierte los errores en respuestas ProblemDetail con mensajes en español. */
@@ -82,6 +83,14 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             @NonNull HttpHeaders headers, @NonNull HttpStatusCode status, @NonNull WebRequest request) {
         return ResponseEntity.badRequest().body(problem(HttpStatus.BAD_REQUEST, "Solicitud inválida",
                 "El cuerpo de la solicitud no es un JSON válido o tiene tipos incorrectos."));
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(
+            @NonNull MaxUploadSizeExceededException ex, @NonNull HttpHeaders headers,
+            @NonNull HttpStatusCode status, @NonNull WebRequest request) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(problem(HttpStatus.PAYLOAD_TOO_LARGE,
+                "Archivo demasiado grande", "La foto pesa demasiado. Tómela de nuevo o elija una más liviana."));
     }
 
     private static ProblemDetail problem(HttpStatus status, String title, String detail) {

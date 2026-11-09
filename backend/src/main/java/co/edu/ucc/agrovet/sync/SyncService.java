@@ -19,6 +19,9 @@ import co.edu.ucc.agrovet.cow.CowRepository;
 import co.edu.ucc.agrovet.inference.Inference;
 import co.edu.ucc.agrovet.inference.InferenceRepository;
 import co.edu.ucc.agrovet.inference.RiskLevel;
+import co.edu.ucc.agrovet.photo.CowPhoto;
+import co.edu.ucc.agrovet.photo.CowPhotoRepository;
+import co.edu.ucc.agrovet.photo.PhotoStorage;
 import co.edu.ucc.agrovet.record.DailyRecord;
 import co.edu.ucc.agrovet.record.DailyRecordRepository;
 import co.edu.ucc.agrovet.record.Symptoms;
@@ -27,6 +30,7 @@ import co.edu.ucc.agrovet.sync.SyncDtos.Confirmed;
 import co.edu.ucc.agrovet.sync.SyncDtos.CowSync;
 import co.edu.ucc.agrovet.sync.SyncDtos.DailyRecordSync;
 import co.edu.ucc.agrovet.sync.SyncDtos.InferenceSync;
+import co.edu.ucc.agrovet.sync.SyncDtos.PhotoSync;
 import co.edu.ucc.agrovet.sync.SyncDtos.Rejected;
 import co.edu.ucc.agrovet.sync.SyncDtos.SyncRequest;
 import co.edu.ucc.agrovet.sync.SyncDtos.SyncResponse;
@@ -51,14 +55,18 @@ public class SyncService {
     private final DailyRecordRepository records;
     private final InferenceRepository inferences;
     private final AlertRepository alerts;
+    private final CowPhotoRepository photos;
+    private final PhotoStorage photoStorage;
     private final Clock clock;
 
     public SyncService(CowRepository cows, DailyRecordRepository records, InferenceRepository inferences,
-            AlertRepository alerts, Clock clock) {
+            AlertRepository alerts, CowPhotoRepository photos, PhotoStorage photoStorage, Clock clock) {
         this.cows = cows;
         this.records = records;
         this.inferences = inferences;
         this.alerts = alerts;
+        this.photos = photos;
+        this.photoStorage = photoStorage;
         this.clock = clock;
     }
 
@@ -69,7 +77,8 @@ public class SyncService {
         request.dailyRecords().forEach(item -> syncDailyRecord(batch, item));
         request.inferences().forEach(item -> syncInference(batch, item));
         request.alerts().forEach(item -> syncAlert(batch, item));
-        return new SyncResponse(new Confirmed(batch.cows, batch.records, batch.inferences, batch.alerts),
+        request.photos().forEach(item -> syncPhoto(batch, item));
+        return new SyncResponse(new Confirmed(batch.cows, batch.records, batch.inferences, batch.alerts, batch.photos),
                 batch.rejected, clock.instant());
     }
 
@@ -172,6 +181,29 @@ public class SyncService {
         batch.alerts.add(item.id());
     }
 
+    private void syncPhoto(Batch batch, PhotoSync item) {
+        Optional<CowPhoto> existing = photos.findById(item.id());
+        if (existing.isPresent() && !batch.owns(existing.get().getCowId())) {
+            batch.reject("photo", item.id(), NOT_OWNED);
+            return;
+        }
+        if (!batch.owns(item.cowId())) {
+            batch.reject("photo", item.id(), COW_NOT_FOUND);
+            return;
+        }
+        CowPhoto photo = existing.orElseGet(() -> new CowPhoto(item.id(), clock.instant()));
+        if (existing.isEmpty() || isNewer(item.updatedAt(), photo.getUpdatedAt())) {
+            photo.update(item.cowId(), item.takenOn(), item.deleted(), item.updatedAt());
+            photo.updateResearch(item.vetConfirmed(), item.diagnosis(), item.diagnosisNotes(),
+                    item.researchConsent(), clock.instant());
+            photos.saveAndFlush(photo);
+            if (item.deleted()) {
+                photoStorage.delete(photo.getId());
+            }
+        }
+        batch.photos.add(item.id());
+    }
+
     /** Se aplica si la versión entrante es igual o más reciente (reenviar la misma versión no cambia nada). */
     private static boolean isNewer(Instant incoming, Instant stored) {
         return !incoming.isBefore(stored);
@@ -184,6 +216,7 @@ public class SyncService {
         private final List<UUID> records = new ArrayList<>();
         private final List<UUID> inferences = new ArrayList<>();
         private final List<UUID> alerts = new ArrayList<>();
+        private final List<UUID> photos = new ArrayList<>();
         private final List<Rejected> rejected = new ArrayList<>();
 
         Batch(UUID ownerId) {

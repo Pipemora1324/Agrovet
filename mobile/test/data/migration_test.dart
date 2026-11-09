@@ -115,6 +115,9 @@ void main() {
           updatedAt: DateTime(2026, 11, 2),
         ));
     expect(await db.select(db.inferences).get(), hasLength(2));
+
+    // v5: la tabla de fotos existe y está vacía
+    expect(await db.select(db.cowPhotos).get(), isEmpty);
     await db.close();
   });
 }

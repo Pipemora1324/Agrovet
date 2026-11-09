@@ -99,12 +99,41 @@ class Alerts extends Table with SyncColumns {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Cows, DailyRecords, Inferences, Alerts])
+/// Foto de una vaca. El archivo vive en el almacenamiento privado (PhotoStore); aquí, sus datos.
+@DataClassName('CowPhotoRow')
+class CowPhotos extends Table with SyncColumns {
+  TextColumn get id => text()();
+  TextColumn get cowId => text().references(Cows, #id)();
+
+  /// Día de la foto como texto AAAA-MM-DD.
+  TextColumn get takenOn => text()();
+  TextColumn get fileName => text()();
+  IntColumn get sizeBytes => integer()();
+
+  /// El archivo ya se subió al servidor (los datos viajan aparte, con la sincronización).
+  BoolColumn get imageUploaded => boolean().withDefault(const Constant(false))();
+
+  /// ¿Lo confirmó un veterinario? YES, NO o PENDING (null: sin responder).
+  TextColumn get vetConfirmed => text().nullable()();
+
+  /// MASTITIS, HEALTHY u OTHER.
+  TextColumn get diagnosis => text().nullable()();
+  TextColumn get diagnosisNotes => text().nullable()();
+
+  /// Permiso expreso para usar la foto en investigación; apagado por defecto.
+  BoolColumn get researchConsent => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [Cows, DailyRecords, Inferences, Alerts, CowPhotos])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -128,6 +157,16 @@ class AppDatabase extends _$AppDatabase {
               inferences,
               newColumns: [inferences.symptomScore, inferences.cause],
             ));
+          }
+          if (from < 5) {
+            await m.createTable(cowPhotos);
+          }
+          if (from >= 5 && from < 6) {
+            // Si la tabla se creó en este mismo arranque (desde < 5) ya tiene las columnas
+            await m.addColumn(cowPhotos, cowPhotos.vetConfirmed);
+            await m.addColumn(cowPhotos, cowPhotos.diagnosis);
+            await m.addColumn(cowPhotos, cowPhotos.diagnosisNotes);
+            await m.addColumn(cowPhotos, cowPhotos.researchConsent);
           }
         },
         beforeOpen: (details) async {

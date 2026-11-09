@@ -9,6 +9,7 @@ import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
+import '../photos/photo_gallery.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/fade_in.dart';
 import '../widgets/traffic_light.dart';
@@ -113,6 +114,20 @@ class _HistoryView extends StatelessWidget {
                           );
                         },
                       ),
+                    const SizedBox(height: 24),
+                    Text('Fotos', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    StreamBuilder<List<CowPhoto>>(
+                      stream: context.read<PhotoRepository>().watchPhotos(cow.id),
+                      builder: (context, snapshot) {
+                        final photos = (snapshot.data ?? const <CowPhoto>[])
+                            .where((p) => !p.takenOn.isBefore(from) && !p.takenOn.isAfter(to))
+                            .toList();
+                        return photos.isEmpty
+                            ? Text('Sin fotos en este periodo.', style: Theme.of(context).textTheme.bodyLarge)
+                            : PhotoGallery(photos: photos);
+                      },
+                    ),
                     const SizedBox(height: 24),
                     Text('Evaluaciones del semáforo', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
