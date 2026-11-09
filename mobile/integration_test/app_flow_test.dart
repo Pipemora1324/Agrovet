@@ -85,8 +85,8 @@ void main() {
     await tester.tap(find.text('Registro de hoy'));
     await settle(tester);
     // Asistente por preguntas: una por pantalla, pasa sola al tocar una opción
+    // (El aviso "Ya hay un registro…" depende de la fecha en que se sembró la demostración)
     expect(find.text('¿Cómo comió hoy?'), findsOneWidget);
-    expect(find.text('Ya hay un registro para este día: puede corregirlo.'), findsOneWidget);
     await shot(tester, '04_registro');
     await answer(tester, 'Normal');
     await answer(tester, 'Igual');
@@ -206,6 +206,10 @@ void main() {
     await tester.enterText(find.widgetWithText(TextFormField, 'Temperatura (opcional)'), '38,7');
     await tester.enterText(find.widgetWithText(TextFormField, 'Leche del día (opcional)'), '11,5');
     await tester.enterText(find.widgetWithText(TextFormField, 'Alimento consumido (opcional)'), '9');
+    // El teclado abierto tapa el botón: se cierra antes de tocarlo
+    FocusManager.instance.primaryFocus?.unfocus();
+    await settle(tester);
+    expect(find.text('medido'), findsNWidgets(3));
     await reveal(tester, find.text('Guardar registro'));
     await tester.tap(find.text('Guardar registro'));
     await settle(tester);
