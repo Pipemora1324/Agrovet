@@ -49,7 +49,11 @@ class _CowDetailScreenState extends State<CowDetailScreen> {
   /// Abre otra pantalla y, al volver, recarga los registros (pudo haber uno nuevo).
   Future<void> _open(Widget screen) async {
     await Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
-    if (mounted) setState(() => _records = _loadRecords());
+    if (!mounted) return;
+    final records = _loadRecords();
+    setState(() {
+      _records = records;
+    });
   }
 
   Future<void> _confirmDelete(Cow cow) async {
@@ -347,7 +351,7 @@ class _RiskPanel extends StatelessWidget {
   static List<(IconData, String)> _reasons(Inference inference, SymptomAssessment? symptoms) {
     final list = <(IconData, String)>[];
     if (inference.cause != null && inference.riskLevel != RiskLevel.green) {
-      list.add((Icons.flag, 'Lo indicó ${inference.cause!.label}.'));
+      list.add((Icons.flag, 'Quién encendió la alerta: ${inference.cause!.label}.'));
     }
     if (inference.probability != null) {
       list.add((
