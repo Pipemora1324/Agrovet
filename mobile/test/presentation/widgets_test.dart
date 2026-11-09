@@ -177,6 +177,7 @@ void main() {
         RepositoryProvider<CowRepository>.value(value: repo),
         RepositoryProvider<InferenceRepository>.value(value: repo),
         RepositoryProvider<AlertRepository>.value(value: repo),
+        RepositoryProvider<RecordRepository>.value(value: repo),
       ],
       child: BlocProvider(create: (_) => SyncCubit.disabled(), child: app(const CowDetailScreen(cowId: 'c1'))),
     ));
@@ -184,6 +185,8 @@ void main() {
 
     expect(find.text('Alerta sin atender'), findsOneWidget);
     expect(find.text('Alto riesgo'), findsOneWidget);
+    await tester.ensureVisible(find.text('Marcar como atendida'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Marcar como atendida'));
     await tester.pumpAndSettle();
 
@@ -277,7 +280,7 @@ class _FixedCows implements CowRepository {
 }
 
 /// Una vaca con alertas en memoria; marcar una la quita de la lista, como la base real.
-class _CowWithAlerts implements CowRepository, InferenceRepository, AlertRepository {
+class _CowWithAlerts implements CowRepository, InferenceRepository, AlertRepository, RecordRepository {
   _CowWithAlerts(this.cow, List<CowAlert> alerts) : _alerts = [...alerts];
 
   final Cow cow;
@@ -290,6 +293,9 @@ class _CowWithAlerts implements CowRepository, InferenceRepository, AlertReposit
 
   @override
   Stream<Inference?> watchLatest(String cowId) => Stream.value(null);
+
+  @override
+  Future<List<DailyRecord>> recordsBetween(String cowId, DateTime from, DateTime to) async => const [];
 
   @override
   Stream<List<CowAlert>> watchPendingAlerts(String cowId) async* {
