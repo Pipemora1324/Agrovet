@@ -8,11 +8,7 @@ class Responsive {
   static bool isTablet(BuildContext context) => MediaQuery.sizeOf(context).width >= tabletWidth;
 
   /// Columnas para las cuadrículas de tarjetas.
-  static int columns(double width) {
-    if (width >= 1100) return 3;
-    if (width >= tabletWidth) return 2;
-    return 1;
-  }
+  static int columns(double width) => width >= tabletWidth ? 2 : 1;
 
   /// Duración de las animaciones respetando la opción de reducir movimiento.
   static Duration motion(BuildContext context, Duration normal) =>
