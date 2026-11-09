@@ -223,6 +223,8 @@ Todo se guarda primero en el celular; cada cambio queda marcado como pendiente.
   guarda como ya sincronizado y cuenta como "Última sincronización". Si el celular ya tiene vacas no
   se trae nada, para no competir con cambios hechos en él (`lib/data/sync/restore_service.dart`).
   **Las fotos no se restauran**: el servidor guarda los archivos, pero no tiene cómo listarlos.
+  Trabajo futuro: un endpoint en el backend que liste las fotos de cada vaca (datos y diagnóstico) para
+  que la restauración también baje sus archivos con `GET /api/cows/{cowId}/photos/{photoId}/image`.
 - La sesión de demostración no sincroniza.
 
 ## Decisiones de diseño (para revisión)
