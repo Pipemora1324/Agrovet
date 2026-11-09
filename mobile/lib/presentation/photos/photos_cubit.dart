@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
@@ -27,9 +29,9 @@ class PhotosCubit extends Cubit<PhotosState> {
     required this.capture,
     DateTime Function()? clock,
     Uuid? uuid,
-  })  : _now = clock ?? DateTime.now,
-        _uuid = uuid ?? const Uuid(),
-        super(const PhotosState());
+  }) : _now = clock ?? DateTime.now,
+       _uuid = uuid ?? const Uuid(),
+       super(const PhotosState());
 
   final String cowId;
   final PhotoRepository repository;
@@ -51,17 +53,27 @@ class PhotosCubit extends Cubit<PhotosState> {
           final id = _uuid.v4();
           final saved = await store.save(id, bytes);
           final now = _now();
-          await repository.savePhoto(CowPhoto(
-            id: id,
-            cowId: cowId,
-            takenOn: dateOnly(now),
-            fileName: saved.fileName,
-            sizeBytes: saved.sizeBytes,
-            createdAt: now,
-          ));
+          await repository.savePhoto(
+            CowPhoto(
+              id: id,
+              cowId: cowId,
+              takenOn: dateOnly(now),
+              fileName: saved.fileName,
+              sizeBytes: saved.sizeBytes,
+              createdAt: now,
+            ),
+          );
           emit(const PhotosState(message: 'Foto guardada.'));
         } on FormatException {
-          emit(const PhotosState(error: 'La foto no es una imagen JPEG válida.'));
+          emit(
+            const PhotosState(error: 'La foto no es una imagen JPEG válida.'),
+          );
+        } on FileSystemException {
+          emit(
+            const PhotosState(
+              error: 'No se pudo guardar la foto. Revise el espacio disponible e intente de nuevo.',
+            ),
+          );
         }
     }
   }
