@@ -73,7 +73,8 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 - La CNN de la ubre (`assets/model/udder_cnn.tflite`, entrenada con un dataset público) viene
   **apagada**. Solo se enciende compilando con `--dart-define=UDDER_TRIAGE=true`, y entonces la ficha
   de la foto muestra una lectura con el aviso "Resultado orientativo, no es diagnóstico". No se
-  recomienda encenderla (ver `ml/README.md`).
+  recomienda encenderla (ver `ml/README.md`). Apagada, `android/app/build.gradle.kts` deja el
+  `.tflite` fuera del APK (x86_64: 13,98 MiB apagada, 14,82 MiB encendida; el límite es 15 MiB).
 
 ## Asistente
 

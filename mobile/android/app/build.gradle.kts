@@ -1,8 +1,20 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Flutter pasa los --dart-define a Gradle como una lista separada por comas, cada uno en base64.
+// La CNN de la ubre solo se empaqueta si la app se compila con --dart-define=UDDER_TRIAGE=true:
+// apagada no se usa y sus ~0,85 MB dejarían el APK al borde del límite de 15 MB.
+val udderTriageEnabled = (project.findProperty("dart-defines") as String?)
+    ?.split(",")
+    ?.filter { it.isNotBlank() }
+    ?.map { String(Base64.getDecoder().decode(it)) }
+    ?.contains("UDDER_TRIAGE=true")
+    ?: false
 
 android {
     namespace = "co.edu.ucc.agrovet"
@@ -60,4 +72,12 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+// El plugin de Flutter copia los assets con tareas copyFlutterAssets<Variante>; con el triaje apagado
+// se deja fuera el modelo de la ubre.
+if (!udderTriageEnabled) {
+    tasks.withType<Copy>().matching { it.name.startsWith("copyFlutterAssets") }.configureEach {
+        exclude("**/udder_cnn.tflite")
+    }
 }
