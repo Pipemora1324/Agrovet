@@ -33,7 +33,7 @@ class SyncButton extends StatelessWidget {
                 ? const SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 3, color: AppColors.onPrimary),
+                    child: CircularProgressIndicator(strokeWidth: 3, color: AppColors.primary),
                   )
                 : Badge(
                     isLabelVisible: state.pending > 0,

@@ -12,6 +12,8 @@ import '../../domain/assistant_tips.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/fade_in.dart';
+import '../widgets/motion.dart';
 import '../widgets/notice_box.dart';
 import 'assistant_cubit.dart';
 
@@ -253,36 +255,47 @@ class _Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final mine = message.fromUser;
-    return Align(
-      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 520),
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: mine ? theme.colorScheme.primaryContainer : AppColors.surface,
-          border: Border.all(color: AppColors.cardBorder),
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (message.withPhoto)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.photo, size: 18),
-                  const SizedBox(width: 4),
-                  Text('Con foto', style: theme.textTheme.bodySmall),
-                ]),
-              ),
-            Text(message.text, style: theme.textTheme.bodyLarge),
-            const SizedBox(height: 4),
-            Text(
-              '${mine ? 'Usted' : 'Asistente'} · ${formatDateTime(message.createdAt)}',
-              style: theme.textTheme.bodySmall,
+    final ink = mine ? AppColors.onPrimary : AppColors.ink;
+    const big = Radius.circular(AppRadius.large);
+    const small = Radius.circular(4);
+    return FadeIn(
+      child: Align(
+        alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 520),
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: mine ? AppColors.primary : AppColors.surface,
+            border: mine ? null : Border.all(color: AppColors.cardBorder),
+            // La punta de la burbuja apunta hacia quien habla
+            borderRadius: BorderRadius.only(
+              topLeft: big,
+              topRight: big,
+              bottomLeft: mine ? big : small,
+              bottomRight: mine ? small : big,
             ),
-          ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (message.withPhoto)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.photo, size: 18, color: ink),
+                    const SizedBox(width: 4),
+                    Text('Con foto', style: theme.textTheme.bodySmall?.copyWith(color: ink)),
+                  ]),
+                ),
+              Text(message.text, style: theme.textTheme.bodyLarge?.copyWith(color: ink)),
+              const SizedBox(height: 4),
+              Text(
+                '${mine ? 'Usted' : 'Asistente'} · ${formatDateTime(message.createdAt)}',
+                style: theme.textTheme.bodySmall?.copyWith(color: ink),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -293,14 +306,25 @@ class _Typing extends StatelessWidget {
   const _Typing();
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 3)),
-            const SizedBox(width: 12),
-            Text('El asistente está respondiendo…', style: Theme.of(context).textTheme.bodyLarge),
-          ],
+  Widget build(BuildContext context) => Align(
+        alignment: Alignment.centerLeft,
+        child: Semantics(
+          label: 'El asistente está respondiendo',
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border.all(color: AppColors.cardBorder),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(AppRadius.large),
+                topRight: Radius.circular(AppRadius.large),
+                bottomRight: Radius.circular(AppRadius.large),
+                bottomLeft: Radius.circular(4),
+              ),
+            ),
+            child: const TypingDots(),
+          ),
         ),
       );
 }

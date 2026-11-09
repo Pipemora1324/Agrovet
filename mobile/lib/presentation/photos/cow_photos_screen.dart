@@ -6,7 +6,10 @@ import '../../data/photos/photo_capture.dart';
 import '../../data/photos/photo_store.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
+import '../../core/theme.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/big_button.dart';
+import '../widgets/fade_in.dart';
 import '../widgets/notice_box.dart';
 import 'photo_gallery.dart';
 import 'photos_cubit.dart';
@@ -98,6 +101,8 @@ class _CowPhotosView extends StatelessWidget {
                                 child: NoticeBox.error(state.error!),
                               ),
                       ),
+                      const FadeIn(child: _PhotoGuide()),
+                      const SizedBox(height: 12),
                       Text(
                         'Las fotos quedan guardadas solo dentro de AgroVet, sin la ubicación, y se suben al '
                         'servidor cuando hay internet.',
@@ -123,6 +128,73 @@ class _CowPhotosView extends StatelessWidget {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// Cómo tomar una buena foto de la ubre, con los dos botones a mano.
+class _PhotoGuide extends StatelessWidget {
+  const _PhotoGuide();
+
+  static const _tips = [
+    (Icons.wb_sunny, 'Con buena luz, de día y sin sombra fuerte.'),
+    (Icons.cleaning_services, 'Ubre limpia y seca, antes del ordeño.'),
+    (Icons.crop_free, 'Que se vea toda la ubre: de lado y por detrás.'),
+    (Icons.do_not_touch, 'Sin personas ni caras en la foto.'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final busy = context.watch<PhotosCubit>().state.busy;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
+                  child: const Icon(Icons.photo_camera, color: AppColors.primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Foto de la ubre', style: theme.textTheme.titleLarge)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            for (final (icon, text) in _tips)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(icon, size: 22, color: AppColors.primary),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(text, style: theme.textTheme.bodyLarge)),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 12),
+            BigButton(
+              icon: Icons.photo_camera,
+              label: 'Tomar foto',
+              busy: busy,
+              onPressed: () => context.read<PhotosCubit>().add(PhotoSource.camera),
+            ),
+            const SizedBox(height: 10),
+            BigButton(
+              icon: Icons.photo_library,
+              label: 'Elegir de la galería',
+              outlined: true,
+              onPressed: busy ? null : () => context.read<PhotosCubit>().add(PhotoSource.gallery),
+            ),
+          ],
         ),
       ),
     );

@@ -112,6 +112,10 @@ class AppMotion {
 
   /// Escala de un elemento mientras se presiona.
   static const pressedScale = 0.97;
+
+  /// Animaciones de ambiente que se repiten (pulso, brillo, formas flotantes). Las pruebas lo apagan
+  /// para que pumpAndSettle termine; apagadas, hacen un solo ciclo.
+  static bool ambient = true;
 }
 
 /// Estilos de texto con nombre propio, derivados del textTheme para no repetir tamaños.

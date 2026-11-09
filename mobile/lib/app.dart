@@ -12,7 +12,7 @@ import 'domain/risk_predictor.dart';
 import 'presentation/auth/auth_cubit.dart';
 import 'presentation/auth/login_screen.dart';
 import 'presentation/auth/verify_email_screen.dart';
-import 'presentation/cows/cows_screen.dart';
+import 'presentation/home/home_shell.dart';
 import 'presentation/session_scope.dart';
 import 'presentation/widgets/loading_view.dart';
 
@@ -120,7 +120,7 @@ class _SessionNavigatorState extends State<SessionNavigator> {
           controller: _heroController,
           child: Navigator(
             key: _navigatorKey,
-            onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => const CowsScreen()),
+            onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => const HomeShell()),
           ),
         ),
       );

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Botón de acción principal: ancho completo, ícono grande y texto corto.
+import '../../core/theme.dart';
+import 'motion.dart';
+
+/// Botón de acción: ancho completo, 56 dp de alto, ícono y texto corto. Se encoge un poco al tocarlo.
 class BigButton extends StatelessWidget {
   const BigButton({
     super.key,
@@ -20,14 +23,18 @@ class BigButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = busy
-        ? const SizedBox(width: 26, height: 26, child: CircularProgressIndicator(strokeWidth: 3))
-        : Icon(icon, size: 28);
+        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3))
+        : Icon(icon, size: AppSizes.icon);
     final action = busy ? null : onPressed;
-    return SizedBox(
-      width: double.infinity,
-      child: outlined
-          ? OutlinedButton.icon(onPressed: action, icon: content, label: Text(label))
-          : FilledButton.icon(onPressed: action, icon: content, label: Text(label)),
+    // El texto puede ocupar dos líneas con letra grande, sin desbordarse
+    final text = Text(label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis);
+    return PressScale(
+      child: SizedBox(
+        width: double.infinity,
+        child: outlined
+            ? OutlinedButton.icon(onPressed: action, icon: content, label: text)
+            : FilledButton.icon(onPressed: action, icon: content, label: text),
+      ),
     );
   }
 }
