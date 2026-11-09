@@ -16,6 +16,13 @@ Future<void> main() async {
   await initializeDateFormatting('es');
   Intl.defaultLocale = 'es';
 
+  // Sin una dirección válida del servidor no se arranca: se explica cómo compilar la app
+  final problem = AppConfig.problem;
+  if (problem != null) {
+    runApp(ConfigErrorApp(message: problem));
+    return;
+  }
+
   if (Platform.isAndroid) {
     // Si no se puede programar, la app sincroniza igual en primer plano
     unawaited(BackgroundSync.schedule().catchError((Object _) {}));
