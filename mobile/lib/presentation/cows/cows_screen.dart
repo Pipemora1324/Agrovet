@@ -107,7 +107,7 @@ class _CowCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        RiskChip(level: summary.lastRisk),
+                        Flexible(child: RiskChip(level: summary.lastRisk)),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
