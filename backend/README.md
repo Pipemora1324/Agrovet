@@ -75,9 +75,10 @@ En GitHub Actions, `setup-java` crea ese archivo automáticamente. Dentro de Doc
 | `CORS_ALLOWED_ORIGINS` | Orígenes web permitidos, separados por coma. Vacío = ninguno. |
 | `LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW`, `LOGIN_MAX_ATTEMPTS_PER_IP` | Límite de intentos de login (5 por IP y correo, 30 por IP, en 5 minutos). |
 | `API_DOCS_ENABLED` | `false` para ocultar Swagger en producción. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | Servidor de correo saliente. En el docker-compose, Mailpit por defecto. |
-| `SMTP_AUTH`, `SMTP_STARTTLS` | `true` con un proveedor real; `false` con Mailpit. |
-| `MAIL_FROM` | Remitente de los correos. Sin él la aplicación no arranca. |
+| `MAIL_HOST`, `MAIL_PORT` | SMTP real (por defecto `smtp.gmail.com:587`). |
+| `MAIL_USERNAME`, `MAIL_PASSWORD` | Cuenta SMTP. Vacías: los correos van a Mailpit. Con valor: SMTP real con STARTTLS obligatorio. |
+| `MAIL_FROM` | Remitente. Vacío: la cuenta de `MAIL_USERNAME` (o uno de prueba con Mailpit). |
+| `MAILPIT_HOST`, `MAILPIT_SMTP_PORT` | Mailpit (`mailpit:1025` en el docker-compose, `localhost:1025` fuera de Docker). |
 | `PHOTO_STORAGE_DIR` | Carpeta de las fotos (en el docker-compose, el volumen `photos`). |
 | `GEMINI_API_KEY` | Clave del asistente (Google AI Studio). Sin ella el asistente responde 503. Solo en el servidor. |
 | `ASSISTANT_PROVIDER`, `GEMINI_MODEL` | Proveedor (`gemini` o `disabled`) y modelo (`gemini-2.5-flash`). |
