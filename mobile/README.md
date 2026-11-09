@@ -216,6 +216,13 @@ Todo se guarda primero en el celular; cada cambio queda marcado como pendiente.
 - **Estado**: en la lista de vacas se muestra una sola línea con la hora de la última sincronización
   confirmada, o "Sin sincronizar aún". No se muestran contadores, errores técnicos ni controles
   manuales de sincronización.
+- **Restaurar en otro celular**: al entrar con una cuenta en un celular que no tiene ninguna de sus
+  vacas (celular nuevo, app reinstalada o datos borrados), la app trae del servidor las vacas
+  (`GET /api/cows`) y el último año de registros, evaluaciones y alertas de cada una
+  (`GET /api/cows/{id}/history`), en segundo plano; si no hay red, lo hace al volver la conexión. Se
+  guarda como ya sincronizado y cuenta como "Última sincronización". Si el celular ya tiene vacas no
+  se trae nada, para no competir con cambios hechos en él (`lib/data/sync/restore_service.dart`).
+  **Las fotos no se restauran**: el servidor guarda los archivos, pero no tiene cómo listarlos.
 - La sesión de demostración no sincroniza.
 
 ## Decisiones de diseño (para revisión)

@@ -170,6 +170,14 @@ class SyncCubit extends Cubit<SyncState> {
 
   void messageShown() => emit(state.copyWith(clearMessage: true));
 
+  /// Los datos se acaban de traer del servidor: el celular quedó al día, como tras una sincronización.
+  Future<void> restoredFromServer() async {
+    if (_service == null) return;
+    final at = _now();
+    await _saveLastSync?.call(at);
+    if (!isClosed) emit(state.copyWith(lastSyncAt: at));
+  }
+
   @override
   Future<void> close() async {
     for (final subscription in _subscriptions) {

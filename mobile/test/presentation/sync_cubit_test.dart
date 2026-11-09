@@ -94,6 +94,27 @@ void main() {
       await resumed.close();
     });
 
+    test('traer los datos del servidor cuenta como última sincronización', () async {
+      final saved = <DateTime>[];
+      final cubit = SyncCubit(
+        SyncService(db, FakeGateway(), sleep: (_) async {}),
+        connectivity: const Stream.empty(),
+        initiallyOnline: false,
+        saveLastSync: (at) async => saved.add(at),
+        clock: () => now,
+      );
+      await cubit.restoredFromServer();
+      expect(cubit.state.lastSyncAt, now);
+      expect(saved, [now]);
+      await cubit.close();
+
+      // En la demostración no hay servidor: no cambia nada
+      final demo = SyncCubit.disabled();
+      await demo.restoredFromServer();
+      expect(demo.state.lastSyncAt, isNull);
+      await demo.close();
+    });
+
     test('carga la última sincronización guardada y la actualiza cuando el servidor confirma', () async {
       final saved = <DateTime>[];
       final cubit = SyncCubit(
