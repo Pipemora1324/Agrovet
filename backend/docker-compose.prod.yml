@@ -42,7 +42,7 @@ services:
       PHOTO_STORAGE_DIR: /app/data/photos
       ASSISTANT_PROVIDER: ${ASSISTANT_PROVIDER:-gemini}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.1-flash-lite}
     volumes:
       - photos:/app/data/photos
     # Sin puertos publicados: el tráfico entra solo por Caddy (HTTPS)

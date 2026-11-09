@@ -52,6 +52,8 @@ public class AssistantRateLimiter {
     }
 
     private static TooManyRequestsException tooMany(Duration retryAfter) {
-        return new TooManyRequestsException("Llegó al límite de preguntas al asistente.", retryAfter);
+        return new TooManyRequestsException(
+                "Por ahora completó las preguntas permitidas al asistente; así se evitan abusos y costos.",
+                retryAfter);
     }
 }

@@ -42,9 +42,12 @@ class _CowDetailScreenState extends State<CowDetailScreen> {
 
   DateTime get _today => dateOnly(DateTime.now());
 
-  Future<List<DailyRecord>> _loadRecords() => context
-      .read<RecordRepository>()
-      .recordsBetween(widget.cowId, _today.subtract(const Duration(days: _trendDays - 1)), _today);
+  Future<List<DailyRecord>> _loadRecords() =>
+      context.read<RecordRepository>().recordsBetween(
+        widget.cowId,
+        _today.subtract(const Duration(days: _trendDays - 1)),
+        _today,
+      );
 
   /// Abre otra pantalla y, al volver, recarga los registros (pudo haber uno nuevo).
   Future<void> _open(Widget screen) async {
@@ -61,9 +64,14 @@ class _CowDetailScreenState extends State<CowDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('¿Dar de baja a ${cow.name ?? cow.tag}?'),
-        content: const Text('Dejará de aparecer en la lista. Sus registros se conservan.'),
+        content: const Text(
+          'Dejará de aparecer en la lista. Sus registros se conservan.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
             style: AppButtonStyles.dangerFilled(context),
             onPressed: () => Navigator.pop(context, true),
@@ -87,7 +95,10 @@ class _CowDetailScreenState extends State<CowDetailScreen> {
       builder: (context, snapshot) {
         final cow = snapshot.data;
         if (cow == null) {
-          return const AppScaffold(title: 'Vaca', body: Center(child: CircularProgressIndicator()));
+          return const AppScaffold(
+            title: 'Vaca',
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         return AppScaffold(
           title: cow.name ?? cow.tag,
@@ -113,7 +124,10 @@ class _CowDetailScreenState extends State<CowDetailScreen> {
                 final risk = _RiskPanel(latest: latest.data, records: list);
                 final alerts = _PendingAlerts(cowId: widget.cowId);
                 final trend = _TrendCard(records: list, today: _today);
-                final production = _ProductionCard(records: list, today: _today);
+                final production = _ProductionCard(
+                  records: list,
+                  today: _today,
+                );
                 final actions = _Actions(cow: cow, open: _open);
                 return SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -125,23 +139,27 @@ class _CowDetailScreenState extends State<CowDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
-                                child: Column(children: [
-                                  FadeIn(child: header),
-                                  const SizedBox(height: 16),
-                                  FadeIn(index: 1, child: risk),
-                                  const SizedBox(height: 16),
-                                  alerts,
-                                ]),
+                                child: Column(
+                                  children: [
+                                    FadeIn(child: header),
+                                    const SizedBox(height: 16),
+                                    FadeIn(index: 1, child: risk),
+                                    const SizedBox(height: 16),
+                                    alerts,
+                                  ],
+                                ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
-                                child: Column(children: [
-                                  FadeIn(index: 2, child: trend),
-                                  const SizedBox(height: 16),
-                                  FadeIn(index: 3, child: production),
-                                  const SizedBox(height: 16),
-                                  FadeIn(index: 4, child: actions),
-                                ]),
+                                child: Column(
+                                  children: [
+                                    FadeIn(index: 2, child: trend),
+                                    const SizedBox(height: 16),
+                                    FadeIn(index: 3, child: production),
+                                    const SizedBox(height: 16),
+                                    FadeIn(index: 4, child: actions),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -191,14 +209,23 @@ class _Header extends StatelessWidget {
           children: [
             Row(
               children: [
-                Hero(tag: 'cow-avatar-${cow.id}', child: CowAvatar(level: latest?.riskLevel, size: 64)),
+                Hero(
+                  tag: 'cow-avatar-${cow.id}',
+                  child: CowAvatar(level: latest?.riskLevel, size: 64),
+                ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(cow.name ?? cow.tag, style: theme.textTheme.titleLarge),
-                      Text('${cow.tag} · ${cow.productionStatus.label}', style: theme.textTheme.bodyLarge),
+                      Text(
+                        cow.name ?? cow.tag,
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      Text(
+                        '${cow.tag} · ${cow.productionStatus.label}',
+                        style: theme.textTheme.bodyLarge,
+                      ),
                     ],
                   ),
                 ),
@@ -211,7 +238,12 @@ class _Header extends StatelessWidget {
               children: [
                 _Fact(icon: Icons.category, text: cow.breed ?? 'Raza sin dato'),
                 _Fact(icon: Icons.cake, text: age ?? 'Edad sin dato'),
-                _Fact(icon: Icons.child_care, text: cow.calvings == null ? 'Partos sin dato' : 'Partos: ${cow.calvings}'),
+                _Fact(
+                  icon: Icons.child_care,
+                  text: cow.calvings == null
+                      ? 'Partos sin dato'
+                      : 'Partos: ${cow.calvings}',
+                ),
               ],
             ),
           ],
@@ -238,20 +270,25 @@ class _Fact extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: const BoxDecoration(color: AppColors.background, borderRadius: AppRadius.field),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: AppColors.primary),
-            const SizedBox(width: 6),
-            Flexible(child: Text(text, style: Theme.of(context).textTheme.bodyMedium)),
-          ],
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: const BoxDecoration(
+      color: AppColors.background,
+      borderRadius: AppRadius.field,
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20, color: AppColors.primary),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
         ),
-      );
+      ],
+    ),
+  );
 }
 
-/// Último semáforo: círculo con el porcentaje del modelo y por qué la app lo cree.
+/// Último semáforo y las señales que se tuvieron en cuenta.
 class _RiskPanel extends StatelessWidget {
   const _RiskPanel({required this.latest, required this.records});
 
@@ -271,8 +308,10 @@ class _RiskPanel extends StatelessWidget {
               const RiskChip(level: null),
               const SizedBox(width: 12),
               Expanded(
-                child: Text('Todavía no se ha evaluado el riesgo. Haga el registro de hoy y toque "Evaluar riesgo".',
-                    style: theme.textTheme.bodyLarge),
+                child: Text(
+                  'Todavía no se ha evaluado el riesgo. Haga el registro de hoy y toque "Evaluar riesgo".',
+                  style: theme.textTheme.bodyLarge,
+                ),
               ),
             ],
           ),
@@ -280,17 +319,20 @@ class _RiskPanel extends StatelessWidget {
       );
     }
     final level = value.riskLevel;
-    final record = records.where((r) => dateOnly(r.recordDate) == dateOnly(value.windowEndDate)).firstOrNull;
-    final reasons = _reasons(value, record == null ? null : SymptomScore.assess(record));
-    final ring = PercentRing(
-      value: value.probability,
-      color: level.color,
-      size: 124,
-      center: value.probability == null ? Icon(level.icon, size: 56, color: level.textColor) : null,
+    final record = records
+        .where((r) => dateOnly(r.recordDate) == dateOnly(value.windowEndDate))
+        .firstOrNull;
+    final reasons = _reasons(
+      value,
+      record == null ? null : SymptomScore.assess(record),
     );
+    final light = TrafficLight(level: level, size: 84);
     return Card(
       color: level.surface,
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.card, side: BorderSide(color: level.color, width: 2)),
+      shape: RoundedRectangleBorder(
+        borderRadius: AppRadius.card,
+        side: BorderSide(color: level.color, width: 2),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -301,29 +343,37 @@ class _RiskPanel extends StatelessWidget {
               runSpacing: 12,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                ring,
+                light,
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 280),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(level.label, style: theme.textTheme.headlineSmall?.copyWith(color: level.textColor)),
+                      Text(
+                        level.label,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: level.textColor,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
-                        value.probability == null
-                            ? 'Evaluado con los síntomas'
-                            : 'Probabilidad según el modelo',
-                        style: theme.textTheme.bodyMedium?.copyWith(color: level.textColor),
+                        'Evaluado: ${formatDay(value.windowEndDate)}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: level.textColor,
+                        ),
                       ),
-                      Text('Evaluado: ${formatDay(value.windowEndDate)}',
-                          style: theme.textTheme.bodyMedium?.copyWith(color: level.textColor)),
                     ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            Text('Por qué la app lo cree', style: theme.textTheme.titleMedium?.copyWith(color: level.textColor)),
+            Text(
+              'Señales registradas',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: level.textColor,
+              ),
+            ),
             const SizedBox(height: 8),
             for (final (icon, text) in reasons)
               Padding(
@@ -334,13 +384,23 @@ class _RiskPanel extends StatelessWidget {
                     Icon(icon, size: 22, color: level.textColor),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(text, style: theme.textTheme.bodyLarge?.copyWith(color: level.textColor)),
+                      child: Text(
+                        text,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: level.textColor,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
             const SizedBox(height: 8),
-            Text(RiskAdvice.disclaimer, style: theme.textTheme.bodySmall?.copyWith(color: level.textColor)),
+            Text(
+              RiskAdvice.disclaimer,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: level.textColor,
+              ),
+            ),
           ],
         ),
       ),
@@ -348,23 +408,28 @@ class _RiskPanel extends StatelessWidget {
   }
 
   /// Razones en lenguaje sencillo, de la más importante a la menos.
-  static List<(IconData, String)> _reasons(Inference inference, SymptomAssessment? symptoms) {
+  static List<(IconData, String)> _reasons(
+    Inference inference,
+    SymptomAssessment? symptoms,
+  ) {
     final list = <(IconData, String)>[];
-    if (inference.cause != null && inference.riskLevel != RiskLevel.green) {
-      list.add((Icons.flag, 'Quién encendió la alerta: ${inference.cause!.label}.'));
-    }
     if (inference.probability != null) {
       list.add((
         Icons.insights,
-        'El modelo revisó la temperatura, la leche y el alimento de los últimos 14 días: '
-            '${formatPercent(inference.probability!)}.',
+        'Se tuvieron en cuenta la temperatura, la leche y el alimento recientes.',
       ));
     } else {
-      list.add((Icons.hourglass_empty, 'No había días suficientes para el modelo; se usaron los síntomas.'));
+      list.add((
+        Icons.hourglass_empty,
+        'Hay pocos registros anteriores; se revisaron los signos de hoy.',
+      ));
     }
     if (symptoms != null) {
       if (symptoms.reasons.isEmpty) {
-        list.add((Icons.check_circle_outline, 'No se marcó ningún signo en la ubre ni en la leche.'));
+        list.add((
+          Icons.check_circle_outline,
+          'No se marcó ningún signo en la ubre ni en la leche.',
+        ));
       } else {
         for (final reason in symptoms.reasons) {
           list.add((Icons.circle, '${reason.label} (+${reason.points}).'));
@@ -386,7 +451,9 @@ class _TrendCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final from = today.subtract(const Duration(days: _trendDays - 1));
-    final byDay = {for (final r in records) dateOnly(r.recordDate): r.temperatureC};
+    final byDay = {
+      for (final r in records) dateOnly(r.recordDate): r.temperatureC,
+    };
     final spots = [
       for (var i = 0; i < _trendDays; i++)
         () {
@@ -394,7 +461,10 @@ class _TrendCard extends StatelessWidget {
           return value == null ? FlSpot.nullSpot : FlSpot(i.toDouble(), value);
         }(),
     ];
-    final present = spots.where((s) => s != FlSpot.nullSpot).map((s) => s.y).toList();
+    final present = spots
+        .where((s) => s != FlSpot.nullSpot)
+        .map((s) => s.y)
+        .toList();
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
@@ -405,15 +475,25 @@ class _TrendCard extends StatelessWidget {
               children: [
                 const Icon(Icons.thermostat, color: AppColors.chartTemperature),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Temperatura, 14 días', style: theme.textTheme.titleMedium)),
+                Expanded(
+                  child: Text(
+                    'Temperatura, 14 días',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
             if (present.isEmpty)
-              Text('Sin temperaturas registradas en estos días.', style: theme.textTheme.bodyLarge)
+              Text(
+                'Sin temperaturas registradas en estos días.',
+                style: theme.textTheme.bodyLarge,
+              )
             else
-              SizedBox(
+              Container(
                 height: 170,
+                // Margen para que el punto de hoy, en el borde derecho, no quede cortado
+                padding: const EdgeInsets.only(right: 12),
                 child: DrawIn(
                   child: LineChart(
                     LineChartData(
@@ -429,19 +509,25 @@ class _TrendCard extends StatelessWidget {
                           color: AppColors.chartTemperature,
                           barWidth: 3.5,
                           dotData: const FlDotData(show: true),
-                          belowBarData:
-                              BarAreaData(show: true, color: AppColors.chartTemperature.withValues(alpha: 0.10)),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            color: AppColors.chartTemperature.withValues(
+                              alpha: 0.10,
+                            ),
+                          ),
                         ),
                       ],
                       // Línea de fiebre como referencia
-                      extraLinesData: ExtraLinesData(horizontalLines: [
-                        HorizontalLine(
-                          y: SymptomScore.feverC,
-                          color: AppColors.riskRed.withValues(alpha: 0.5),
-                          strokeWidth: 1.5,
-                          dashArray: [6, 4],
-                        ),
-                      ]),
+                      extraLinesData: ExtraLinesData(
+                        horizontalLines: [
+                          HorizontalLine(
+                            y: SymptomScore.feverC,
+                            color: AppColors.riskRed.withValues(alpha: 0.5),
+                            strokeWidth: 1.5,
+                            dashArray: [6, 4],
+                          ),
+                        ],
+                      ),
                       gridData: const FlGridData(drawVerticalLine: false),
                       borderData: FlBorderData(show: false),
                       titlesData: FlTitlesData(
@@ -452,11 +538,15 @@ class _TrendCard extends StatelessWidget {
                             showTitles: true,
                             reservedSize: 48,
                             interval: 1,
-                            getTitlesWidget: (value, meta) => value == meta.min || value == meta.max
+                            getTitlesWidget: (value, meta) =>
+                                value == meta.min || value == meta.max
                                 ? const SizedBox.shrink()
                                 : SideTitleWidget(
                                     meta: meta,
-                                    child: Text(formatNumber(value, decimals: 0), style: theme.textTheme.axis),
+                                    child: Text(
+                                      formatNumber(value, decimals: 0),
+                                      style: theme.textTheme.axis,
+                                    ),
                                   ),
                           ),
                         ),
@@ -467,14 +557,24 @@ class _TrendCard extends StatelessWidget {
                             reservedSize: 30,
                             getTitlesWidget: (value, meta) {
                               final index = value.toInt();
-                              if (index % 4 != 0 && index != _trendDays - 1) return const SizedBox.shrink();
+                              if (index % 4 != 0 && index != _trendDays - 1) {
+                                return const SizedBox.shrink();
+                              }
                               if (index == 12) return const SizedBox.shrink();
                               return SideTitleWidget(
                                 meta: meta,
+                                // "Hoy" en el borde no se corta con letra grande
+                                fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
                                 child: Text(
                                   index == _trendDays - 1
                                       ? 'Hoy'
-                                      : formatShortDay(DateTime(from.year, from.month, from.day + index)),
+                                      : formatShortDay(
+                                          DateTime(
+                                            from.year,
+                                            from.month,
+                                            from.day + index,
+                                          ),
+                                        ),
                                   style: theme.textTheme.axis,
                                 ),
                               );
@@ -487,7 +587,10 @@ class _TrendCard extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 4),
-            Text('Línea punteada: fiebre (${formatNumber(SymptomScore.feverC)} °C).', style: theme.textTheme.bodySmall),
+            Text(
+              'Línea punteada: fiebre (${formatNumber(SymptomScore.feverC)} °C).',
+              style: theme.textTheme.bodySmall,
+            ),
           ],
         ),
       ),
@@ -506,7 +609,10 @@ class _ProductionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final from = today.subtract(const Duration(days: _trendDays - 1));
     final byDay = {for (final r in records) dateOnly(r.recordDate): r};
-    final days = [for (var i = 0; i < _trendDays; i++) byDay[DateTime(from.year, from.month, from.day + i)]];
+    final days = [
+      for (var i = 0; i < _trendDays; i++)
+        byDay[DateTime(from.year, from.month, from.day + i)],
+    ];
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -519,7 +625,10 @@ class _ProductionCard extends StatelessWidget {
               unit: 'L',
               color: AppColors.chartMilk,
               values: [for (final d in days) d?.milkL],
-              estimated: {for (var i = 0; i < days.length; i++) if (days[i]?.milkEstimated ?? false) i},
+              estimated: {
+                for (var i = 0; i < days.length; i++)
+                  if (days[i]?.milkEstimated ?? false) i,
+              },
             ),
             const Divider(height: 32),
             _Series(
@@ -528,7 +637,10 @@ class _ProductionCard extends StatelessWidget {
               unit: 'kg',
               color: AppColors.chartFeed,
               values: [for (final d in days) d?.feedKg],
-              estimated: {for (var i = 0; i < days.length; i++) if (days[i]?.feedEstimated ?? false) i},
+              estimated: {
+                for (var i = 0; i < days.length; i++)
+                  if (days[i]?.feedEstimated ?? false) i,
+              },
             ),
           ],
         ),
@@ -558,7 +670,9 @@ class _Series extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final present = values.whereType<double>().toList();
-    final average = present.isEmpty ? null : present.reduce((a, b) => a + b) / present.length;
+    final average = present.isEmpty
+        ? null
+        : present.reduce((a, b) => a + b) / present.length;
     final last = values.last;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -567,7 +681,12 @@ class _Series extends StatelessWidget {
           children: [
             Icon(icon, color: color),
             const SizedBox(width: 8),
-            Expanded(child: Text('$title, 14 días', style: theme.textTheme.titleMedium)),
+            Expanded(
+              child: Text(
+                '$title, 14 días',
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 4),
@@ -575,18 +694,26 @@ class _Series extends StatelessWidget {
           present.isEmpty
               ? 'Sin datos en estos días.'
               : 'Hoy: ${last == null ? 'sin dato' : '${formatNumber(last)} $unit'} · '
-                  'Promedio: ${formatNumber(average)} $unit',
+                    'Promedio: ${formatNumber(average)} $unit',
           style: theme.textTheme.bodyMedium,
         ),
         const SizedBox(height: 10),
         Semantics(
           label: '$title de los últimos 14 días',
           excludeSemantics: true,
-          child: GrowColumns(values: values, color: color, height: 80, estimated: estimated),
+          child: GrowColumns(
+            values: values,
+            color: color,
+            height: 80,
+            estimated: estimated,
+          ),
         ),
         if (estimated.isNotEmpty) ...[
           const SizedBox(height: 6),
-          Text('Las barras claras son valores estimados.', style: theme.textTheme.bodySmall),
+          Text(
+            'Las barras claras son valores estimados.',
+            style: theme.textTheme.bodySmall,
+          ),
         ],
       ],
     );
@@ -602,7 +729,9 @@ class _PendingAlerts extends StatelessWidget {
   Future<void> _markAttended(BuildContext context, CowAlert alert) async {
     await context.read<AlertRepository>().markAlertAttended(alert.id);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alerta marcada como atendida.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Alerta marcada como atendida.')),
+      );
     }
   }
 
@@ -628,11 +757,19 @@ class _PendingAlerts extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.notifications_active, color: alerts.first.riskLevel.color, size: 30),
+                      Icon(
+                        Icons.notifications_active,
+                        color: alerts.first.riskLevel.color,
+                        size: 30,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(alerts.length == 1 ? 'Alerta sin atender' : '${alerts.length} alertas sin atender',
-                            style: theme.textTheme.titleMedium),
+                        child: Text(
+                          alerts.length == 1
+                              ? 'Alerta sin atender'
+                              : '${alerts.length} alertas sin atender',
+                          style: theme.textTheme.titleMedium,
+                        ),
                       ),
                     ],
                   ),
@@ -644,7 +781,10 @@ class _PendingAlerts extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         RiskChip(level: alert.riskLevel),
-                        Text(formatDay(alert.createdAt), style: theme.textTheme.bodyLarge),
+                        Text(
+                          formatDay(alert.createdAt),
+                          style: theme.textTheme.bodyLarge,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -673,40 +813,48 @@ class _Actions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      BigButton(
+        icon: Icons.edit_note,
+        label: 'Registro de hoy',
+        onPressed: () => open(DailyRecordScreen(cow: cow)),
+      ),
+      const SizedBox(height: 12),
+      BigButton(
+        icon: Icons.traffic,
+        label: 'Evaluar riesgo',
+        onPressed: () => open(RiskScreen(cow: cow)),
+      ),
+      const SizedBox(height: 12),
+      Row(
         children: [
-          BigButton(icon: Icons.edit_note, label: 'Registro de hoy', onPressed: () => open(DailyRecordScreen(cow: cow))),
-          const SizedBox(height: 12),
-          BigButton(icon: Icons.traffic, label: 'Evaluar riesgo', onPressed: () => open(RiskScreen(cow: cow))),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: BigButton(
-                  icon: Icons.photo_camera,
-                  label: 'Fotos',
-                  outlined: true,
-                  onPressed: () => open(CowPhotosScreen(cow: cow)),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: BigButton(
-                  icon: Icons.show_chart,
-                  label: 'Ver historial',
-                  outlined: true,
-                  onPressed: () => open(HistoryScreen(cow: cow)),
-                ),
-              ),
-            ],
+          Expanded(
+            child: BigButton(
+              icon: Icons.photo_camera,
+              label: 'Fotos',
+              outlined: true,
+              onPressed: () => open(CowPhotosScreen(cow: cow)),
+            ),
           ),
-          const SizedBox(height: 12),
-          BigButton(
-            icon: Icons.chat,
-            label: 'Preguntar al asistente',
-            outlined: true,
-            onPressed: () => open(AssistantScreen(cow: cow)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: BigButton(
+              icon: Icons.show_chart,
+              label: 'Ver historial',
+              outlined: true,
+              onPressed: () => open(HistoryScreen(cow: cow)),
+            ),
           ),
         ],
-      );
+      ),
+      const SizedBox(height: 12),
+      BigButton(
+        icon: Icons.chat,
+        label: 'Preguntar al asistente',
+        outlined: true,
+        onPressed: () => open(AssistantScreen(cow: cow)),
+      ),
+    ],
+  );
 }

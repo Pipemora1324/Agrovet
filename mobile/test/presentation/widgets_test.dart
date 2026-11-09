@@ -17,7 +17,6 @@ import 'package:agrovet/presentation/cows/cows_screen.dart';
 import 'package:agrovet/presentation/risk/risk_cubit.dart';
 import 'package:agrovet/presentation/risk/risk_screen.dart';
 import 'package:agrovet/presentation/sync/sync_cubit.dart';
-import 'package:agrovet/presentation/sync/sync_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -27,12 +26,12 @@ import 'package:intl/date_symbol_data_local.dart';
 import '../helpers.dart';
 
 Widget app(Widget child) => MaterialApp(
-      theme: AppTheme.light(),
-      locale: const Locale('es'),
-      supportedLocales: const [Locale('es')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      home: child,
-    );
+  theme: AppTheme.light(),
+  locale: const Locale('es'),
+  supportedLocales: const [Locale('es')],
+  localizationsDelegates: GlobalMaterialLocalizations.delegates,
+  home: child,
+);
 
 void main() {
   setUpAll(() => initializeDateFormatting('es'));
@@ -46,23 +45,33 @@ void main() {
     );
   }
 
-  testWidgets('el login valida los campos y ofrece la demostración solo si está permitida', (tester) async {
-    final cubit = authCubit()..emit(const Unauthenticated());
-    await tester.pumpWidget(BlocProvider.value(value: cubit, child: app(const LoginScreen())));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'el login valida los campos y ofrece la demostración solo si está permitida',
+    (tester) async {
+      final cubit = authCubit()..emit(const Unauthenticated());
+      await tester.pumpWidget(
+        BlocProvider.value(value: cubit, child: app(const LoginScreen())),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('AgroVet'), findsOneWidget);
-    expect(find.text('Ver con datos de demostración'), findsOneWidget);
-    await tester.tap(find.text('Ingresar'));
-    await tester.pump();
-    expect(find.text('Escriba su correo'), findsOneWidget);
-    expect(find.text('La contraseña debe tener al menos 8 caracteres'), findsOneWidget);
+      expect(find.text('AgroVet'), findsOneWidget);
+      expect(find.text('Entrar a la demostración'), findsOneWidget);
+      await tester.tap(find.text('Ingresar'));
+      await tester.pump();
+      expect(find.text('Escriba su correo'), findsOneWidget);
+      expect(
+        find.text('La contraseña debe tener al menos 8 caracteres'),
+        findsOneWidget,
+      );
 
-    final noDemo = authCubit(allowDemo: false)..emit(const Unauthenticated());
-    await tester.pumpWidget(BlocProvider.value(value: noDemo, child: app(const LoginScreen())));
-    await tester.pumpAndSettle();
-    expect(find.text('Ver con datos de demostración'), findsNothing);
-  });
+      final noDemo = authCubit(allowDemo: false)..emit(const Unauthenticated());
+      await tester.pumpWidget(
+        BlocProvider.value(value: noDemo, child: app(const LoginScreen())),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Entrar a la demostración'), findsNothing);
+    },
+  );
 
   group('lista de vacas', () {
     final repo = _FixedCows([
@@ -79,36 +88,79 @@ void main() {
         ),
     ]);
 
-    Future<void> pumpCows(WidgetTester tester, Size size) async {
+    Future<void> pumpCows(
+      WidgetTester tester,
+      Size size, {
+      SyncCubit? syncCubit,
+    }) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<Session>.value(
-              value: const Session(userId: 'demo', name: 'Demo', email: 'd@x.co', isDemo: true)),
-          RepositoryProvider<CowRepository>.value(value: repo),
-          RepositoryProvider.value(value: authCubit()),
-        ],
-        child: MultiBlocProvider(
+      await tester.pumpWidget(
+        MultiRepositoryProvider(
           providers: [
-            BlocProvider.value(value: authCubit()),
-            BlocProvider(create: (_) => SyncCubit.disabled()),
+            RepositoryProvider<Session>.value(
+              value: const Session(
+                userId: 'demo',
+                name: 'Demo',
+                email: 'd@x.co',
+                isDemo: true,
+              ),
+            ),
+            RepositoryProvider<CowRepository>.value(value: repo),
+            RepositoryProvider.value(value: authCubit()),
           ],
-          child: app(const CowsScreen()),
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: authCubit()),
+              BlocProvider<SyncCubit>.value(
+                value: syncCubit ?? SyncCubit.disabled(),
+              ),
+            ],
+            child: app(const CowsScreen()),
+          ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
     }
 
-    testWidgets('en celular muestra una columna y el rótulo de demostración', (tester) async {
+    testWidgets('en celular muestra una columna y el rótulo de demostración', (
+      tester,
+    ) async {
       await pumpCows(tester, const Size(400, 800));
-      expect(find.text('Datos de demostración'), findsOneWidget);
+      expect(find.text('Modo de prueba'), findsOneWidget);
       expect(find.text('Vaca 1'), findsOneWidget);
       final first = tester.getTopLeft(find.text('Vaca 1'));
       final second = tester.getTopLeft(find.text('Vaca 2'));
       expect(second.dy, greaterThan(first.dy));
       expect(second.dx, first.dx);
+    });
+
+    testWidgets('la lista muestra solo la última sincronización', (
+      tester,
+    ) async {
+      final cubit = _FixedSyncCubit(
+        SyncState(
+          enabled: true,
+          pending: 3,
+          lastSyncAt: DateTime.now().subtract(const Duration(minutes: 10)),
+          lastError: 'No hay conexión con el servidor.',
+          rejected: const [
+            SyncIssue(
+              kind: 'Registro',
+              label: 'V-01 · 2026-03-20',
+              reason: 'Ya existe otro registro.',
+            ),
+          ],
+        ),
+      );
+      await pumpCows(tester, const Size(400, 800), syncCubit: cubit);
+
+      expect(find.text('Última sincronización: hace 10 min'), findsOneWidget);
+      expect(find.text('Sincronizar'), findsNothing);
+      expect(find.text('Pendientes: 3'), findsNothing);
+      expect(find.text('No hay conexión con el servidor.'), findsNothing);
+      await cubit.close();
     });
 
     testWidgets('en tableta muestra las vacas en dos columnas', (tester) async {
@@ -120,133 +172,219 @@ void main() {
     });
   });
 
-  testWidgets('el resultado muestra el semáforo, la recomendación y el aviso fijo', (tester) async {
-    final cow = Cow(id: 'c1', tag: 'V-01', name: 'Lucero', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026));
-    final today = dateOnly(DateTime.now());
-    final cubit = _FixedRiskCubit(RiskState(
-      evaluating: false,
-      outcome: RiskEvaluator.combine(
-        model: RiskResult(probability: 0.9, level: RiskLevel.red, windowEnd: today),
-        symptoms: SymptomScore.assess(DailyRecord(
-          id: 'r', cowId: 'c1', recordDate: today, symptoms: const Symptoms(udderHeat: true), updatedAt: today)),
-        day: today,
-      ),
-      todaySymptoms: const Symptoms(udderHeat: true),
-    ));
-    await tester.pumpWidget(BlocProvider<RiskCubit>.value(value: cubit, child: app(RiskView(cow: cow))));
-    await tester.pumpAndSettle();
-    expect(find.text('Alto riesgo'), findsWidgets);
-    expect(find.text('Lo indicó: el modelo.'), findsOneWidget);
-    expect(find.text('Consulte al veterinario'), findsOneWidget);
-    expect(find.text('Esta herramienta apoya, no reemplaza al veterinario.'), findsOneWidget);
-    expect(find.textContaining('Probabilidad estimada: 90 %'), findsOneWidget);
-    expect(find.text('Puntaje: 2 puntos'), findsOneWidget);
-    expect(find.text('Ubre caliente (+2)'), findsOneWidget);
-    expect(find.text(SymptomScore.notice), findsOneWidget);
-  });
+  testWidgets(
+    'el resultado muestra el semáforo, la recomendación y el aviso fijo',
+    (tester) async {
+      final cow = Cow(
+        id: 'c1',
+        tag: 'V-01',
+        name: 'Lucero',
+        productionStatus: ProductionStatus.lactating,
+        updatedAt: DateTime(2026),
+      );
+      final today = dateOnly(DateTime.now());
+      final cubit = _FixedRiskCubit(
+        RiskState(
+          evaluating: false,
+          outcome: RiskEvaluator.combine(
+            model: RiskResult(
+              probability: 0.9,
+              level: RiskLevel.red,
+              windowEnd: today,
+            ),
+            symptoms: SymptomScore.assess(
+              DailyRecord(
+                id: 'r',
+                cowId: 'c1',
+                recordDate: today,
+                symptoms: const Symptoms(udderHeat: true),
+                updatedAt: today,
+              ),
+            ),
+            day: today,
+          ),
+          todaySymptoms: const Symptoms(udderHeat: true),
+        ),
+      );
+      await tester.pumpWidget(
+        BlocProvider<RiskCubit>.value(
+          value: cubit,
+          child: app(RiskView(cow: cow)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Alto riesgo'), findsWidgets);
+      expect(
+        find.text('Revise la vaca y siga las recomendaciones.'),
+        findsOneWidget,
+      );
+      expect(find.text('Consulte al veterinario'), findsOneWidget);
+      expect(
+        find.text('Esta herramienta apoya, no reemplaza al veterinario.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          'Se tuvieron en cuenta la temperatura, la leche y el alimento',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Puntaje: 2 puntos'), findsOneWidget);
+      expect(find.text('Ubre caliente (+2)'), findsOneWidget);
+      expect(find.text(SymptomScore.notice), findsOneWidget);
+    },
+  );
 
-  testWidgets('sin datos para el modelo se apoya en los síntomas y lo dice', (tester) async {
-    final cow = Cow(id: 'c1', tag: 'V-01', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026));
+  testWidgets('con pocos registros se apoya en los signos del día', (
+    tester,
+  ) async {
+    final cow = Cow(
+      id: 'c1',
+      tag: 'V-01',
+      productionStatus: ProductionStatus.lactating,
+      updatedAt: DateTime(2026),
+    );
     final today = dateOnly(DateTime.now());
-    final cubit = _FixedRiskCubit(RiskState(
-      evaluating: false,
-      outcome: RiskEvaluator.combine(
-        model: const InsufficientData(recordedDays: 3, requiredDays: 10, windowDays: 14),
-        symptoms: SymptomScore.assess(DailyRecord(
-          id: 'r', cowId: 'c1', recordDate: today, symptoms: const Symptoms(abnormalMilk: true), updatedAt: today)),
-        day: today,
+    final cubit = _FixedRiskCubit(
+      RiskState(
+        evaluating: false,
+        outcome: RiskEvaluator.combine(
+          model: const InsufficientData(
+            recordedDays: 3,
+            requiredDays: 10,
+            windowDays: 14,
+          ),
+          symptoms: SymptomScore.assess(
+            DailyRecord(
+              id: 'r',
+              cowId: 'c1',
+              recordDate: today,
+              symptoms: const Symptoms(abnormalMilk: true),
+              updatedAt: today,
+            ),
+          ),
+          day: today,
+        ),
       ),
-    ));
-    await tester.pumpWidget(BlocProvider<RiskCubit>.value(value: cubit, child: app(RiskView(cow: cow))));
+    );
+    await tester.pumpWidget(
+      BlocProvider<RiskCubit>.value(
+        value: cubit,
+        child: app(RiskView(cow: cow)),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Alerta temprana'), findsWidgets);
-    expect(find.text('Lo indicó: los síntomas.'), findsOneWidget);
-    expect(find.text('Faltan datos para el modelo'), findsOneWidget);
-    expect(find.textContaining('Hay 3 de los últimos 14 días'), findsOneWidget);
+    expect(
+      find.text('Revise la vaca y siga las recomendaciones.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Aún hay pocos registros anteriores. El semáforo se basa en los signos de hoy.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Grumos o sangre en la leche (+3)'), findsOneWidget);
   });
 
-  testWidgets('la ficha muestra la alerta sin atender y permite marcarla como atendida', (tester) async {
-    final repo = _CowWithAlerts(
-      Cow(id: 'c1', tag: 'V-01', name: 'Lucero', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026)),
-      [CowAlert(id: 'al1', cowId: 'c1', riskLevel: RiskLevel.red, createdAt: DateTime.now())],
+  testWidgets(
+    'la ficha muestra la alerta sin atender y permite marcarla como atendida',
+    (tester) async {
+      final repo = _CowWithAlerts(
+        Cow(
+          id: 'c1',
+          tag: 'V-01',
+          name: 'Lucero',
+          productionStatus: ProductionStatus.lactating,
+          updatedAt: DateTime(2026),
+        ),
+        [
+          CowAlert(
+            id: 'al1',
+            cowId: 'c1',
+            riskLevel: RiskLevel.red,
+            createdAt: DateTime.now(),
+          ),
+        ],
+      );
+      addTearDown(repo.dispose);
+      await tester.pumpWidget(
+        MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<CowRepository>.value(value: repo),
+            RepositoryProvider<InferenceRepository>.value(value: repo),
+            RepositoryProvider<AlertRepository>.value(value: repo),
+            RepositoryProvider<RecordRepository>.value(value: repo),
+          ],
+          child: BlocProvider(
+            create: (_) => SyncCubit.disabled(),
+            child: app(const CowDetailScreen(cowId: 'c1')),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Alerta sin atender'), findsOneWidget);
+      expect(find.text('Alto riesgo'), findsOneWidget);
+      await tester.ensureVisible(find.text('Marcar como atendida'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Marcar como atendida'));
+      await tester.pumpAndSettle();
+
+      expect(repo.attended, ['al1']);
+      expect(find.text('Alerta marcada como atendida.'), findsOneWidget);
+      expect(find.text('Alerta sin atender'), findsNothing);
+      expect(find.text('Registro de hoy'), findsOneWidget);
+    },
+  );
+
+  testWidgets('sin registro de hoy y con pocos datos explica qué falta', (
+    tester,
+  ) async {
+    final cow = Cow(
+      id: 'c1',
+      tag: 'V-01',
+      productionStatus: ProductionStatus.lactating,
+      updatedAt: DateTime(2026),
     );
-    addTearDown(repo.dispose);
-    await tester.pumpWidget(MultiRepositoryProvider(
-      providers: [
-        RepositoryProvider<CowRepository>.value(value: repo),
-        RepositoryProvider<InferenceRepository>.value(value: repo),
-        RepositoryProvider<AlertRepository>.value(value: repo),
-        RepositoryProvider<RecordRepository>.value(value: repo),
-      ],
-      child: BlocProvider(create: (_) => SyncCubit.disabled(), child: app(const CowDetailScreen(cowId: 'c1'))),
-    ));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Alerta sin atender'), findsOneWidget);
-    expect(find.text('Alto riesgo'), findsOneWidget);
-    await tester.ensureVisible(find.text('Marcar como atendida'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Marcar como atendida'));
-    await tester.pumpAndSettle();
-
-    expect(repo.attended, ['al1']);
-    expect(find.text('Alerta marcada como atendida.'), findsOneWidget);
-    expect(find.text('Alerta sin atender'), findsNothing);
-    expect(find.text('Registro de hoy'), findsOneWidget);
-  });
-
-  testWidgets('el respaldo muestra pendientes, última sincronización, errores y el botón', (tester) async {
-    final cubit = _FixedSyncCubit(SyncState(
-      pending: 3,
-      lastSyncAt: DateTime.now().copyWith(hour: 14, minute: 32),
-      lastError: 'No hay conexión con el servidor.',
-      rejected: const [
-        SyncIssue(kind: 'Registro', label: 'V-01 · 2026-03-20', reason: 'Ya existe otro registro de esa vaca para ese día.'),
-      ],
-    ));
-    await tester.pumpWidget(BlocProvider<SyncCubit>.value(value: cubit, child: app(const SyncScreen())));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Hay un problema'), findsOneWidget);
-    expect(find.text('Pendientes: '), findsOneWidget);
-    expect(find.text('3'), findsOneWidget);
-    expect(find.text('Hoy, 14:32'), findsOneWidget);
-    expect(find.textContaining('Último intento: No hay conexión con el servidor.'), findsOneWidget);
-    expect(find.text('Registro · V-01 · 2026-03-20'), findsOneWidget);
-    expect(find.text('Ya existe otro registro de esa vaca para ese día.'), findsOneWidget);
-
-    await tester.tap(find.text('Sincronizar ahora'));
-    expect(cubit.requested, 1);
-
-    cubit.show(const SyncState());
-    await tester.pumpAndSettle();
-    expect(find.text('Todo respaldado'), findsOneWidget);
-    expect(find.text('Todavía no'), findsOneWidget);
-  });
-
-  testWidgets('sin registro de hoy y con pocos datos explica qué falta', (tester) async {
-    final cow = Cow(id: 'c1', tag: 'V-01', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026));
-    final cubit = _FixedRiskCubit(const RiskState(
-      evaluating: false,
-      outcome: NothingToEvaluate(InsufficientData(recordedDays: 6, requiredDays: 10, windowDays: 14)),
-    ));
-    await tester.pumpWidget(BlocProvider<RiskCubit>.value(value: cubit, child: app(RiskView(cow: cow))));
+    final cubit = _FixedRiskCubit(
+      const RiskState(
+        evaluating: false,
+        outcome: NothingToEvaluate(
+          InsufficientData(recordedDays: 6, requiredDays: 10, windowDays: 14),
+        ),
+      ),
+    );
+    await tester.pumpWidget(
+      BlocProvider<RiskCubit>.value(
+        value: cubit,
+        child: app(RiskView(cow: cow)),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Faltan registros'), findsOneWidget);
-    expect(find.textContaining('Hay 6 de los últimos 14 días'), findsOneWidget);
-    expect(find.text('Esta herramienta apoya, no reemplaza al veterinario.'), findsOneWidget);
+    expect(
+      find.text(
+        'Haga el registro de hoy para revisar los signos de la ubre y la leche.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Esta herramienta apoya, no reemplaza al veterinario.'),
+      findsOneWidget,
+    );
   });
 }
 
 class _FixedRiskCubit extends RiskCubit {
   _FixedRiskCubit(RiskState initial)
-      : super(
-          cowId: 'c1',
-          records: _NoRecords(),
-          inferences: _NoInferences(),
-          evaluator: RiskEvaluator(FakePredictor(0)),
-        ) {
+    : super(
+        cowId: 'c1',
+        records: _NoRecords(),
+        inferences: _NoInferences(),
+        evaluator: RiskEvaluator(FakePredictor(0)),
+      ) {
     emit(initial);
   }
 
@@ -258,13 +396,6 @@ class _FixedSyncCubit extends SyncCubit {
   _FixedSyncCubit(SyncState initial) : super.disabled() {
     emit(initial);
   }
-
-  int requested = 0;
-
-  void show(SyncState state) => emit(state);
-
-  @override
-  Future<void> syncNow({bool silent = false}) async => requested++;
 }
 
 class _FixedCows implements CowRepository {
@@ -280,7 +411,12 @@ class _FixedCows implements CowRepository {
 }
 
 /// Una vaca con alertas en memoria; marcar una la quita de la lista, como la base real.
-class _CowWithAlerts implements CowRepository, InferenceRepository, AlertRepository, RecordRepository {
+class _CowWithAlerts
+    implements
+        CowRepository,
+        InferenceRepository,
+        AlertRepository,
+        RecordRepository {
   _CowWithAlerts(this.cow, List<CowAlert> alerts) : _alerts = [...alerts];
 
   final Cow cow;
@@ -295,7 +431,11 @@ class _CowWithAlerts implements CowRepository, InferenceRepository, AlertReposit
   Stream<Inference?> watchLatest(String cowId) => Stream.value(null);
 
   @override
-  Future<List<DailyRecord>> recordsBetween(String cowId, DateTime from, DateTime to) async => const [];
+  Future<List<DailyRecord>> recordsBetween(
+    String cowId,
+    DateTime from,
+    DateTime to,
+  ) async => const [];
 
   @override
   Stream<List<CowAlert>> watchPendingAlerts(String cowId) async* {

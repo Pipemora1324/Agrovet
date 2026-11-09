@@ -81,7 +81,7 @@ En GitHub Actions, `setup-java` crea ese archivo automáticamente. Dentro de Doc
 | `MAILPIT_HOST`, `MAILPIT_SMTP_PORT` | Mailpit (`mailpit:1025` en el docker-compose, `localhost:1025` fuera de Docker). |
 | `PHOTO_STORAGE_DIR` | Carpeta de las fotos (en el docker-compose, el volumen `photos`). |
 | `GEMINI_API_KEY` | Clave del asistente (Google AI Studio). Sin ella el asistente responde 503. Solo en el servidor. |
-| `ASSISTANT_PROVIDER`, `GEMINI_MODEL` | Proveedor (`gemini` o `disabled`) y modelo (`gemini-2.5-flash`). |
+| `ASSISTANT_PROVIDER`, `GEMINI_MODEL` | Proveedor (`gemini` o `disabled`) y modelo (`gemini-3.1-flash-lite`). |
 | `ASSISTANT_MAX_PER_HOUR`, `ASSISTANT_MAX_PER_DAY` | Preguntas al asistente por usuario (20 por hora, 60 por día). |
 | `CODE_MAX_REQUESTS_PER_IP` | Solicitudes de código por IP en una hora (20 por defecto). |
 

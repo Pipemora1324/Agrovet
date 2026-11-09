@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -39,32 +41,43 @@ class SystemPhotoCapture implements PhotoCapture {
   final ImagePicker _picker;
 
   /// Lado mayor y calidad JPEG: suficiente para ver la ubre y liviano para subir con poca señal.
-  static const maxSide = 1600.0;
-  static const quality = 80;
+  static const maxSide = 1280.0;
+  static const quality = 75;
+  static const maxBytes = 5 * 1024 * 1024;
 
   @override
   Future<CaptureResult> pick(PhotoSource source) async {
     try {
       final file = await _picker.pickImage(
-        source: source == PhotoSource.camera ? ImageSource.camera : ImageSource.gallery,
+        source: source == PhotoSource.camera
+            ? ImageSource.camera
+            : ImageSource.gallery,
         maxWidth: maxSide,
         maxHeight: maxSide,
         imageQuality: quality,
         requestFullMetadata: false,
       );
       if (file == null) return const CaptureCancelled();
-      return Captured(await file.readAsBytes());
+      final bytes = await file.readAsBytes();
+      if (bytes.length > maxBytes) {
+        return const CaptureFailed(
+          'La foto pesa demasiado. Intente tomarla de nuevo con menor resolución.',
+        );
+      }
+      return Captured(bytes);
     } on PlatformException catch (e) {
       return CaptureFailed(describe(e.code));
+    } on FileSystemException {
+      return const CaptureFailed(
+        'No se pudo obtener la foto. Revise el espacio disponible e intente de nuevo.',
+      );
     }
   }
 
   static String describe(String code) => switch (code) {
-        'camera_access_denied' =>
-          'AgroVet no tiene permiso para usar la cámara. Actívelo en Ajustes > Aplicaciones > AgroVet > Permisos.',
-        'photo_access_denied' =>
-          'AgroVet no tiene permiso para ver sus fotos. Actívelo en Ajustes > Aplicaciones > AgroVet > Permisos.',
-        'no_available_camera' => 'Este celular no tiene una cámara disponible.',
-        _ => 'No se pudo obtener la foto. Intente de nuevo.',
-      };
+    'camera_access_denied' => 'AgroVet no tiene permiso para usar la cámara. Actívelo en Ajustes > Aplicaciones > AgroVet > Permisos.',
+    'photo_access_denied' => 'AgroVet no tiene permiso para ver sus fotos. Actívelo en Ajustes > Aplicaciones > AgroVet > Permisos.',
+    'no_available_camera' => 'Este celular no tiene una cámara disponible.',
+    _ => 'No se pudo obtener la foto. Intente de nuevo.',
+  };
 }

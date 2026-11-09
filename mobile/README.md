@@ -4,8 +4,8 @@ Aplicación Flutter (solo Android, API 24 o superior). El ganadero registra cada
 leche, alimento y síntomas visibles de cada vaca; el modelo LSTM corre en el celular y muestra un
 semáforo de riesgo. Todo funciona sin conexión.
 
-> **Esta herramienta apoya, no reemplaza al veterinario.** El modelo actual se entrenó con datos
-> simulados (ver `ml/README.md`); la app lo indica en la pantalla del resultado.
+> **Esta herramienta apoya, no reemplaza al veterinario.** El modelo es experimental; sus resultados
+> no sustituyen una valoración profesional.
 
 ## Ejecutar
 
@@ -21,10 +21,9 @@ La dirección del servidor sale **solo** de `--dart-define=API_BASE_URL`; sin el
 "Configuración incompleta". En debug se acepta HTTP solo hacia `10.0.2.2`, `localhost` y
 `127.0.0.1`; en release, solo HTTPS (`lib/core/config.dart` y `network_security_config.xml`).
 
-En la pantalla de ingreso de una compilación **debug** aparece el botón
-**"Ver con datos de demostración"**: abre una sesión local con 6 vacas inventadas (prefijo `DEMO`)
-y un rótulo amarillo "Datos de demostración" en todas las pantallas. Esos datos viven en una base
-aparte, nunca se sincronizan y el botón no existe en las compilaciones release.
+En la pantalla de ingreso de una compilación **debug** aparece la opción **"Entrar a la demostración"**:
+abre una sesión local con 6 vacas de ejemplo (prefijo `DEMO`) y el rótulo "Modo de prueba". Esos datos
+viven en una base aparte, nunca se sincronizan y la opción no existe en las compilaciones release.
 
 Para ingresar con una cuenta real, el backend debe estar corriendo (`backend/`, `docker compose up`).
 Desde el emulador el equipo es `10.0.2.2`. Para un servidor publicado:
@@ -63,14 +62,16 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 - En la ficha de la vaca, **"Fotos"** permite tomar una con la cámara o elegirla de la galería. Se usan
   la cámara y el selector de fotos del sistema, así que AgroVet no pide permiso para leer todas las
   fotos del celular; si la persona negó el acceso a la cámara, la app explica cómo activarlo.
-- Cada foto se reduce (lado mayor de 1600 px, JPEG al 80 %), se le quitan los metadatos EXIF/XMP
+- Cada foto se reduce (lado mayor de 1280 px, JPEG al 75 %), se le quitan los metadatos EXIF/XMP
   (incluida la ubicación GPS) y se guarda en el almacenamiento privado de la app, vinculada a la vaca y
   al día. El historial muestra la galería del periodo.
-- Los datos de la foto viajan con la sincronización y luego se sube el archivo (multipart, con
-  reintentos). El servidor vuelve a validar el tipo real, el tamaño y quita los metadatos.
-- Cada foto tiene, opcionalmente, la confirmación del veterinario, el diagnóstico y el interruptor
-  "Permitir usar esta foto para investigación", apagado por defecto (ver `ml/README.md`).
-- La CNN no se usa en la app hasta tener un modelo validado.
+- La foto queda como registro visual; no se analiza automáticamente. La CNN está desactivada hasta
+  contar con fotografías reales suficientes para validarla.
+- En la ficha de la foto, la sección plegada **"Para investigación (opcional)"** guarda la
+  confirmación del veterinario, el diagnóstico y el interruptor "Permitir usar esta foto para
+  investigación", apagado por defecto (ver `ml/README.md`).
+- Las fotos se sincronizan después de sus datos; el servidor vuelve a validar el tipo, el tamaño y
+  elimina los metadatos.
 
 ## Asistente
 
@@ -168,7 +169,7 @@ lib/
   core/          tema, diseño adaptable, validaciones, formatos y configuración
   domain/        entidades, preprocesamiento (réplica de Python), semáforo, recomendaciones, aviso de privacidad
   data/          base local (Drift + SQLCipher), almacenamiento seguro, API, modelo TFLite, demo
-  presentation/  pantallas y cubits (cuenta, perfil, vacas, registro diario, riesgo, historial, respaldo)
+  presentation/  pantallas y cubits (cuenta, perfil, vacas, registro diario, riesgo, historial)
 ```
 
 **Tema**: colores, tipografía, radios y estilos de botones viven solo en `lib/core/theme.dart`
@@ -198,9 +199,9 @@ cambiando un solo archivo.
 
 Todo se guarda primero en el celular; cada cambio queda marcado como pendiente.
 
-- **Cuándo**: al abrir la sesión, al volver la app al frente y al recuperar la conexión
-  (`connectivity_plus`) si hay cambios pendientes; cuando el ganadero toca "Sincronizar ahora"; y cada
-  15 minutos en segundo plano con `workmanager`, aunque la app esté cerrada (solo con red; si falla,
+- **Cuándo**: automáticamente al detectar cambios pendientes mientras hay conexión, al volver la app
+  al frente y al recuperar la conexión (`connectivity_plus`); y cada 15 minutos en segundo plano con
+  `workmanager`, aunque la app esté cerrada (solo con red; si falla,
   Android reintenta con espera exponencial). Android decide el momento exacto de la tarea periódica y
   puede atrasarla para agruparla con otras.
 - **Cómo**: `POST /api/sync` en lotes de hasta 200 elementos por tipo, primero las vacas. Ante fallas
@@ -209,11 +210,9 @@ Todo se guarda primero en el celular; cada cambio queda marcado como pendiente.
   cambió mientras se enviaba. Nunca se borra nada local.
 - **Rechazos**: si el servidor rechaza un elemento (por ejemplo, otro registro para el mismo día), se
   guarda el motivo y no se reintenta hasta que el ganadero lo corrija.
-- **Estado**: la nube de la barra superior muestra cuántos cambios faltan por subir y cambia de ícono
-  si hay un problema. Al tocarla se abre "Respaldo de datos" con los pendientes, la hora de la última
-  sincronización (la guardan tanto la app como la tarea en segundo plano), el error del último intento,
-  lo que el servidor rechazó con su motivo y el botón **"Sincronizar ahora"**. Solo cuenta como
-  sincronización un envío que el servidor confirmó.
+- **Estado**: en la lista de vacas se muestra una sola línea con la hora de la última sincronización
+  confirmada, o "Sin sincronizar aún". No se muestran contadores, errores técnicos ni controles
+  manuales de sincronización.
 - La sesión de demostración no sincroniza.
 
 ## Decisiones de diseño (para revisión)

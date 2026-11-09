@@ -38,30 +38,40 @@ void main() {
     addTearDown(tester.view.reset);
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     final store = SecureStore();
-    final auth = AuthCubit(store: store, api: AuthApi(ApiClient(baseUrl: 'http://localhost:1', store: store)))
-      ..emit(const Unauthenticated());
-    await tester.pumpWidget(MultiRepositoryProvider(
-      providers: [
-        RepositoryProvider<Session>.value(value: const Session(userId: 'u', name: 'Ana', email: 'ana@correo.co')),
-        RepositoryProvider<CowRepository>.value(value: repo),
-        RepositoryProvider<RecordRepository>.value(value: repo),
-        RepositoryProvider<InferenceRepository>.value(value: repo),
-        RepositoryProvider<AlertRepository>.value(value: repo),
-      ],
-      child: MultiBlocProvider(
+    final auth = AuthCubit(
+      store: store,
+      api: AuthApi(ApiClient(baseUrl: 'http://localhost:1', store: store)),
+    )..emit(const Unauthenticated());
+    await tester.pumpWidget(
+      MultiRepositoryProvider(
         providers: [
-          BlocProvider<AuthCubit>.value(value: auth),
-          BlocProvider(create: (_) => SyncCubit.disabled()),
+          RepositoryProvider<Session>.value(
+            value: const Session(
+              userId: 'u',
+              name: 'Ana',
+              email: 'ana@correo.co',
+            ),
+          ),
+          RepositoryProvider<CowRepository>.value(value: repo),
+          RepositoryProvider<RecordRepository>.value(value: repo),
+          RepositoryProvider<InferenceRepository>.value(value: repo),
+          RepositoryProvider<AlertRepository>.value(value: repo),
         ],
-        child: MaterialApp(
-          theme: AppTheme.light(),
-          locale: const Locale('es'),
-          supportedLocales: const [Locale('es')],
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
-          home: screen,
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: auth),
+            BlocProvider(create: (_) => SyncCubit.disabled()),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            locale: const Locale('es'),
+            supportedLocales: const [Locale('es')],
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
+            home: screen,
+          ),
         ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
   }
 
@@ -73,7 +83,10 @@ void main() {
       expect(find.text('AgroVet'), findsOneWidget);
       expect(tester.takeException(), isNull);
       // El formulario no pasa del ancho máximo en tableta
-      expect(tester.getSize(find.byType(Card).first).width, lessThanOrEqualTo(520));
+      expect(
+        tester.getSize(find.byType(Card).first).width,
+        lessThanOrEqualTo(520),
+      );
     });
 
     testWidgets('lista de vacas en $name', (tester) async {
@@ -86,7 +99,10 @@ void main() {
         expect(second.dx, greaterThan(first.dx));
         // Contenido centrado con ancho máximo
         expect(tester.getSize(find.byType(ListView)).width, size.width);
-        expect(tester.getTopLeft(find.text('Riesgo alto')).dx, greaterThanOrEqualTo((size.width - 720) / 2));
+        expect(
+          tester.getTopLeft(find.text('Riesgo alto')).dx,
+          greaterThanOrEqualTo((size.width - 720) / 2),
+        );
       } else {
         expect(second.dy, greaterThan(first.dy), reason: 'una columna');
         expect(second.dx, first.dx);
@@ -96,8 +112,8 @@ void main() {
     testWidgets('ficha de la vaca en $name', (tester) async {
       await pumpScreen(tester, size, const CowDetailScreen(cowId: 'c1'));
       expect(tester.takeException(), isNull);
-      expect(find.text('Por qué la app lo cree'), findsOneWidget);
-      final reasons = tester.getTopLeft(find.text('Por qué la app lo cree'));
+      expect(find.text('Señales registradas'), findsOneWidget);
+      final reasons = tester.getTopLeft(find.text('Señales registradas'));
       final chart = tester.getTopLeft(find.text('Temperatura, 14 días'));
       if (tablet) {
         // Dos paneles: semáforo y razones a la izquierda, gráfica a la derecha
@@ -110,7 +126,12 @@ void main() {
 }
 
 /// Dos vacas: Canela con riesgo alto y 14 días de registros, Paloma sana.
-class _Herd implements CowRepository, RecordRepository, InferenceRepository, AlertRepository {
+class _Herd
+    implements
+        CowRepository,
+        RecordRepository,
+        InferenceRepository,
+        AlertRepository {
   _Herd(this.today);
 
   final DateTime today;
@@ -125,48 +146,73 @@ class _Herd implements CowRepository, RecordRepository, InferenceRepository, Ale
     productionStatus: ProductionStatus.lactating,
     updatedAt: today,
   );
-  late final paloma = Cow(id: 'c2', tag: 'NAR-0002', name: 'Paloma', productionStatus: ProductionStatus.dry, updatedAt: today);
+  late final paloma = Cow(
+    id: 'c2',
+    tag: 'NAR-0002',
+    name: 'Paloma',
+    productionStatus: ProductionStatus.dry,
+    updatedAt: today,
+  );
 
   @override
   Stream<List<CowSummary>> watchCows() => Stream.value([
-        CowSummary(cow: canela, lastRisk: RiskLevel.red, lastRecordDate: today),
-        CowSummary(cow: paloma, lastRisk: RiskLevel.green, lastRecordDate: today.subtract(const Duration(days: 2))),
-      ]);
+    CowSummary(cow: canela, lastRisk: RiskLevel.red, lastRecordDate: today),
+    CowSummary(
+      cow: paloma,
+      lastRisk: RiskLevel.green,
+      lastRecordDate: today.subtract(const Duration(days: 2)),
+    ),
+  ]);
 
   @override
-  Stream<Cow?> watchCow(String id) => Stream.value(id == 'c1' ? canela : paloma);
+  Stream<Cow?> watchCow(String id) =>
+      Stream.value(id == 'c1' ? canela : paloma);
 
   @override
-  Future<List<DailyRecord>> recordsBetween(String cowId, DateTime from, DateTime to) async => [
-        for (var i = 0; i < 14; i++)
-          DailyRecord(
-            id: 'r$i',
-            cowId: cowId,
-            recordDate: from.add(Duration(days: i)),
-            temperatureC: 38.4 + (i > 10 ? 1.3 : 0.1 * (i % 3)),
-            milkL: 14.0 - (i > 10 ? 3 : 0),
-            feedKg: 11.0,
-            symptoms: i == 13 ? const Symptoms(udderHeat: true, abnormalMilk: true) : const Symptoms(),
-            updatedAt: today,
-          ),
-      ];
-
-  @override
-  Stream<Inference?> watchLatest(String cowId) => Stream.value(Inference(
-        id: 'i1',
+  Future<List<DailyRecord>> recordsBetween(
+    String cowId,
+    DateTime from,
+    DateTime to,
+  ) async => [
+    for (var i = 0; i < 14; i++)
+      DailyRecord(
+        id: 'r$i',
         cowId: cowId,
-        windowEndDate: today,
-        probability: 0.91,
-        symptomScore: 5,
-        cause: RiskCause.both,
-        riskLevel: RiskLevel.red,
-        modelVersion: 'prueba',
+        recordDate: from.add(Duration(days: i)),
+        temperatureC: 38.4 + (i > 10 ? 1.3 : 0.1 * (i % 3)),
+        milkL: 14.0 - (i > 10 ? 3 : 0),
+        feedKg: 11.0,
+        symptoms: i == 13
+            ? const Symptoms(udderHeat: true, abnormalMilk: true)
+            : const Symptoms(),
         updatedAt: today,
-      ));
+      ),
+  ];
 
   @override
-  Stream<List<CowAlert>> watchPendingAlerts(String cowId) =>
-      Stream.value([CowAlert(id: 'a1', cowId: cowId, riskLevel: RiskLevel.red, createdAt: today)]);
+  Stream<Inference?> watchLatest(String cowId) => Stream.value(
+    Inference(
+      id: 'i1',
+      cowId: cowId,
+      windowEndDate: today,
+      probability: 0.91,
+      symptomScore: 5,
+      cause: RiskCause.both,
+      riskLevel: RiskLevel.red,
+      modelVersion: 'prueba',
+      updatedAt: today,
+    ),
+  );
+
+  @override
+  Stream<List<CowAlert>> watchPendingAlerts(String cowId) => Stream.value([
+    CowAlert(
+      id: 'a1',
+      cowId: cowId,
+      riskLevel: RiskLevel.red,
+      createdAt: today,
+    ),
+  ]);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();

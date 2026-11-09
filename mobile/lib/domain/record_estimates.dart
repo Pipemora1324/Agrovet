@@ -42,7 +42,7 @@ enum BodyAnswer {
   final String label;
 }
 
-/// 4. ¿Cómo ves la ubre y la leche?
+/// 4. ¿Cómo ve la ubre y la leche?
 enum UdderAnswer {
   normal('Todo normal'),
   inflamed('Ubre caliente, dura o hinchada'),

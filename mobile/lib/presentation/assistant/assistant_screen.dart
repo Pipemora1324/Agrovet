@@ -141,11 +141,14 @@ class _AssistantViewState extends State<_AssistantView> {
               stream: context.read<AssistantRepository>().watchMessages(widget.cow.id),
               builder: (context, snapshot) {
                 final messages = snapshot.data ?? const <AssistantMessage>[];
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (_scroll.hasClients) _scroll.jumpTo(_scroll.position.maxScrollExtent);
-                });
                 return BlocBuilder<AssistantCubit, AssistantState>(
-                  builder: (context, state) => ListView(
+                  builder: (context, state) {
+                    // Baja al final con cada mensaje y con cada cambio de estado (sin internet aparecen
+                    // los consejos debajo de la conversación; también el error o "escribiendo")
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (_scroll.hasClients) _scroll.jumpTo(_scroll.position.maxScrollExtent);
+                    });
+                    return ListView(
                     controller: _scroll,
                     padding: const EdgeInsets.all(16),
                     children: [
@@ -173,7 +176,8 @@ class _AssistantViewState extends State<_AssistantView> {
                         ),
                       ),
                     ],
-                  ),
+                  );
+                  },
                 );
               },
             ),
@@ -288,7 +292,10 @@ class _Bubble extends StatelessWidget {
                     Text('Con foto', style: theme.textTheme.bodySmall?.copyWith(color: ink)),
                   ]),
                 ),
-              Text(message.text, style: theme.textTheme.bodyLarge?.copyWith(color: ink)),
+              Text(
+                mine ? message.text : plainAssistantText(message.text),
+                style: theme.textTheme.bodyLarge?.copyWith(color: ink),
+              ),
               const SizedBox(height: 4),
               Text(
                 '${mine ? 'Usted' : 'Asistente'} · ${formatDateTime(message.createdAt)}',

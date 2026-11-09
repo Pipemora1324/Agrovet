@@ -55,7 +55,7 @@ services:
       # Asistente: sin clave queda apagado. La clave va solo en backend/.env, nunca en la app
       ASSISTANT_PROVIDER: ${ASSISTANT_PROVIDER:-gemini}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.1-flash-lite}
     volumes:
       - photos:/app/data/photos
     ports:

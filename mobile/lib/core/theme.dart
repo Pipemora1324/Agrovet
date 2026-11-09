@@ -267,6 +267,8 @@ class AppTheme {
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: SegmentedButton.styleFrom(
           minimumSize: buttonSize,
+          // SegmentedButton ignora minimumSize en cada segmento: el alto de 56 dp sale del relleno
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 18),
           textStyle: const TextStyle(fontFamily: fontFamily, fontSize: 17, fontWeight: FontWeight.w700),
         ),
       ),

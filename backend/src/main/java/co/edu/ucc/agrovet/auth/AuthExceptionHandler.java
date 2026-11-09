@@ -37,7 +37,7 @@ class AuthExceptionHandler {
     @ExceptionHandler(TooManyRequestsException.class)
     ResponseEntity<ProblemDetail> handleTooManyRequests(TooManyRequestsException ex) {
         long seconds = Math.max(1, ex.getRetryAfter().toSeconds());
-        String wait = seconds < 60 ? seconds + " segundos" : Math.max(1, seconds / 60) + " minuto(s)";
+        String wait = waitText(seconds);
         String detail = ex instanceof TooManyLoginAttemptsException
                 ? "Demasiados intentos. Espere " + wait + " e intente de nuevo."
                 : ex.getMessage() + " Intente de nuevo en " + wait + ".";
@@ -46,5 +46,14 @@ class AuthExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .header(HttpHeaders.RETRY_AFTER, String.valueOf(seconds))
                 .body(problem);
+    }
+
+    /** "1 segundo", "30 segundos", "1 minuto", "54 minutos" (los minutos se redondean hacia arriba). */
+    static String waitText(long seconds) {
+        if (seconds < 60) {
+            return seconds == 1 ? "1 segundo" : seconds + " segundos";
+        }
+        long minutes = (seconds + 59) / 60;
+        return minutes == 1 ? "1 minuto" : minutes + " minutos";
     }
 }
