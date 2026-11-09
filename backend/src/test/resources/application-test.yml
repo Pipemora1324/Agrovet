@@ -4,9 +4,6 @@ spring:
     url: jdbc:postgresql://placeholder/test
     username: test
     password: test
-  mail:
-    # No se conecta nunca: las pruebas reemplazan el remitente por RecordingEmailSender
-    host: localhost
 
 agrovet:
   jwt:
