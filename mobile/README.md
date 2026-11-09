@@ -67,6 +67,9 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
   al día. El historial muestra la galería del periodo.
 - La foto queda como registro visual; no se analiza automáticamente. La CNN está desactivada hasta
   contar con fotografías reales suficientes para validarla.
+- En la ficha de la foto, la sección plegada **"Para investigación (opcional)"** guarda la
+  confirmación del veterinario, el diagnóstico y el interruptor "Permitir usar esta foto para
+  investigación", apagado por defecto (ver `ml/README.md`).
 - Las fotos se sincronizan después de sus datos; el servidor vuelve a validar el tipo, el tamaño y
   elimina los metadatos.
 
