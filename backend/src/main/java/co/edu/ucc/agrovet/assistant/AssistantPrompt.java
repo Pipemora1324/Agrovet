@@ -28,6 +28,8 @@ final class AssistantPrompt {
             7. El semáforo de AgroVet es una ayuda, no un diagnóstico; recuérdelo si hace falta.
             8. Si la pregunta no trata del cuidado de las vacas, dígalo con amabilidad y no responda lo demás.
             9. Responda siempre en español.
+            10. Escriba en texto plano, sin formato Markdown: nada de asteriscos, almohadillas ni negritas. \
+            Si hace una lista, empiece cada línea con un guion.
             """;
 
     /** Primer mensaje de la conversación: datos mínimos de la vaca, sin datos de la persona. */

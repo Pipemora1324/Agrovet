@@ -2,6 +2,34 @@ import 'package:agrovet/core/formatters.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('plainAssistantText', () {
+    test('quita el Markdown que devolvió Gemini en la prueba del emulador', () {
+      const raw = 'Para identificar señales de mastitis, observe lo siguiente:\n\n'
+          '*   **Cambios en la leche:** Revise si hay grumos.\n'
+          '*   **Estado de la ubre:** Fíjese si está caliente.\n\n\n'
+          'Dado que su vaca presenta síntomas, **llame a su veterinario de confianza cuanto antes**.';
+      expect(
+        plainAssistantText(raw),
+        'Para identificar señales de mastitis, observe lo siguiente:\n\n'
+        '• Cambios en la leche: Revise si hay grumos.\n'
+        '• Estado de la ubre: Fíjese si está caliente.\n\n'
+        'Dado que su vaca presenta síntomas, llame a su veterinario de confianza cuanto antes.',
+      );
+    });
+
+    test('quita títulos y respeta guiones y texto sin formato', () {
+      expect(plainAssistantText('## Qué revisar\n- Ubre\n- Leche'), 'Qué revisar\n• Ubre\n• Leche');
+      expect(plainAssistantText('Temperatura de 39,5 °C - revise'), 'Temperatura de 39,5 °C - revise');
+      expect(plainAssistantText('2 * 3 no es viñeta'), '2 * 3 no es viñeta');
+    });
+  });
+
+  test('joinSpanish une con comas y "y"', () {
+    expect(joinSpanish([]), '');
+    expect(joinSpanish(['leche']), 'leche');
+    expect(joinSpanish(['temperatura', 'leche', 'alimento']), 'temperatura, leche y alimento');
+  });
+
   group('formatElapsedSince', () {
     final now = DateTime(2026, 11, 9, 12);
 

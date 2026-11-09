@@ -29,6 +29,25 @@ String formatElapsedSince(DateTime? value, {DateTime? now}) {
   return 'hace $days ${days == 1 ? 'día' : 'días'}';
 }
 
+/// Respuesta del asistente en texto plano: el modelo a veces usa Markdown y la app lo mostraría crudo
+/// (`**negritas**`, `* viñetas`, `# títulos`). Las viñetas quedan como "• ".
+String plainAssistantText(String text) {
+  final lines = text.replaceAll('\r\n', '\n').split('\n').map((line) {
+    var clean = line.replaceAll('**', '').replaceAll('__', '');
+    clean = clean.replaceFirstMapped(RegExp(r'^(\s*)#{1,6}\s+'), (m) => m[1]!);
+    clean = clean.replaceFirstMapped(RegExp(r'^(\s*)[*\-•]\s+'), (m) => '${m[1]}• ');
+    return clean.trimRight();
+  });
+  return lines.join('\n').replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
+}
+
+/// "a", "a y b", "a, b y c".
+String joinSpanish(List<String> items) => switch (items.length) {
+  0 => '',
+  1 => items.single,
+  _ => '${items.sublist(0, items.length - 1).join(', ')} y ${items.last}',
+};
+
 String formatNumber(double? value, {int decimals = 1}) =>
     value == null ? '—' : value.toStringAsFixed(decimals).replaceAll('.', ',');
 
