@@ -24,6 +24,13 @@ updates:
     schedule:
       interval: weekly
     labels: [backend]
+    # Se pospone el cambio de versión mayor del stack (Spring Boot 4 y springdoc 3); siguen llegando
+    # las versiones menores y de corrección dentro de Spring Boot 3 y springdoc 2.
+    ignore:
+      - dependency-name: org.springframework.boot:spring-boot-starter-parent
+        update-types: ["version-update:semver-major"]
+      - dependency-name: org.springdoc:springdoc-openapi-starter-webmvc-ui
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: pub
     directory: /mobile
