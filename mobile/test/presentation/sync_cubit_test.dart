@@ -14,18 +14,35 @@ void main() {
   test('al recuperar la conexión sube lo pendiente', () async {
     final db = memoryDatabase();
     final repo = LocalRepository(db);
-    await repo.saveCow(Cow(id: 'c1', tag: 'V-01', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026)));
+    await repo.saveCow(
+      Cow(
+        id: 'c1',
+        tag: 'V-01',
+        productionStatus: ProductionStatus.lactating,
+        updatedAt: DateTime(2026),
+      ),
+    );
     final gateway = FakeGateway();
     final online = StreamController<bool>();
-    final cubit = SyncCubit(SyncService(db, gateway, sleep: (_) async {}), connectivity: online.stream);
+    final cubit = SyncCubit(
+      SyncService(db, gateway, sleep: (_) async {}),
+      connectivity: online.stream,
+      initiallyOnline: false,
+    );
 
-    await expectLater(cubit.stream, emitsThrough(predicate<SyncState>((s) => s.pending == 1)));
+    await expectLater(
+      cubit.stream,
+      emitsThrough(predicate<SyncState>((s) => s.pending == 1)),
+    );
     online.add(false);
     await Future<void>.delayed(const Duration(milliseconds: 20));
     expect(gateway.batches, isEmpty);
 
     online.add(true);
-    await expectLater(cubit.stream, emitsThrough(predicate<SyncState>((s) => s.pending == 0 && !s.syncing)));
+    await expectLater(
+      cubit.stream,
+      emitsThrough(predicate<SyncState>((s) => s.pending == 0 && !s.syncing)),
+    );
     expect(gateway.batches, hasLength(1));
 
     await cubit.close();
@@ -41,7 +58,14 @@ void main() {
     setUp(() async {
       db = memoryDatabase();
       repo = LocalRepository(db);
-      await repo.saveCow(Cow(id: 'c1', tag: 'V-01', productionStatus: ProductionStatus.lactating, updatedAt: DateTime(2026)));
+      await repo.saveCow(
+        Cow(
+          id: 'c1',
+          tag: 'V-01',
+          productionStatus: ProductionStatus.lactating,
+          updatedAt: DateTime(2026),
+        ),
+      );
     });
 
     tearDown(() => db.close());
@@ -49,15 +73,46 @@ void main() {
     test('al volver la app al frente sube lo pendiente', () async {
       final gateway = FakeGateway();
       final resumed = StreamController<void>();
-      final cubit = SyncCubit(SyncService(db, gateway, sleep: (_) async {}),
-          connectivity: const Stream.empty(), appResumed: resumed.stream);
-      await expectLater(cubit.stream, emitsThrough(predicate<SyncState>((s) => s.pending == 1)));
+      final cubit = SyncCubit(
+        SyncService(db, gateway, sleep: (_) async {}),
+        connectivity: const Stream.empty(),
+        appResumed: resumed.stream,
+        initiallyOnline: false,
+      );
+      await expectLater(
+        cubit.stream,
+        emitsThrough(predicate<SyncState>((s) => s.pending == 1)),
+      );
 
       resumed.add(null);
-      await expectLater(cubit.stream, emitsThrough(predicate<SyncState>((s) => s.pending == 0 && !s.syncing)));
+      await expectLater(
+        cubit.stream,
+        emitsThrough(predicate<SyncState>((s) => s.pending == 0 && !s.syncing)),
+      );
       expect(gateway.batches, hasLength(1));
       await cubit.close();
       await resumed.close();
+    });
+
+    test('traer los datos del servidor cuenta como última sincronización', () async {
+      final saved = <DateTime>[];
+      final cubit = SyncCubit(
+        SyncService(db, FakeGateway(), sleep: (_) async {}),
+        connectivity: const Stream.empty(),
+        initiallyOnline: false,
+        saveLastSync: (at) async => saved.add(at),
+        clock: () => now,
+      );
+      await cubit.restoredFromServer();
+      expect(cubit.state.lastSyncAt, now);
+      expect(saved, [now]);
+      await cubit.close();
+
+      // En la demostración no hay servidor: no cambia nada
+      final demo = SyncCubit.disabled();
+      await demo.restoredFromServer();
+      expect(demo.state.lastSyncAt, isNull);
+      await demo.close();
     });
 
     test('carga la última sincronización guardada y la actualiza cuando el servidor confirma', () async {
@@ -65,11 +120,17 @@ void main() {
       final cubit = SyncCubit(
         SyncService(db, FakeGateway(), sleep: (_) async {}),
         connectivity: const Stream.empty(),
+        initiallyOnline: false,
         loadLastSync: () async => DateTime(2026, 3, 19, 8),
         saveLastSync: (at) async => saved.add(at),
         clock: () => now,
       );
-      await expectLater(cubit.stream, emitsThrough(predicate<SyncState>((s) => s.lastSyncAt == DateTime(2026, 3, 19, 8))));
+      await expectLater(
+        cubit.stream,
+        emitsThrough(
+          predicate<SyncState>((s) => s.lastSyncAt == DateTime(2026, 3, 19, 8)),
+        ),
+      );
 
       await cubit.syncNow();
       expect(cubit.state.lastSyncAt, now);
@@ -85,11 +146,18 @@ void main() {
 
     test('sin red deja el error del último intento y lo borra cuando vuelve a funcionar', () async {
       final gateway = FakeGateway(failures: 4);
-      final cubit = SyncCubit(SyncService(db, gateway, sleep: (_) async {}), connectivity: const Stream.empty());
-      await expectLater(cubit.stream, emitsThrough(predicate<SyncState>((s) => s.pending == 1)));
+      final cubit = SyncCubit(
+        SyncService(db, gateway, sleep: (_) async {}),
+        connectivity: const Stream.empty(),
+        initiallyOnline: false,
+      );
+      await expectLater(
+        cubit.stream,
+        emitsThrough(predicate<SyncState>((s) => s.pending == 1)),
+      );
 
       await cubit.syncNow(silent: true);
-      expect(cubit.state.lastError, contains('No hay conexión'));
+      expect(cubit.state.lastError, contains('No pudimos comunicarnos con el servidor'));
       expect(cubit.state.message, isNull);
       expect(cubit.state.hasProblems, isTrue);
       expect(cubit.state.lastSyncAt, isNull);
@@ -101,19 +169,86 @@ void main() {
     });
 
     test('muestra lo rechazado por el servidor con su motivo', () async {
-      await repo.saveRecord(DailyRecord(id: 'r1', cowId: 'c1', recordDate: DateTime(2026, 3, 20), milkL: 12, updatedAt: now));
-      final gateway = FakeGateway(reject: {'r1': 'Ya existe otro registro de esa vaca para ese día.'});
-      final cubit = SyncCubit(SyncService(db, gateway, sleep: (_) async {}), connectivity: const Stream.empty());
-      await expectLater(cubit.stream, emitsThrough(predicate<SyncState>((s) => s.pending == 2)));
+      await repo.saveRecord(
+        DailyRecord(
+          id: 'r1',
+          cowId: 'c1',
+          recordDate: DateTime(2026, 3, 20),
+          milkL: 12,
+          updatedAt: now,
+        ),
+      );
+      final gateway = FakeGateway(
+        reject: {'r1': 'Ya existe otro registro de esa vaca para ese día.'},
+      );
+      final cubit = SyncCubit(
+        SyncService(db, gateway, sleep: (_) async {}),
+        connectivity: const Stream.empty(),
+        initiallyOnline: false,
+      );
+      await expectLater(
+        cubit.stream,
+        emitsThrough(predicate<SyncState>((s) => s.pending == 2)),
+      );
 
       await cubit.syncNow();
-      expect(cubit.state.message, '1 cambio(s) fueron rechazados por el servidor.');
+      expect(
+        cubit.state.message,
+        '1 cambio(s) fueron rechazados por el servidor.',
+      );
       // El rechazo puede haber llegado ya desde la base antes de escuchar el stream
-      if (cubit.state.rejected.isEmpty) await cubit.stream.firstWhere((s) => s.rejected.isNotEmpty);
-      expect(cubit.state.rejected.single.reason, 'Ya existe otro registro de esa vaca para ese día.');
+      if (cubit.state.rejected.isEmpty) {
+        await cubit.stream.firstWhere((s) => s.rejected.isNotEmpty);
+      }
+      expect(
+        cubit.state.rejected.single.reason,
+        'Ya existe otro registro de esa vaca para ese día.',
+      );
       expect(cubit.state.hasProblems, isTrue);
       await cubit.close();
     });
+
+    test(
+      'sube automáticamente los nuevos cambios cuando hay conexión',
+      () async {
+        final db = memoryDatabase();
+        final repo = LocalRepository(db);
+        final gateway = FakeGateway();
+        final cubit = SyncCubit(
+          SyncService(db, gateway, sleep: (_) async {}),
+          connectivity: const Stream.empty(),
+        );
+
+        await expectLater(
+          cubit.stream,
+          emitsThrough(predicate<SyncState>((state) => state.pending == 0)),
+        );
+        await repo.saveCow(
+          Cow(
+            id: 'c1',
+            tag: 'V-01',
+            productionStatus: ProductionStatus.lactating,
+            updatedAt: DateTime(2026),
+          ),
+        );
+        await expectLater(
+          cubit.stream,
+          emitsThrough(predicate<SyncState>((state) => state.pending == 1)),
+        );
+        await expectLater(
+          cubit.stream,
+          emitsThrough(
+            predicate<SyncState>(
+              (state) => state.pending == 0 && !state.syncing,
+            ),
+          ),
+        );
+        expect(gateway.batches, hasLength(1));
+
+        await cubit.close();
+        await db.close();
+      },
+    );
   });
 
   test('en la sesión de demostración no hace nada', () async {

@@ -29,7 +29,10 @@ suele haber señales sutiles: sube un poco la temperatura, baja la leche y la va
 - **Asistente con IA** por vaca: orienta, no diagnostica; sin internet muestra consejos fijos.
 - Todo lo esencial funciona **sin internet**: el modelo corre en el celular y los datos se guardan
   cifrados. Cuando hay conexión, se sincronizan con el servidor.
-- Pendiente: triaje visual con una CNN (MobileNetV2), cuando haya fotos reales confirmadas.
+- Triaje visual con una CNN (MobileNetV2): entrenada y evaluada con un dataset público (CC BY 4.0),
+  **apagada en la app** porque aprende parte del fondo de las fotos y en un mismo establo pierde
+  casi la mitad de las mastitis. Pendiente validarla con fotos reales confirmadas por un veterinario.
+  Ver [ml/README.md](ml/README.md#cnn-de-triaje-visual-de-la-ubre).
 
 ## Arquitectura
 
@@ -90,12 +93,37 @@ docker compose up -d
 Documentación de la API en `http://localhost:8080/swagger-ui.html`; los correos de prueba (códigos de
 verificación) llegan a Mailpit en `http://localhost:8025`.
 
+**Correo: Mailpit o Gmail.** El backend elige solo, según `backend/.env`:
+
+- *Mailpit (desarrollo)*: deje `MAIL_USERNAME` y `MAIL_PASSWORD` vacíos. Ningún correo sale del
+  equipo; todos se ven en `http://localhost:8025`.
+- *Gmail (correos de verdad)*: active la verificación en dos pasos de la cuenta, cree una
+  *contraseña de aplicación* (Cuenta de Google → Seguridad → Contraseñas de aplicaciones) y póngala
+  en `.env`:
+
+  ```
+  MAIL_HOST=smtp.gmail.com
+  MAIL_PORT=587
+  MAIL_USERNAME=su.cuenta@gmail.com
+  MAIL_PASSWORD=abcdefghijklmnop     # los 16 caracteres, sin espacios
+  MAIL_FROM=AgroVet <su.cuenta@gmail.com>
+  ```
+
+  El envío usa STARTTLS obligatorio. Para volver a Mailpit, vacíe `MAIL_USERNAME` y `MAIL_PASSWORD`.
+  Después de cambiar `.env`: `docker compose up -d backend`. El log de arranque dice qué modo quedó
+  (`Correo: Mailpit ...` o `Correo: SMTP smtp.gmail.com:587 con STARTTLS`).
+
+`.env` está en `.gitignore`: las claves (Gmail, `GEMINI_API_KEY`, `JWT_SECRET`) nunca se suben.
+
+**Servidor propio.** `docs/DEPLOY.md` explica cómo levantar el backend en una VPS con
+`docker-compose.prod.yml` (perfil `prod`, HTTPS con Caddy y `/actuator/health` para el chequeo).
+
 **Aplicación (mobile/)**: requiere Flutter y un dispositivo o emulador Android (API 24+).
 
 ```bash
 cd mobile
 flutter pub get
-flutter run                     # emulador: usa http://10.0.2.2:8080
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080   # emulador (el equipo es 10.0.2.2)
 ```
 
 En un celular o tableta por USB, con el backend corriendo en el equipo:

@@ -1,0 +1,46 @@
+# Perfil de producción: SPRING_PROFILES_ACTIVE=prod (lo pone docker-compose.prod.yml).
+# Se suma a application.yml; todas las claves siguen llegando por variables de entorno.
+spring:
+  jpa:
+    show-sql: false
+
+server:
+  # Detrás del proxy con HTTPS (Caddy): la IP real del cliente llega en X-Forwarded-For, para que el
+  # límite de intentos por IP no vea a todos como el proxy. Solo se confía en proxies de redes internas.
+  forward-headers-strategy: native
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+    include-exception: false
+
+agrovet:
+  mail:
+    # Sin SMTP real (MAIL_USERNAME y MAIL_PASSWORD) la aplicación no arranca
+    require-smtp: true
+  cors:
+    # La app Android no usa CORS; solo se abre a un panel web si se define CORS_ALLOWED_ORIGINS
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+
+# Swagger y la descripción de la API, apagados
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+management:
+  endpoint:
+    health:
+      show-details: never
+      # /actuator/health/liveness y /actuator/health/readiness para el chequeo del servidor
+      probes:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    # Las consultas y sus parámetros no van al log
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
+    org.springframework.web: WARN

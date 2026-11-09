@@ -19,7 +19,8 @@ jobs:
 
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
-          # En pull_request la action toma las referencias del propio PR
-          base-ref: ${{ github.event.before }}
-          head-ref: ${{ github.sha }}
+          # En pull_request se comparan la base y la cabeza del PR; en push, el commit anterior y el
+          # nuevo. Pasar github.event.before (vacío en un PR) dejaba la action sin base y fallaba.
+          base-ref: ${{ github.event.pull_request.base.sha || github.event.before }}
+          head-ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fail-on-severity: moderate

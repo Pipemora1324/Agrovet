@@ -12,6 +12,7 @@ import '../auth/auth_cubit.dart';
 import '../auth/password_field.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/big_button.dart';
+import '../widgets/fade_in.dart';
 import '../widgets/notice_box.dart';
 import 'change_password_screen.dart';
 import 'privacy_notice_screen.dart';
@@ -123,18 +124,45 @@ class _ProfileViewState extends State<_ProfileView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Card(
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    leading: CircleAvatar(
-                      radius: 28,
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      child: Text(session.name.isEmpty ? '?' : session.name.characters.first.toUpperCase(),
-                          style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onPrimary)),
+                FadeIn(
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      borderRadius: AppRadius.card,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [AppColors.primary, AppColors.primaryDark],
+                      ),
                     ),
-                    title: Text(session.name, style: theme.textTheme.titleMedium),
-                    subtitle: Text(session.email),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 32,
+                          backgroundColor: AppColors.surface,
+                          child: Text(session.name.isEmpty ? '?' : session.name.characters.first.toUpperCase(),
+                              style: theme.textTheme.headlineSmall?.copyWith(color: AppColors.primary)),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(session.name, style: theme.textTheme.titleLarge?.copyWith(color: AppColors.onPrimary)),
+                              Text(session.email, style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.onPrimary)),
+                              if (session.farmName != null && session.farmName!.isNotEmpty)
+                                Text(
+                                  [session.farmName, session.municipality]
+                                      .whereType<String>()
+                                      .where((s) => s.isNotEmpty)
+                                      .join(' · '),
+                                  style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.onPrimary),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 if (needsConsent) ...[

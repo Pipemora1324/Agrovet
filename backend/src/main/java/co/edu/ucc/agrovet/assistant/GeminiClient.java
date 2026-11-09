@@ -7,11 +7,16 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import co.edu.ucc.agrovet.common.TooManyRequestsException;
 
 /**
  * Cliente de Gemini (API generateContent). La clave viaja en la cabecera x-goog-api-key, nunca en la
@@ -58,11 +63,31 @@ public class GeminiClient implements LlmClient {
                     .body(body)
                     .retrieve()
                     .body(JsonNode.class);
+        } catch (HttpStatusCodeException e) {
+            log.warn("Gemini respondió HTTP {}", e.getStatusCode().value());
+            if (e.getStatusCode().value() == HttpStatus.TOO_MANY_REQUESTS.value()) {
+                throw new TooManyRequestsException("El asistente alcanzó el límite de consultas.",
+                        retryAfter(e.getResponseHeaders()));
+            }
+            if (e.getStatusCode().value() == HttpStatus.SERVICE_UNAVAILABLE.value()) {
+                throw new AssistantUnavailableException("Gemini está temporalmente saturado.",
+                        "El asistente está recibiendo muchas consultas. Intente de nuevo en unos minutos.", e);
+            }
+            throw new AssistantUnavailableException("Gemini respondió con un error HTTP", e);
         } catch (RestClientException e) {
             log.warn("Gemini no respondió: {}", e.getClass().getSimpleName());
             throw new AssistantUnavailableException("El proveedor no respondió", e);
         }
         return extractText(response);
+    }
+
+    private static java.time.Duration retryAfter(HttpHeaders headers) {
+        String seconds = headers == null ? null : headers.getFirst(HttpHeaders.RETRY_AFTER);
+        try {
+            return java.time.Duration.ofSeconds(Math.max(1, Long.parseLong(seconds)));
+        } catch (NumberFormatException | NullPointerException e) {
+            return java.time.Duration.ofMinutes(1);
+        }
     }
 
     static String extractText(JsonNode response) {
@@ -73,10 +98,11 @@ public class GeminiClient implements LlmClient {
         for (JsonNode part : response.path("candidates").path(0).path("content").path("parts")) {
             text.append(part.path("text").asText(""));
         }
-        if (text.isEmpty()) {
+        String answer = text.toString().trim();
+        if (answer.isEmpty()) {
             // Bloqueada por los filtros del proveedor o sin contenido
             throw new AssistantUnavailableException("El proveedor no devolvió texto");
         }
-        return text.toString().trim();
+        return answer;
     }
 }

@@ -1,0 +1,26 @@
+{
+  "description": "Patrones sint\u00e9ticos definidos por f\u00f3rmula (synthetic_pattern); no son fotos. keras = salida del modelo Keras; la app y TFLite deben coincidir dentro de tolerance.",
+  "tolerance": 0.03,
+  "cases": [
+    {
+      "pattern": 0,
+      "keras": 0.22869738936424255,
+      "tflite": 0.2205331176519394
+    },
+    {
+      "pattern": 1,
+      "keras": 0.4341464042663574,
+      "tflite": 0.43552592396736145
+    },
+    {
+      "pattern": 2,
+      "keras": 0.251033753156662,
+      "tflite": 0.2500048279762268
+    },
+    {
+      "pattern": 3,
+      "keras": 0.7756829857826233,
+      "tflite": 0.775923490524292
+    }
+  ]
+}

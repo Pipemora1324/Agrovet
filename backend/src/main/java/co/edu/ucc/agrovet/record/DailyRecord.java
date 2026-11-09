@@ -55,6 +55,15 @@ public class DailyRecord {
     @Column(name = "milk_drop")
     private Boolean milkDrop;
 
+    @Column(name = "temperature_source", length = 10)
+    private String temperatureSource;
+
+    @Column(name = "milk_source", length = 10)
+    private String milkSource;
+
+    @Column(name = "feed_source", length = 10)
+    private String feedSource;
+
     @Column(length = 500)
     private String notes;
 
@@ -77,7 +86,10 @@ public class DailyRecord {
     }
 
     public void update(UUID cowId, LocalDate recordDate, Double temperatureC, Double milkL, Double feedKg,
-            Symptoms symptoms, String notes, boolean deleted, Instant updatedAt) {
+            Symptoms symptoms, ValueSources sources, String notes, boolean deleted, Instant updatedAt) {
+        this.temperatureSource = sources.temperature();
+        this.milkSource = sources.milk();
+        this.feedSource = sources.feed();
         this.cowId = cowId;
         this.recordDate = recordDate;
         this.temperatureC = temperatureC;
@@ -123,6 +135,10 @@ public class DailyRecord {
     public Symptoms getSymptoms() {
         return new Symptoms(udderSwelling, abnormalMilk, udderPain, lethargy, udderRedness, udderHeat, ateNormally,
                 milkDrop);
+    }
+
+    public ValueSources getSources() {
+        return new ValueSources(temperatureSource, milkSource, feedSource);
     }
 
     public String getNotes() {

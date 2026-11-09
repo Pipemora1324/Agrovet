@@ -12,7 +12,7 @@ import 'domain/risk_predictor.dart';
 import 'presentation/auth/auth_cubit.dart';
 import 'presentation/auth/login_screen.dart';
 import 'presentation/auth/verify_email_screen.dart';
-import 'presentation/cows/cows_screen.dart';
+import 'presentation/home/home_shell.dart';
 import 'presentation/session_scope.dart';
 import 'presentation/widgets/loading_view.dart';
 
@@ -63,6 +63,42 @@ class _AgroVetAppState extends State<AgroVetApp> {
             supportedLocales: const [Locale('es'), Locale('en')],
             localizationsDelegates: GlobalMaterialLocalizations.delegates,
             home: _AuthGate(predictor: _predictor),
+          ),
+        ),
+      );
+}
+
+/// Se muestra en lugar de la app cuando la compilación no trae una dirección válida del servidor.
+class ConfigErrorApp extends StatelessWidget {
+  const ConfigErrorApp({super.key, required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+        title: 'AgroVet',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.settings_suggest, size: 64, color: AppColors.error),
+                    const SizedBox(height: 16),
+                    Builder(
+                      builder: (context) =>
+                          Text('Configuración incompleta', style: Theme.of(context).textTheme.titleLarge),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(message, textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       );
@@ -120,7 +156,7 @@ class _SessionNavigatorState extends State<SessionNavigator> {
           controller: _heroController,
           child: Navigator(
             key: _navigatorKey,
-            onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => const CowsScreen()),
+            onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => const HomeShell()),
           ),
         ),
       );

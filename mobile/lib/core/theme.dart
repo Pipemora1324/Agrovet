@@ -2,61 +2,120 @@ import 'package:flutter/material.dart';
 
 import '../domain/entities.dart';
 
-/// Único lugar con los valores visuales de la app: colores, tipografía, radios y estilos de los
-/// componentes. Las pantallas usan los roles de Material 3 (colorScheme, textTheme) y los nombres de
-/// este archivo; nunca escriben un color ni un tamaño de letra a mano. Para rediseñar la app basta
-/// con cambiar este archivo.
+/// Único lugar con los valores visuales de la app: colores, tipografía, radios, medidas, movimiento
+/// y estilos de los componentes. Las pantallas usan los roles de Material 3 (colorScheme, textTheme)
+/// y los nombres de este archivo; nunca escriben un color ni un tamaño de letra a mano. Para
+/// rediseñar la app basta con cambiar este archivo.
 class AppColors {
   AppColors._();
 
   // Marca
-  static const primary = Color(0xFF1B5E20);
+  static const primary = Color(0xFF1F6B45);
+  static const primaryDark = Color(0xFF175A38);
   static const onPrimary = Colors.white;
-  static const secondary = Color(0xFF6D4C1F);
-  static const background = Color(0xFFF3F5EF);
-  static const surface = Colors.white;
-  static const ink = Color(0xFF111611);
-  static const inkMuted = Color(0xFF3B4639);
-  static const outline = Color(0xFF59654F);
-  static const outlineSoft = Color(0xFFC9D0C2);
-  static const cardBorder = Color(0xFFD5DBCF);
+  static const sun = Color(0xFFF6D774);
+  static const onSun = Color(0xFF3A2E00);
+  static const secondary = primaryDark;
+  static const background = Color(0xFFF2F5EE);
+  static const surface = Color(0xFFFFFFFF);
+  static const ink = Color(0xFF16251B);
+  static const inkMuted = Color(0xFF4B5B50);
+  static const outline = Color(0xFF7D8B80);
+  static const outlineSoft = Color(0xFFD5DDD3);
+  static const cardBorder = Color(0xFFD5DDD3);
   static const error = Color(0xFFB3261E);
 
-  // Semáforo
-  static const riskGreen = Color(0xFF2E7D32);
-  static const riskYellow = Color(0xFFF9A825);
-  static const riskRed = Color(0xFFC62828);
-  static const onRiskYellow = Color(0xFF1A1400);
-  static const riskNone = Color(0xFFE3E7DF);
-  static const trafficLightBody = Color(0xFF1F2420);
+  /// Verde muy claro para chips y burbujas propias.
+  static const primarySoft = Color(0xFFDDF3E4);
 
-  /// Texto "de advertencia" legible sobre fondo claro (el amarillo del semáforo no lo es).
-  static const warningText = Color(0xFF7A5600);
+  /// Formas decorativas sobre el verde (blanco translúcido).
+  static const heroShape = Color(0x26FFFFFF);
+  static const heroShapeStrong = Color(0x40FFFFFF);
+
+  /// Brillo que recorre el botón principal.
+  static const shine = Color(0x55FFFFFF);
+  static const transparent = Color(0x00FFFFFF);
+
+  // Semáforo: color, fondo y texto legible sobre el fondo
+  static const riskRed = Color(0xFFB3261E);
+  static const riskRedSurface = Color(0xFFFBDAD7);
+  static const riskRedText = Color(0xFF7A1A14);
+  static const riskYellow = Color(0xFFB7791F);
+  static const riskYellowSurface = Color(0xFFFFF0C2);
+  static const riskYellowText = Color(0xFF6B4500);
+  static const riskGreen = Color(0xFF1F6B45);
+  static const riskGreenSurface = Color(0xFFDDF3E4);
+  static const riskGreenText = Color(0xFF14502F);
+  static const onRiskYellow = Colors.white;
+  static const riskNone = Color(0xFFE4E9E2);
+  static const trafficLightBody = Color(0xFF16251B);
+
+  /// Texto "de advertencia" legible sobre fondo claro.
+  static const warningText = riskYellowText;
 
   // Resaltados
-  static const highlightSurface = Color(0xFFFFF3CD);
-  static const highlightBorder = Color(0xFFB07A00);
-  static const demoBanner = Color(0xFFFFE082);
-  static const onDemoBanner = Color(0xFF3E2C00);
-  static const notice = Color(0xFF263238);
+  static const highlightSurface = riskYellowSurface;
+  static const highlightBorder = riskYellow;
+  static const demoBanner = sun;
+  static const onDemoBanner = onSun;
+  static const notice = Color(0xFF16251B);
   static const onNotice = Colors.white;
-  static const info = Color(0xFF1565C0);
-  static const infoSurface = Color(0xFFE3F2FD);
+  static const info = Color(0xFF1E5AA8);
+  static const infoSurface = Color(0xFFE2ECF8);
 
   // Gráficas del historial
-  static const chartTemperature = Color(0xFFC62828);
-  static const chartMilk = Color(0xFF1565C0);
-  static const chartFeed = Color(0xFF6D4C1F);
+  static const chartTemperature = riskRed;
+  static const chartMilk = info;
+  static const chartFeed = riskYellow;
+  static const chartGrid = Color(0xFFE4E9E2);
+  static const chartBarTrack = Color(0xFFEDF1EA);
 }
 
 class AppRadius {
   AppRadius._();
 
-  static const small = 12.0;
+  static const small = 14.0;
   static const medium = 16.0;
-  static const pill = 24.0;
+  static const large = 20.0;
+  static const pill = 28.0;
 
-  static const card = BorderRadius.all(Radius.circular(medium));
+  static const field = BorderRadius.all(Radius.circular(small));
+  static const button = BorderRadius.all(Radius.circular(medium));
+  static const card = BorderRadius.all(Radius.circular(large));
+}
+
+/// Medidas de los controles: alto de botones y campos, y objetivo táctil mínimo.
+class AppSizes {
+  AppSizes._();
+
+  static const control = 56.0;
+  static const touch = 48.0;
+
+  /// Icono de las tarjetas y de los atajos.
+  static const icon = 28.0;
+}
+
+/// Tiempos de las animaciones. Siempre pasan por Responsive.motion, que respeta la opción del
+/// sistema de reducir el movimiento.
+class AppMotion {
+  AppMotion._();
+
+  static const entrance = Duration(milliseconds: 550);
+  static const stagger = Duration(milliseconds: 70);
+  static const bars = Duration(milliseconds: 700);
+  static const chart = Duration(milliseconds: 900);
+  static const press = Duration(milliseconds: 110);
+  static const pulse = Duration(milliseconds: 1400);
+  static const shine = Duration(milliseconds: 2600);
+  static const float = Duration(seconds: 6);
+  static const page = Duration(milliseconds: 300);
+
+  /// Escala de un elemento mientras se presiona.
+  static const pressedScale = 0.97;
+
+  /// Animaciones de ambiente que se repiten (pulso, brillo, formas flotantes). Las pruebas lo apagan
+  /// para que pumpAndSettle termine; apagadas, hacen un solo ciclo.
+  static bool ambient = true;
 }
 
 /// Estilos de texto con nombre propio, derivados del textTheme para no repetir tamaños.
@@ -77,7 +136,7 @@ extension AppTextStyles on TextTheme {
   TextStyle get chip => labelMedium!;
 
   /// Texto de una franja de aviso (por ejemplo, "Datos de demostración").
-  TextStyle get banner => labelMedium!.copyWith(fontSize: 16);
+  TextStyle get banner => labelMedium!;
 
   /// Párrafo destacado.
   TextStyle get emphasis => bodyLarge!.copyWith(fontWeight: FontWeight.w600);
@@ -88,13 +147,27 @@ extension AppTextStyles on TextTheme {
   /// Mensaje de error de un formulario.
   TextStyle get formError => titleSmall!.copyWith(color: AppColors.error);
 
-  /// Código de verificación (dígitos grandes y espaciados).
-  TextStyle get code => headlineMedium!.copyWith(letterSpacing: 12, fontWeight: FontWeight.w800);
+  /// Código de verificación (un dígito por casilla).
+  TextStyle get code => headlineMedium!.copyWith(fontWeight: FontWeight.w800);
+
+  /// Título grande del encabezado verde.
+  TextStyle get heroTitle => displaySmall!.copyWith(color: AppColors.onPrimary, fontWeight: FontWeight.w800);
+
+  /// Texto del encabezado verde.
+  TextStyle get heroBody => bodyLarge!.copyWith(color: AppColors.onPrimary);
+
+  /// Número del resumen (cuántas vacas en cada nivel) y del porcentaje.
+  TextStyle get stat => headlineMedium!.copyWith(fontWeight: FontWeight.w800);
+
+  /// Rótulo en mayúsculas pequeñas sobre una sección.
+  TextStyle get overline => labelMedium!.copyWith(color: AppColors.inkMuted, letterSpacing: 0.6);
 }
 
-/// Tema de campo: alto contraste para leer a pleno sol, texto grande y botones amplios.
+/// Tema de campo: alto contraste para leer a pleno sol, texto grande y controles amplios.
 class AppTheme {
   AppTheme._();
+
+  static const fontFamily = 'Figtree';
 
   // Atajos que usan las pantallas antiguas; apuntan a la misma paleta
   static const primary = AppColors.primary;
@@ -106,7 +179,11 @@ class AppTheme {
       seedColor: AppColors.primary,
       primary: AppColors.primary,
       onPrimary: AppColors.onPrimary,
-      secondary: AppColors.secondary,
+      primaryContainer: AppColors.primarySoft,
+      onPrimaryContainer: AppColors.riskGreenText,
+      secondary: AppColors.primaryDark,
+      tertiary: AppColors.sun,
+      onTertiary: AppColors.onSun,
       surface: AppColors.surface,
       onSurface: AppColors.ink,
       onSurfaceVariant: AppColors.inkMuted,
@@ -114,66 +191,85 @@ class AppTheme {
       outlineVariant: AppColors.outlineSoft,
       error: AppColors.error,
     );
-    final base = ThemeData(useMaterial3: true, colorScheme: scheme, scaffoldBackgroundColor: AppColors.background);
-    final t = base.textTheme.apply(bodyColor: AppColors.ink, displayColor: AppColors.ink);
+    final base = ThemeData(
+      useMaterial3: true,
+      colorScheme: scheme,
+      fontFamily: fontFamily,
+      scaffoldBackgroundColor: AppColors.background,
+    );
+    final t = base.textTheme.apply(bodyColor: AppColors.ink, displayColor: AppColors.ink, fontFamily: fontFamily);
+    // Ningún texto baja de 16 sp
     final text = t.copyWith(
-      headlineMedium: t.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
-      headlineSmall: t.headlineSmall?.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
-      titleLarge: t.titleLarge?.copyWith(fontSize: 24, fontWeight: FontWeight.w700),
+      displaySmall: t.displaySmall?.copyWith(fontSize: 34, height: 1.1, fontWeight: FontWeight.w800),
+      headlineMedium: t.headlineMedium?.copyWith(fontSize: 28, fontWeight: FontWeight.w800),
+      headlineSmall: t.headlineSmall?.copyWith(fontSize: 25, fontWeight: FontWeight.w800),
+      titleLarge: t.titleLarge?.copyWith(fontSize: 22, fontWeight: FontWeight.w700),
       titleMedium: t.titleMedium?.copyWith(fontSize: 19, fontWeight: FontWeight.w700),
       titleSmall: t.titleSmall?.copyWith(fontSize: 17, fontWeight: FontWeight.w700),
       bodyLarge: t.bodyLarge?.copyWith(fontSize: 18, height: 1.35),
-      bodyMedium: t.bodyMedium?.copyWith(fontSize: 16, height: 1.35),
-      bodySmall: t.bodySmall?.copyWith(fontSize: 14, color: AppColors.inkMuted),
+      bodyMedium: t.bodyMedium?.copyWith(fontSize: 17, height: 1.35),
+      bodySmall: t.bodySmall?.copyWith(fontSize: 16, color: AppColors.inkMuted),
       labelLarge: t.labelLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
-      labelMedium: t.labelMedium?.copyWith(fontSize: 15, fontWeight: FontWeight.w800),
-      labelSmall: t.labelSmall?.copyWith(fontSize: 13, color: AppColors.ink),
+      labelMedium: t.labelMedium?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
+      labelSmall: t.labelSmall?.copyWith(fontSize: 16, color: AppColors.inkMuted),
     );
-    const radius = AppRadius.card;
-    const buttonText = TextStyle(fontSize: 19, fontWeight: FontWeight.w700);
+    const buttonText = TextStyle(fontFamily: fontFamily, fontSize: 18, fontWeight: FontWeight.w700);
+    const buttonPadding = EdgeInsets.symmetric(horizontal: 22, vertical: 14);
+    const buttonSize = Size(AppSizes.touch, AppSizes.control);
     return base.copyWith(
       textTheme: text,
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.onPrimary,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.ink,
+        surfaceTintColor: AppColors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: text.titleLarge?.copyWith(fontSize: 22, color: AppColors.onPrimary),
+        titleTextStyle: text.titleLarge,
       ),
       cardTheme: const CardThemeData(
         color: AppColors.surface,
-        elevation: 1,
+        elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: radius, side: BorderSide(color: AppColors.cardBorder)),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.card, side: BorderSide(color: AppColors.cardBorder)),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(64, 64),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          minimumSize: buttonSize,
+          padding: buttonPadding,
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.onPrimary,
           textStyle: buttonText,
-          shape: const RoundedRectangleBorder(borderRadius: radius),
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.button),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(64, 64),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          minimumSize: buttonSize,
+          padding: buttonPadding,
           foregroundColor: AppColors.primary,
+          backgroundColor: AppColors.surface,
           side: const BorderSide(color: AppColors.primary, width: 2),
           textStyle: buttonText,
-          shape: const RoundedRectangleBorder(borderRadius: radius),
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.button),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          minimumSize: const Size(48, 48),
+          minimumSize: const Size(AppSizes.touch, AppSizes.touch),
           foregroundColor: AppColors.primary,
-          textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(fontFamily: fontFamily, fontSize: 17, fontWeight: FontWeight.w700),
         ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(minimumSize: const Size(AppSizes.touch, AppSizes.touch)),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: SegmentedButton.styleFrom(
-          minimumSize: const Size(64, 56),
-          textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          minimumSize: buttonSize,
+          // SegmentedButton ignora minimumSize en cada segmento: el alto de 56 dp sale del relleno
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 18),
+          textStyle: const TextStyle(fontFamily: fontFamily, fontSize: 17, fontWeight: FontWeight.w700),
         ),
       ),
       chipTheme: ChipThemeData(
@@ -182,36 +278,43 @@ class AppTheme {
         labelStyle: text.titleSmall,
         secondaryLabelStyle: text.titleSmall?.copyWith(color: AppColors.onPrimary),
         checkmarkColor: AppColors.onPrimary,
+        side: const BorderSide(color: AppColors.cardBorder),
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.field),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.onPrimary,
-        extendedTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        extendedTextStyle: TextStyle(fontFamily: fontFamily, fontSize: 18, fontWeight: FontWeight.w700),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.card),
       ),
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        labelStyle: TextStyle(fontSize: 18, color: AppColors.inkMuted),
-        floatingLabelStyle: TextStyle(fontSize: 18, color: AppColors.primary, fontWeight: FontWeight.w700),
-        helperStyle: TextStyle(fontSize: 14, color: AppColors.inkMuted),
+        constraints: BoxConstraints(minHeight: AppSizes.control),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        labelStyle: TextStyle(fontFamily: fontFamily, fontSize: 18, color: AppColors.inkMuted),
+        floatingLabelStyle:
+            TextStyle(fontFamily: fontFamily, fontSize: 18, color: AppColors.primary, fontWeight: FontWeight.w700),
+        hintStyle: TextStyle(fontFamily: fontFamily, fontSize: 17, color: AppColors.inkMuted),
+        helperStyle: TextStyle(fontFamily: fontFamily, fontSize: 16, color: AppColors.inkMuted),
         helperMaxLines: 3,
-        errorStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        errorStyle: TextStyle(fontFamily: fontFamily, fontSize: 16, fontWeight: FontWeight.w600),
         errorMaxLines: 3,
-        border: OutlineInputBorder(borderRadius: radius),
+        border: OutlineInputBorder(borderRadius: AppRadius.field),
         enabledBorder: OutlineInputBorder(
-          borderRadius: radius,
+          borderRadius: AppRadius.field,
           borderSide: BorderSide(color: AppColors.outline, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: radius,
+          borderRadius: AppRadius.field,
           borderSide: BorderSide(color: AppColors.primary, width: 2.5),
         ),
       ),
       checkboxTheme: CheckboxThemeData(
         side: const BorderSide(color: AppColors.inkMuted, width: 2),
         visualDensity: VisualDensity.standard,
+        materialTapTargetSize: MaterialTapTargetSize.padded,
         fillColor: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.selected) ? AppColors.primary : AppColors.surface),
       ),
@@ -223,15 +326,49 @@ class AppTheme {
       ),
       listTileTheme: ListTileThemeData(
         iconColor: AppColors.primary,
+        minVerticalPadding: 12,
+        minTileHeight: AppSizes.control,
         titleTextStyle: text.titleSmall,
         subtitleTextStyle: text.bodyMedium,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.surface,
+        indicatorColor: AppColors.primarySoft,
+        height: 72,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) => text.labelMedium?.copyWith(
+            color: states.contains(WidgetState.selected) ? AppColors.primary : AppColors.inkMuted)),
+        iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
+            size: AppSizes.icon,
+            color: states.contains(WidgetState.selected) ? AppColors.primary : AppColors.inkMuted)),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: AppColors.surface,
+        indicatorColor: AppColors.primarySoft,
+        selectedIconTheme: const IconThemeData(size: AppSizes.icon, color: AppColors.primary),
+        unselectedIconTheme: const IconThemeData(size: AppSizes.icon, color: AppColors.inkMuted),
+        selectedLabelTextStyle: text.labelMedium?.copyWith(color: AppColors.primary),
+        unselectedLabelTextStyle: text.labelMedium?.copyWith(color: AppColors.inkMuted),
       ),
       dividerTheme: const DividerThemeData(color: AppColors.cardBorder),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        contentTextStyle: TextStyle(fontSize: 17, color: Colors.white),
+        backgroundColor: AppColors.ink,
+        contentTextStyle: TextStyle(fontFamily: fontFamily, fontSize: 17, color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.field),
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(linearTrackColor: AppColors.riskNone),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primary,
+        linearTrackColor: AppColors.riskNone,
+        linearMinHeight: 8,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.large))),
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.card),
+      ),
       pageTransitionsTheme: const PageTransitionsTheme(builders: {
         TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
       }),
@@ -250,6 +387,12 @@ class AppButtonStyles {
     final error = Theme.of(context).colorScheme.error;
     return OutlinedButton.styleFrom(foregroundColor: error, side: BorderSide(color: error, width: 2));
   }
+
+  /// Botón sobre el encabezado verde (fondo blanco, texto verde).
+  static ButtonStyle onHero() => FilledButton.styleFrom(
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.primaryDark,
+      );
 }
 
 /// Colores del semáforo con texto legible encima de cada uno.
@@ -262,8 +405,19 @@ extension RiskColors on RiskLevel {
 
   Color get onColor => this == RiskLevel.yellow ? AppColors.onRiskYellow : Colors.white;
 
-  /// Color para escribir el nivel sobre fondo claro (el amarillo puro no se lee).
-  Color get textColor => this == RiskLevel.yellow ? AppColors.warningText : color;
+  /// Fondo claro del nivel (tarjetas, chips).
+  Color get surface => switch (this) {
+        RiskLevel.green => AppColors.riskGreenSurface,
+        RiskLevel.yellow => AppColors.riskYellowSurface,
+        RiskLevel.red => AppColors.riskRedSurface,
+      };
+
+  /// Color para escribir el nivel sobre fondo claro o sobre [surface].
+  Color get textColor => switch (this) {
+        RiskLevel.green => AppColors.riskGreenText,
+        RiskLevel.yellow => AppColors.riskYellowText,
+        RiskLevel.red => AppColors.riskRedText,
+      };
 
   IconData get icon => switch (this) {
         RiskLevel.green => Icons.check_circle,

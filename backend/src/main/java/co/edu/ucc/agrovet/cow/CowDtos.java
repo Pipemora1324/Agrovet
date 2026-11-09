@@ -18,6 +18,7 @@ import co.edu.ucc.agrovet.inference.RiskCause;
 import co.edu.ucc.agrovet.inference.RiskLevel;
 import co.edu.ucc.agrovet.record.DailyRecord;
 import co.edu.ucc.agrovet.record.Symptoms;
+import co.edu.ucc.agrovet.record.ValueSources;
 
 public final class CowDtos {
 
@@ -53,11 +54,11 @@ public final class CowDtos {
     }
 
     public record DailyRecordResponse(UUID id, LocalDate recordDate, Double temperatureC, Double milkL,
-            Double feedKg, Symptoms symptoms, String notes) {
+            Double feedKg, Symptoms symptoms, ValueSources sources, String notes) {
 
         public static DailyRecordResponse from(DailyRecord record) {
             return new DailyRecordResponse(record.getId(), record.getRecordDate(), record.getTemperatureC(),
-                    record.getMilkL(), record.getFeedKg(), record.getSymptoms(), record.getNotes());
+                    record.getMilkL(), record.getFeedKg(), record.getSymptoms(), record.getSources(), record.getNotes());
         }
     }
 

@@ -135,6 +135,21 @@ class Symptoms extends Equatable {
       [udderSwelling, abnormalMilk, udderPain, lethargy, udderRedness, udderHeat, ateNormally, milkDrop];
 }
 
+/// Origen de un valor del registro: medido (termómetro, litros, kilos) o estimado por la app a partir
+/// de una respuesta y la línea base de la vaca.
+enum ValueSource {
+  measured('measured', 'medido'),
+  estimated('estimated', 'estimado');
+
+  const ValueSource(this.code, this.label);
+
+  /// Valor que usan la API y la base local.
+  final String code;
+  final String label;
+
+  static ValueSource? fromCode(String? code) => values.where((v) => v.code == code).firstOrNull;
+}
+
 class DailyRecord extends Equatable {
   const DailyRecord({
     required this.id,
@@ -143,6 +158,9 @@ class DailyRecord extends Equatable {
     this.temperatureC,
     this.milkL,
     this.feedKg,
+    this.temperatureSource,
+    this.milkSource,
+    this.feedSource,
     this.symptoms = const Symptoms(),
     this.notes,
     required this.updatedAt,
@@ -156,13 +174,22 @@ class DailyRecord extends Equatable {
   final double? temperatureC;
   final double? milkL;
   final double? feedKg;
+
+  /// Origen de cada valor; null en registros de versiones anteriores (escritos a mano).
+  final ValueSource? temperatureSource;
+  final ValueSource? milkSource;
+  final ValueSource? feedSource;
   final Symptoms symptoms;
   final String? notes;
   final DateTime updatedAt;
 
+  bool get temperatureEstimated => temperatureC != null && temperatureSource == ValueSource.estimated;
+  bool get milkEstimated => milkL != null && milkSource == ValueSource.estimated;
+  bool get feedEstimated => feedKg != null && feedSource == ValueSource.estimated;
+
   @override
-  List<Object?> get props =>
-      [id, cowId, recordDate, temperatureC, milkL, feedKg, symptoms, notes, updatedAt];
+  List<Object?> get props => [id, cowId, recordDate, temperatureC, milkL, feedKg, temperatureSource, milkSource,
+        feedSource, symptoms, notes, updatedAt];
 }
 
 /// Qué indicador fijó el color final del semáforo.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/config.dart';
 import '../../core/formatters.dart';
 import '../../core/responsive.dart';
 import '../../core/theme.dart';
@@ -8,8 +9,9 @@ import '../../data/photos/photo_store.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
 import '../widgets/big_button.dart';
+import 'udder_triage_card.dart';
 
-/// Foto en grande (con zoom), sus datos para investigación y la opción de borrarla.
+/// Foto en grande (con zoom), sus datos opcionales para investigación y la opción de borrarla.
 class PhotoViewScreen extends StatelessWidget {
   const PhotoViewScreen({super.key, required this.photo, this.onDelete});
 
@@ -21,9 +23,12 @@ class PhotoViewScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('¿Borrar esta foto?'),
-        content: const Text('Se borra de este celular y, al sincronizar, del servidor.'),
+        content: const Text('La foto se quitará de la ficha de esta vaca.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
             style: AppButtonStyles.dangerFilled(context),
             onPressed: () => Navigator.pop(context, true),
@@ -40,47 +45,100 @@ class PhotoViewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: Text(formatDay(photo.takenOn)),
-          actions: [
-            if (onDelete != null)
-              IconButton(
-                tooltip: 'Borrar foto',
-                icon: const Icon(Icons.delete_outline),
-                onPressed: () => _confirmDelete(context),
-              ),
-          ],
-        ),
-        body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              CenteredContent(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.small),
-                      child: SizedBox(
-                        height: MediaQuery.sizeOf(context).height * 0.45,
-                        child: InteractiveViewer(
-                          maxScale: 5,
-                          child: Image.file(context.read<PhotoStore>().fileFor(photo.fileName)),
-                        ),
+    appBar: AppBar(
+      title: Text(formatDay(photo.takenOn)),
+      actions: [
+        if (onDelete != null)
+          IconButton(
+            tooltip: 'Borrar foto',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => _confirmDelete(context),
+          ),
+      ],
+    ),
+    body: SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          CenteredContent(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.small),
+                  child: SizedBox(
+                    height: MediaQuery.sizeOf(context).height * 0.45,
+                    child: InteractiveViewer(
+                      maxScale: 5,
+                      child: Image.file(
+                        context.read<PhotoStore>().fileFor(photo.fileName),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    _ResearchForm(photo: photo),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                if (AppConfig.udderTriageEnabled) ...[
+                  const SizedBox(height: 16),
+                  UdderTriageCard(photo: context.read<PhotoStore>().fileFor(photo.fileName)),
+                ],
+                const SizedBox(height: 16),
+                _ResearchForm(photo: photo),
+              ],
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }
 
-/// Confirmación del veterinario, diagnóstico y permiso para investigación.
+/// Opciones excluyentes y opcionales (se puede desmarcar). En horizontal si cada opción cabe en una
+/// línea; si no (letra grande o pantalla angosta), una debajo de otra, para no partir palabras.
+class _Choices<T> extends StatelessWidget {
+  const _Choices({required this.options, required this.selected, required this.onChanged});
+
+  final Map<T, String> options;
+  final T? selected;
+  final ValueChanged<T?> onChanged;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final style = Theme.of(context).segmentedButtonTheme.style?.textStyle?.resolve({});
+      final scaler = MediaQuery.textScalerOf(context);
+      final widest = options.values
+          .map((label) => (TextPainter(
+                text: TextSpan(text: label, style: style),
+                textScaler: scaler,
+                textDirection: TextDirection.ltr,
+                maxLines: 1,
+              )..layout()).width)
+          .reduce((a, b) => a > b ? a : b);
+      // Texto + relleno (16) + bordes; sin ícono de marcado (lo elegido se ve por el color)
+      final fits = widest + 24 <= constraints.maxWidth / options.length;
+      return SegmentedButton<T>(
+        direction: fits ? Axis.horizontal : Axis.vertical,
+        // En vertical, la píldora del tema se vería como un óvalo
+        style: fits
+            ? null
+            : SegmentedButton.styleFrom(
+                shape: const RoundedRectangleBorder(borderRadius: AppRadius.field),
+              ),
+        showSelectedIcon: false,
+        emptySelectionAllowed: true,
+        segments: [
+          for (final MapEntry(key: value, value: label) in options.entries)
+            ButtonSegment(value: value, label: Text(label)),
+        ],
+        selected: {?selected},
+        onSelectionChanged: (selection) => onChanged(selection.firstOrNull),
+      );
+    },
+  );
+}
+
+/// Datos opcionales para investigación, plegados por defecto: confirmación del veterinario,
+/// diagnóstico y permiso expreso para usar la foto (apagado por defecto). Solo las fotos con permiso,
+/// confirmadas y con diagnóstico claro sirven para entrenar la CNN (ml/src/build_cnn_dataset.py).
 class _ResearchForm extends StatefulWidget {
   const _ResearchForm({required this.photo});
 
@@ -105,71 +163,68 @@ class _ResearchFormState extends State<_ResearchForm> {
 
   Future<void> _save() async {
     setState(() => _saving = true);
-    await context.read<PhotoRepository>().savePhoto(widget.photo.withResearch(
-          vetConfirmed: _vet,
-          diagnosis: _diagnosis,
-          diagnosisNotes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-          researchConsent: _consent,
-        ));
+    await context.read<PhotoRepository>().savePhoto(
+      widget.photo.withResearch(
+        vetConfirmed: _vet,
+        diagnosis: _diagnosis,
+        diagnosisNotes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+        researchConsent: _consent,
+      ),
+    );
     if (!mounted) return;
     setState(() => _saving = false);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Datos de la foto guardados.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Datos de la foto guardados.')),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Para investigación (opcional)', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Text('¿Un veterinario confirmó el diagnóstico?', style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
-            SegmentedButton<VetConfirmation>(
-              emptySelectionAllowed: true,
-              segments: [
-                for (final option in VetConfirmation.values) ButtonSegment(value: option, label: Text(option.label)),
-              ],
-              selected: {?_vet},
-              onSelectionChanged: (selection) => setState(() => _vet = selection.firstOrNull),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        title: Text('Para investigación (opcional)', style: theme.textTheme.titleMedium),
+        subtitle: const Text('Diagnóstico del veterinario y permiso de uso'),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('¿Un veterinario confirmó el diagnóstico?', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          _Choices<VetConfirmation>(
+            options: {for (final option in VetConfirmation.values) option: option.label},
+            selected: _vet,
+            onChanged: (value) => setState(() => _vet = value),
+          ),
+          const SizedBox(height: 16),
+          Text('Diagnóstico', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          _Choices<Diagnosis>(
+            options: {for (final option in Diagnosis.values) option: option.label},
+            selected: _diagnosis,
+            onChanged: (value) => setState(() => _diagnosis = value),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _notes,
+            maxLength: 300,
+            maxLines: 2,
+            decoration: const InputDecoration(labelText: 'Notas (opcional)'),
+          ),
+          const Divider(height: 24),
+          SwitchListTile(
+            value: _consent,
+            onChanged: (value) => setState(() => _consent = value),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Permitir usar esta foto para investigación'),
+            subtitle: const Text(
+              'Ayuda a entrenar un modelo que reconozca la mastitis en fotos. Se usa sin datos que lo '
+              'identifiquen y puede quitar el permiso cuando quiera.',
             ),
-            const SizedBox(height: 16),
-            Text('Diagnóstico', style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
-            SegmentedButton<Diagnosis>(
-              emptySelectionAllowed: true,
-              segments: [
-                for (final option in Diagnosis.values) ButtonSegment(value: option, label: Text(option.label)),
-              ],
-              selected: {?_diagnosis},
-              onSelectionChanged: (selection) => setState(() => _diagnosis = selection.firstOrNull),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _notes,
-              maxLength: 300,
-              maxLines: 2,
-              decoration: const InputDecoration(labelText: 'Notas del diagnóstico (opcional)'),
-            ),
-            const Divider(height: 24),
-            SwitchListTile(
-              value: _consent,
-              onChanged: (value) => setState(() => _consent = value),
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Permitir usar esta foto para investigación'),
-              subtitle: const Text(
-                'Ayuda a entrenar un modelo que reconozca la mastitis en fotos. Se usa sin datos que lo '
-                'identifiquen y puede quitar el permiso cuando quiera.',
-              ),
-            ),
-            const SizedBox(height: 12),
-            BigButton(icon: Icons.save, label: 'Guardar', busy: _saving, onPressed: _save),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          BigButton(icon: Icons.save, label: 'Guardar', busy: _saving, onPressed: _save),
+        ],
       ),
     );
   }

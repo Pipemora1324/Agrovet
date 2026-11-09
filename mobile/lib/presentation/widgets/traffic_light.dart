@@ -69,7 +69,12 @@ class RiskChip extends StatelessWidget {
         children: [
           Icon(level?.icon ?? Icons.help_outline, size: 18, color: onColor),
           const SizedBox(width: 6),
-          Text(level?.label ?? 'Sin evaluar', style: Theme.of(context).textTheme.chip.copyWith(color: onColor)),
+          Flexible(
+            child: Text(level?.label ?? 'Sin evaluar',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.chip.copyWith(color: onColor)),
+          ),
         ],
       ),
     );

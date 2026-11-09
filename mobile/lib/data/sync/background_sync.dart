@@ -28,6 +28,8 @@ Future<bool> runBackgroundSync() async {
   final store = SecureStore();
   final session = await store.readSession();
   if (session == null || session.isDemo || session.refreshToken == null) return true;
+  // Sin una dirección válida del servidor no hay a dónde subir (ver AppConfig)
+  if (AppConfig.problem != null) return true;
 
   final db = await DatabaseOpener.openForUser(
     userId: session.userId,

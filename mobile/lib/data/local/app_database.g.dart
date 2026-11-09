@@ -854,6 +854,40 @@ class $DailyRecordsTable extends DailyRecords
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _temperatureSourceMeta = const VerificationMeta(
+    'temperatureSource',
+  );
+  @override
+  late final GeneratedColumn<String> temperatureSource =
+      GeneratedColumn<String>(
+        'temperature_source',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _milkSourceMeta = const VerificationMeta(
+    'milkSource',
+  );
+  @override
+  late final GeneratedColumn<String> milkSource = GeneratedColumn<String>(
+    'milk_source',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _feedSourceMeta = const VerificationMeta(
+    'feedSource',
+  );
+  @override
+  late final GeneratedColumn<String> feedSource = GeneratedColumn<String>(
+    'feed_source',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _udderSwellingMeta = const VerificationMeta(
     'udderSwelling',
   );
@@ -994,6 +1028,9 @@ class $DailyRecordsTable extends DailyRecords
     temperatureC,
     milkL,
     feedKg,
+    temperatureSource,
+    milkSource,
+    feedSource,
     udderSwelling,
     abnormalMilk,
     udderPain,
@@ -1091,6 +1128,27 @@ class $DailyRecordsTable extends DailyRecords
       context.handle(
         _feedKgMeta,
         feedKg.isAcceptableOrUnknown(data['feed_kg']!, _feedKgMeta),
+      );
+    }
+    if (data.containsKey('temperature_source')) {
+      context.handle(
+        _temperatureSourceMeta,
+        temperatureSource.isAcceptableOrUnknown(
+          data['temperature_source']!,
+          _temperatureSourceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('milk_source')) {
+      context.handle(
+        _milkSourceMeta,
+        milkSource.isAcceptableOrUnknown(data['milk_source']!, _milkSourceMeta),
+      );
+    }
+    if (data.containsKey('feed_source')) {
+      context.handle(
+        _feedSourceMeta,
+        feedSource.isAcceptableOrUnknown(data['feed_source']!, _feedSourceMeta),
       );
     }
     if (data.containsKey('udder_swelling')) {
@@ -1216,6 +1274,18 @@ class $DailyRecordsTable extends DailyRecords
         DriftSqlType.double,
         data['${effectivePrefix}feed_kg'],
       ),
+      temperatureSource: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}temperature_source'],
+      ),
+      milkSource: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}milk_source'],
+      ),
+      feedSource: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}feed_source'],
+      ),
       udderSwelling: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}udder_swelling'],
@@ -1279,6 +1349,11 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
   final double? temperatureC;
   final double? milkL;
   final double? feedKg;
+
+  /// Origen de cada valor: 'measured' o 'estimated' (null en registros anteriores, escritos a mano).
+  final String? temperatureSource;
+  final String? milkSource;
+  final String? feedSource;
   final bool udderSwelling;
   final bool abnormalMilk;
   final bool udderPain;
@@ -1306,6 +1381,9 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     this.temperatureC,
     this.milkL,
     this.feedKg,
+    this.temperatureSource,
+    this.milkSource,
+    this.feedSource,
     required this.udderSwelling,
     required this.abnormalMilk,
     required this.udderPain,
@@ -1337,6 +1415,15 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     }
     if (!nullToAbsent || feedKg != null) {
       map['feed_kg'] = Variable<double>(feedKg);
+    }
+    if (!nullToAbsent || temperatureSource != null) {
+      map['temperature_source'] = Variable<String>(temperatureSource);
+    }
+    if (!nullToAbsent || milkSource != null) {
+      map['milk_source'] = Variable<String>(milkSource);
+    }
+    if (!nullToAbsent || feedSource != null) {
+      map['feed_source'] = Variable<String>(feedSource);
     }
     map['udder_swelling'] = Variable<bool>(udderSwelling);
     map['abnormal_milk'] = Variable<bool>(abnormalMilk);
@@ -1377,6 +1464,15 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       feedKg: feedKg == null && nullToAbsent
           ? const Value.absent()
           : Value(feedKg),
+      temperatureSource: temperatureSource == null && nullToAbsent
+          ? const Value.absent()
+          : Value(temperatureSource),
+      milkSource: milkSource == null && nullToAbsent
+          ? const Value.absent()
+          : Value(milkSource),
+      feedSource: feedSource == null && nullToAbsent
+          ? const Value.absent()
+          : Value(feedSource),
       udderSwelling: Value(udderSwelling),
       abnormalMilk: Value(abnormalMilk),
       udderPain: Value(udderPain),
@@ -1412,6 +1508,11 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       temperatureC: serializer.fromJson<double?>(json['temperatureC']),
       milkL: serializer.fromJson<double?>(json['milkL']),
       feedKg: serializer.fromJson<double?>(json['feedKg']),
+      temperatureSource: serializer.fromJson<String?>(
+        json['temperatureSource'],
+      ),
+      milkSource: serializer.fromJson<String?>(json['milkSource']),
+      feedSource: serializer.fromJson<String?>(json['feedSource']),
       udderSwelling: serializer.fromJson<bool>(json['udderSwelling']),
       abnormalMilk: serializer.fromJson<bool>(json['abnormalMilk']),
       udderPain: serializer.fromJson<bool>(json['udderPain']),
@@ -1438,6 +1539,9 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
       'temperatureC': serializer.toJson<double?>(temperatureC),
       'milkL': serializer.toJson<double?>(milkL),
       'feedKg': serializer.toJson<double?>(feedKg),
+      'temperatureSource': serializer.toJson<String?>(temperatureSource),
+      'milkSource': serializer.toJson<String?>(milkSource),
+      'feedSource': serializer.toJson<String?>(feedSource),
       'udderSwelling': serializer.toJson<bool>(udderSwelling),
       'abnormalMilk': serializer.toJson<bool>(abnormalMilk),
       'udderPain': serializer.toJson<bool>(udderPain),
@@ -1462,6 +1566,9 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     Value<double?> temperatureC = const Value.absent(),
     Value<double?> milkL = const Value.absent(),
     Value<double?> feedKg = const Value.absent(),
+    Value<String?> temperatureSource = const Value.absent(),
+    Value<String?> milkSource = const Value.absent(),
+    Value<String?> feedSource = const Value.absent(),
     bool? udderSwelling,
     bool? abnormalMilk,
     bool? udderPain,
@@ -1483,6 +1590,11 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     temperatureC: temperatureC.present ? temperatureC.value : this.temperatureC,
     milkL: milkL.present ? milkL.value : this.milkL,
     feedKg: feedKg.present ? feedKg.value : this.feedKg,
+    temperatureSource: temperatureSource.present
+        ? temperatureSource.value
+        : this.temperatureSource,
+    milkSource: milkSource.present ? milkSource.value : this.milkSource,
+    feedSource: feedSource.present ? feedSource.value : this.feedSource,
     udderSwelling: udderSwelling ?? this.udderSwelling,
     abnormalMilk: abnormalMilk ?? this.abnormalMilk,
     udderPain: udderPain ?? this.udderPain,
@@ -1512,6 +1624,15 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           : this.temperatureC,
       milkL: data.milkL.present ? data.milkL.value : this.milkL,
       feedKg: data.feedKg.present ? data.feedKg.value : this.feedKg,
+      temperatureSource: data.temperatureSource.present
+          ? data.temperatureSource.value
+          : this.temperatureSource,
+      milkSource: data.milkSource.present
+          ? data.milkSource.value
+          : this.milkSource,
+      feedSource: data.feedSource.present
+          ? data.feedSource.value
+          : this.feedSource,
       udderSwelling: data.udderSwelling.present
           ? data.udderSwelling.value
           : this.udderSwelling,
@@ -1546,6 +1667,9 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           ..write('temperatureC: $temperatureC, ')
           ..write('milkL: $milkL, ')
           ..write('feedKg: $feedKg, ')
+          ..write('temperatureSource: $temperatureSource, ')
+          ..write('milkSource: $milkSource, ')
+          ..write('feedSource: $feedSource, ')
           ..write('udderSwelling: $udderSwelling, ')
           ..write('abnormalMilk: $abnormalMilk, ')
           ..write('udderPain: $udderPain, ')
@@ -1560,7 +1684,7 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     updatedAt,
     deleted,
     syncPending,
@@ -1572,6 +1696,9 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     temperatureC,
     milkL,
     feedKg,
+    temperatureSource,
+    milkSource,
+    feedSource,
     udderSwelling,
     abnormalMilk,
     udderPain,
@@ -1581,7 +1708,7 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
     ateNormally,
     milkDrop,
     notes,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1597,6 +1724,9 @@ class DailyRecordRow extends DataClass implements Insertable<DailyRecordRow> {
           other.temperatureC == this.temperatureC &&
           other.milkL == this.milkL &&
           other.feedKg == this.feedKg &&
+          other.temperatureSource == this.temperatureSource &&
+          other.milkSource == this.milkSource &&
+          other.feedSource == this.feedSource &&
           other.udderSwelling == this.udderSwelling &&
           other.abnormalMilk == this.abnormalMilk &&
           other.udderPain == this.udderPain &&
@@ -1620,6 +1750,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
   final Value<double?> temperatureC;
   final Value<double?> milkL;
   final Value<double?> feedKg;
+  final Value<String?> temperatureSource;
+  final Value<String?> milkSource;
+  final Value<String?> feedSource;
   final Value<bool> udderSwelling;
   final Value<bool> abnormalMilk;
   final Value<bool> udderPain;
@@ -1642,6 +1775,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     this.temperatureC = const Value.absent(),
     this.milkL = const Value.absent(),
     this.feedKg = const Value.absent(),
+    this.temperatureSource = const Value.absent(),
+    this.milkSource = const Value.absent(),
+    this.feedSource = const Value.absent(),
     this.udderSwelling = const Value.absent(),
     this.abnormalMilk = const Value.absent(),
     this.udderPain = const Value.absent(),
@@ -1665,6 +1801,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     this.temperatureC = const Value.absent(),
     this.milkL = const Value.absent(),
     this.feedKg = const Value.absent(),
+    this.temperatureSource = const Value.absent(),
+    this.milkSource = const Value.absent(),
+    this.feedSource = const Value.absent(),
     this.udderSwelling = const Value.absent(),
     this.abnormalMilk = const Value.absent(),
     this.udderPain = const Value.absent(),
@@ -1691,6 +1830,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     Expression<double>? temperatureC,
     Expression<double>? milkL,
     Expression<double>? feedKg,
+    Expression<String>? temperatureSource,
+    Expression<String>? milkSource,
+    Expression<String>? feedSource,
     Expression<bool>? udderSwelling,
     Expression<bool>? abnormalMilk,
     Expression<bool>? udderPain,
@@ -1714,6 +1856,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
       if (temperatureC != null) 'temperature_c': temperatureC,
       if (milkL != null) 'milk_l': milkL,
       if (feedKg != null) 'feed_kg': feedKg,
+      if (temperatureSource != null) 'temperature_source': temperatureSource,
+      if (milkSource != null) 'milk_source': milkSource,
+      if (feedSource != null) 'feed_source': feedSource,
       if (udderSwelling != null) 'udder_swelling': udderSwelling,
       if (abnormalMilk != null) 'abnormal_milk': abnormalMilk,
       if (udderPain != null) 'udder_pain': udderPain,
@@ -1739,6 +1884,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     Value<double?>? temperatureC,
     Value<double?>? milkL,
     Value<double?>? feedKg,
+    Value<String?>? temperatureSource,
+    Value<String?>? milkSource,
+    Value<String?>? feedSource,
     Value<bool>? udderSwelling,
     Value<bool>? abnormalMilk,
     Value<bool>? udderPain,
@@ -1762,6 +1910,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
       temperatureC: temperatureC ?? this.temperatureC,
       milkL: milkL ?? this.milkL,
       feedKg: feedKg ?? this.feedKg,
+      temperatureSource: temperatureSource ?? this.temperatureSource,
+      milkSource: milkSource ?? this.milkSource,
+      feedSource: feedSource ?? this.feedSource,
       udderSwelling: udderSwelling ?? this.udderSwelling,
       abnormalMilk: abnormalMilk ?? this.abnormalMilk,
       udderPain: udderPain ?? this.udderPain,
@@ -1811,6 +1962,15 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
     if (feedKg.present) {
       map['feed_kg'] = Variable<double>(feedKg.value);
     }
+    if (temperatureSource.present) {
+      map['temperature_source'] = Variable<String>(temperatureSource.value);
+    }
+    if (milkSource.present) {
+      map['milk_source'] = Variable<String>(milkSource.value);
+    }
+    if (feedSource.present) {
+      map['feed_source'] = Variable<String>(feedSource.value);
+    }
     if (udderSwelling.present) {
       map['udder_swelling'] = Variable<bool>(udderSwelling.value);
     }
@@ -1858,6 +2018,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecordRow> {
           ..write('temperatureC: $temperatureC, ')
           ..write('milkL: $milkL, ')
           ..write('feedKg: $feedKg, ')
+          ..write('temperatureSource: $temperatureSource, ')
+          ..write('milkSource: $milkSource, ')
+          ..write('feedSource: $feedSource, ')
           ..write('udderSwelling: $udderSwelling, ')
           ..write('abnormalMilk: $abnormalMilk, ')
           ..write('udderPain: $udderPain, ')
@@ -5602,6 +5765,9 @@ typedef $$DailyRecordsTableCreateCompanionBuilder =
       Value<double?> temperatureC,
       Value<double?> milkL,
       Value<double?> feedKg,
+      Value<String?> temperatureSource,
+      Value<String?> milkSource,
+      Value<String?> feedSource,
       Value<bool> udderSwelling,
       Value<bool> abnormalMilk,
       Value<bool> udderPain,
@@ -5626,6 +5792,9 @@ typedef $$DailyRecordsTableUpdateCompanionBuilder =
       Value<double?> temperatureC,
       Value<double?> milkL,
       Value<double?> feedKg,
+      Value<String?> temperatureSource,
+      Value<String?> milkSource,
+      Value<String?> feedSource,
       Value<bool> udderSwelling,
       Value<bool> abnormalMilk,
       Value<bool> udderPain,
@@ -5716,6 +5885,21 @@ class $$DailyRecordsTableFilterComposer
 
   ColumnFilters<double> get feedKg => $composableBuilder(
     column: $table.feedKg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get temperatureSource => $composableBuilder(
+    column: $table.temperatureSource,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get milkSource => $composableBuilder(
+    column: $table.milkSource,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get feedSource => $composableBuilder(
+    column: $table.feedSource,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5847,6 +6031,21 @@ class $$DailyRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get temperatureSource => $composableBuilder(
+    column: $table.temperatureSource,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get milkSource => $composableBuilder(
+    column: $table.milkSource,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get feedSource => $composableBuilder(
+    column: $table.feedSource,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get udderSwelling => $composableBuilder(
     column: $table.udderSwelling,
     builder: (column) => ColumnOrderings(column),
@@ -5961,6 +6160,21 @@ class $$DailyRecordsTableAnnotationComposer
   GeneratedColumn<double> get feedKg =>
       $composableBuilder(column: $table.feedKg, builder: (column) => column);
 
+  GeneratedColumn<String> get temperatureSource => $composableBuilder(
+    column: $table.temperatureSource,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get milkSource => $composableBuilder(
+    column: $table.milkSource,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get feedSource => $composableBuilder(
+    column: $table.feedSource,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get udderSwelling => $composableBuilder(
     column: $table.udderSwelling,
     builder: (column) => column,
@@ -6059,6 +6273,9 @@ class $$DailyRecordsTableTableManager
                 Value<double?> temperatureC = const Value.absent(),
                 Value<double?> milkL = const Value.absent(),
                 Value<double?> feedKg = const Value.absent(),
+                Value<String?> temperatureSource = const Value.absent(),
+                Value<String?> milkSource = const Value.absent(),
+                Value<String?> feedSource = const Value.absent(),
                 Value<bool> udderSwelling = const Value.absent(),
                 Value<bool> abnormalMilk = const Value.absent(),
                 Value<bool> udderPain = const Value.absent(),
@@ -6081,6 +6298,9 @@ class $$DailyRecordsTableTableManager
                 temperatureC: temperatureC,
                 milkL: milkL,
                 feedKg: feedKg,
+                temperatureSource: temperatureSource,
+                milkSource: milkSource,
+                feedSource: feedSource,
                 udderSwelling: udderSwelling,
                 abnormalMilk: abnormalMilk,
                 udderPain: udderPain,
@@ -6105,6 +6325,9 @@ class $$DailyRecordsTableTableManager
                 Value<double?> temperatureC = const Value.absent(),
                 Value<double?> milkL = const Value.absent(),
                 Value<double?> feedKg = const Value.absent(),
+                Value<String?> temperatureSource = const Value.absent(),
+                Value<String?> milkSource = const Value.absent(),
+                Value<String?> feedSource = const Value.absent(),
                 Value<bool> udderSwelling = const Value.absent(),
                 Value<bool> abnormalMilk = const Value.absent(),
                 Value<bool> udderPain = const Value.absent(),
@@ -6127,6 +6350,9 @@ class $$DailyRecordsTableTableManager
                 temperatureC: temperatureC,
                 milkL: milkL,
                 feedKg: feedKg,
+                temperatureSource: temperatureSource,
+                milkSource: milkSource,
+                feedSource: feedSource,
                 udderSwelling: udderSwelling,
                 abnormalMilk: abnormalMilk,
                 udderPain: udderPain,

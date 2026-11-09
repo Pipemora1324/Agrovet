@@ -4,8 +4,8 @@ Aplicación Flutter (solo Android, API 24 o superior). El ganadero registra cada
 leche, alimento y síntomas visibles de cada vaca; el modelo LSTM corre en el celular y muestra un
 semáforo de riesgo. Todo funciona sin conexión.
 
-> **Esta herramienta apoya, no reemplaza al veterinario.** El modelo actual se entrenó con datos
-> simulados (ver `ml/README.md`); la app lo indica en la pantalla del resultado.
+> **Esta herramienta apoya, no reemplaza al veterinario.** El modelo es experimental; sus resultados
+> no sustituyen una valoración profesional.
 
 ## Ejecutar
 
@@ -14,16 +14,19 @@ Requiere Flutter (canal estable) y un emulador o celular Android.
 ```bash
 cd mobile
 flutter pub get
-flutter run
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080   # emulador con el backend local
 ```
 
-En la pantalla de ingreso de una compilación **debug** aparece el botón
-**"Ver con datos de demostración"**: abre una sesión local con 6 vacas inventadas (prefijo `DEMO`)
-y un rótulo amarillo "Datos de demostración" en todas las pantallas. Esos datos viven en una base
-aparte, nunca se sincronizan y el botón no existe en las compilaciones release.
+La dirección del servidor sale **solo** de `--dart-define=API_BASE_URL`; sin ella la app muestra
+"Configuración incompleta". En debug se acepta HTTP solo hacia `10.0.2.2`, `localhost` y
+`127.0.0.1`; en release, solo HTTPS (`lib/core/config.dart` y `network_security_config.xml`).
+
+En la pantalla de ingreso de una compilación **debug** aparece la opción **"Entrar a la demostración"**:
+abre una sesión local con 6 vacas de ejemplo (prefijo `DEMO`) y el rótulo "Modo de prueba". Esos datos
+viven en una base aparte, nunca se sincronizan y la opción no existe en las compilaciones release.
 
 Para ingresar con una cuenta real, el backend debe estar corriendo (`backend/`, `docker compose up`).
-Desde el emulador, la app lo busca en `http://10.0.2.2:8080`. Otra dirección se indica así:
+Desde el emulador el equipo es `10.0.2.2`. Para un servidor publicado:
 
 ```bash
 flutter run --dart-define=API_BASE_URL=https://mi-servidor.example.org
@@ -40,9 +43,15 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 
 ## Registro diario y semáforo
 
-- El registro tiene dos preguntas Sí/No ("¿Comió normal?", "¿Dio menos leche de lo usual?"), cinco
-  signos de la ubre (enrojecida, hinchada, caliente, dolor al tocar, grumos o sangre) y mediciones
-  **opcionales** (temperatura, leche, alimento).
+- **Registro de hoy** es un asistente con una pregunta por pantalla: cómo comió, cuánta leche dio
+  (solo vacas en ordeño), cómo se siente el cuerpo al tocarla y cómo se ven la ubre y la leche. Al
+  tocar una opción pasa sola a la siguiente; todas tienen "No sé", y hay "Atrás", "Empezar de nuevo"
+  y "Saltar por hoy".
+- Con las respuestas la app **estima** temperatura, leche y alimento respecto a la línea base de la
+  vaca (promedio de sus mediciones exactas). El bloque opcional "Tengo termómetro o litros exactos"
+  reemplaza lo estimado por lo medido. Cada valor se guarda como `measured` o `estimated` y el
+  historial lo muestra. Las equivalencias están en `lib/domain/record_estimates.dart` y son
+  provisionales, pendientes de validar con un veterinario (`docs/symptom_score.md`).
 - El semáforo final es el más grave entre el **puntaje por síntomas** del día (reglas provisionales,
   a validar con un veterinario: ver `docs/symptom_score.md`) y el **modelo LSTM**. La pantalla dice
   cuál lo indicó. Si no hay días suficientes con mediciones, muestra "Faltan datos para el modelo" y
@@ -53,18 +62,24 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 - En la ficha de la vaca, **"Fotos"** permite tomar una con la cámara o elegirla de la galería. Se usan
   la cámara y el selector de fotos del sistema, así que AgroVet no pide permiso para leer todas las
   fotos del celular; si la persona negó el acceso a la cámara, la app explica cómo activarlo.
-- Cada foto se reduce (lado mayor de 1600 px, JPEG al 80 %), se le quitan los metadatos EXIF/XMP
+- Cada foto se reduce (lado mayor de 1280 px, JPEG al 75 %), se le quitan los metadatos EXIF/XMP
   (incluida la ubicación GPS) y se guarda en el almacenamiento privado de la app, vinculada a la vaca y
   al día. El historial muestra la galería del periodo.
-- Los datos de la foto viajan con la sincronización y luego se sube el archivo (multipart, con
-  reintentos). El servidor vuelve a validar el tipo real, el tamaño y quita los metadatos.
-- Cada foto tiene, opcionalmente, la confirmación del veterinario, el diagnóstico y el interruptor
-  "Permitir usar esta foto para investigación", apagado por defecto (ver `ml/README.md`).
-- La CNN no se usa en la app hasta tener un modelo validado.
+- Las fotos se sincronizan después de sus datos (el archivo va aparte, multipart y con reintentos);
+  el servidor vuelve a validar el tipo, el tamaño y elimina los metadatos.
+- En la ficha de la foto, la sección plegada **"Para investigación (opcional)"** guarda la
+  confirmación del veterinario, el diagnóstico y el interruptor "Permitir usar esta foto para
+  investigación", apagado por defecto (ver `ml/README.md`).
+- La foto queda como registro visual; la app no la analiza. La CNN de la ubre (`assets/model/udder_cnn.tflite`, entrenada con un dataset público) viene
+  **apagada**. Solo se enciende compilando con `--dart-define=UDDER_TRIAGE=true`, y entonces la ficha
+  de la foto muestra una lectura con el aviso "Resultado orientativo, no es diagnóstico". No se
+  recomienda encenderla (ver `ml/README.md`). Apagada, `android/app/build.gradle.kts` deja el
+  `.tflite` fuera del APK (x86_64: 13,98 MiB apagada, 14,82 MiB encendida; el límite es 15 MiB).
 
 ## Asistente
 
-- En la ficha de la vaca, **"Preguntar al asistente"** abre un chat sobre esa vaca. La app envía la
+- La pestaña **Asistente** de la barra inferior (o **"Preguntar al asistente"** en la ficha) abre un
+  chat sobre una vaca. La app envía la
   pregunta, el último semáforo y los síntomas de hoy, los últimos mensajes y, si se adjunta, una foto
   sin metadatos. La clave del proveedor de IA nunca está en la app.
 - Aviso fijo en la pantalla: "Orientación de un asistente de IA, no es un diagnóstico".
@@ -84,7 +99,7 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 - **Olvidé mi contraseña**: código al correo, contraseña nueva y la app inicia sesión sola.
 - **Internet**: registro, verificación, recuperación y cambios del perfil necesitan conexión. Una vez
   abierta, la sesión queda guardada y la app funciona sin internet.
-- **Mi perfil** (ícono de la persona en "Mis vacas"):
+- **Perfil** (pestaña de la barra inferior):
   - ver y editar nombre, finca, municipio y teléfono opcional (se guarda una copia para verlo sin
     conexión);
   - cambiar la contraseña, lo que cierra la sesión en los demás celulares;
@@ -99,8 +114,10 @@ subir su versión para que la app lo pida de nuevo.
 ### APK para instalar
 
 ```bash
-flutter build apk --release --split-per-abi
+flutter build apk --release --split-per-abi --dart-define=API_BASE_URL=https://api.su-dominio.co
 ```
+
+(Pasos del servidor en `docs/DEPLOY.md`.)
 
 Genera un APK por arquitectura en `build/app/outputs/flutter-apk/`. La mayoría de los celulares
 actuales usa `arm64-v8a`; los más viejos o de gama muy baja, `armeabi-v7a`.
@@ -119,7 +136,7 @@ Antes un solo APK arm64 pesaba 39,1 MB. Para bajarlo:
 El CI falla si algún APK pasa de 15 MB.
 
 En release solo se permite HTTPS: el permiso para HTTP sin cifrar existe únicamente en debug y
-solo hacia `10.0.2.2` y `localhost`.
+solo hacia `10.0.2.2`, `localhost` y `127.0.0.1`.
 
 ## Pruebas
 
@@ -127,12 +144,13 @@ solo hacia `10.0.2.2` y `localhost`.
 flutter analyze
 flutter test
 # En el emulador o un celular conectado:
-flutter test integration_test/test_vectors_on_device_test.dart -d <dispositivo>
+flutter test integration_test/test_vectors_on_device_test.dart -d <dispositivo> \
+  --dart-define=API_BASE_URL=http://10.0.2.2:8080
 # Recorrido completo (demo, cuenta real con verificación, perfil y eliminación). Necesita el backend
 # y Mailpit del docker-compose; en un celular por USB, con adb reverse de 8080 y 8025:
 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_flow_test.dart \
-  -d <dispositivo> --keep-app-running
-#   celular por USB: --dart-define=API_BASE_URL=http://localhost:8080 --dart-define=MAILPIT_URL=http://localhost:8025
+  -d <dispositivo> --keep-app-running --dart-define=API_BASE_URL=http://10.0.2.2:8080
+#   celular por USB, en lugar de las anteriores: --dart-define=API_BASE_URL=http://localhost:8080 --dart-define=MAILPIT_URL=http://localhost:8025
 ```
 
 - `test/model/test_vectors_test.dart` es la **prueba bloqueante**: la app reproduce los 8 casos de
@@ -154,7 +172,7 @@ lib/
   core/          tema, diseño adaptable, validaciones, formatos y configuración
   domain/        entidades, preprocesamiento (réplica de Python), semáforo, recomendaciones, aviso de privacidad
   data/          base local (Drift + SQLCipher), almacenamiento seguro, API, modelo TFLite, demo
-  presentation/  pantallas y cubits (cuenta, perfil, vacas, registro diario, riesgo, historial, respaldo)
+  presentation/  pantallas y cubits (cuenta, perfil, vacas, registro diario, riesgo, historial)
 ```
 
 **Tema**: colores, tipografía, radios y estilos de botones viven solo en `lib/core/theme.dart`
@@ -162,6 +180,13 @@ lib/
 pantallas usan esos nombres y los roles de Material. La prueba `test/architecture_test.dart` falla si
 algún archivo fuera del tema escribe un color o un tamaño de letra, para que el rediseño se haga
 cambiando un solo archivo.
+
+**Ícono y pantalla de arranque**: el escudo con cruz del ingreso (`Icons.health_and_safety` de
+Material Icons, licencia Apache 2.0) en blanco sobre el verde de la app. Ícono adaptativo con versión
+monocromática (Android 8+ y 13+), ícono clásico para Android 7 y pantalla de arranque verde tanto en
+Android 12+ (`values-v31`) como antes (`launch_background.xml`). Si cambia el verde del tema, hay que
+cambiar también `android/app/src/main/res/values/colors.xml` y regenerar las imágenes:
+`python tool/generate_launcher_icons.py --flutter <ruta del SDK de Flutter>` (requiere Pillow).
 
 ## Seguridad
 
@@ -184,9 +209,9 @@ cambiando un solo archivo.
 
 Todo se guarda primero en el celular; cada cambio queda marcado como pendiente.
 
-- **Cuándo**: al abrir la sesión, al volver la app al frente y al recuperar la conexión
-  (`connectivity_plus`) si hay cambios pendientes; cuando el ganadero toca "Sincronizar ahora"; y cada
-  15 minutos en segundo plano con `workmanager`, aunque la app esté cerrada (solo con red; si falla,
+- **Cuándo**: automáticamente al detectar cambios pendientes mientras hay conexión, al volver la app
+  al frente y al recuperar la conexión (`connectivity_plus`); y cada 15 minutos en segundo plano con
+  `workmanager`, aunque la app esté cerrada (solo con red; si falla,
   Android reintenta con espera exponencial). Android decide el momento exacto de la tarea periódica y
   puede atrasarla para agruparla con otras.
 - **Cómo**: `POST /api/sync` en lotes de hasta 200 elementos por tipo, primero las vacas. Ante fallas
@@ -195,11 +220,18 @@ Todo se guarda primero en el celular; cada cambio queda marcado como pendiente.
   cambió mientras se enviaba. Nunca se borra nada local.
 - **Rechazos**: si el servidor rechaza un elemento (por ejemplo, otro registro para el mismo día), se
   guarda el motivo y no se reintenta hasta que el ganadero lo corrija.
-- **Estado**: la nube de la barra superior muestra cuántos cambios faltan por subir y cambia de ícono
-  si hay un problema. Al tocarla se abre "Respaldo de datos" con los pendientes, la hora de la última
-  sincronización (la guardan tanto la app como la tarea en segundo plano), el error del último intento,
-  lo que el servidor rechazó con su motivo y el botón **"Sincronizar ahora"**. Solo cuenta como
-  sincronización un envío que el servidor confirmó.
+- **Estado**: en la lista de vacas se muestra una sola línea con la hora de la última sincronización
+  confirmada, o "Sin sincronizar aún". No se muestran contadores, errores técnicos ni controles
+  manuales de sincronización.
+- **Restaurar en otro celular**: al entrar con una cuenta en un celular que no tiene ninguna de sus
+  vacas (celular nuevo, app reinstalada o datos borrados), la app trae del servidor las vacas
+  (`GET /api/cows`) y el último año de registros, evaluaciones y alertas de cada una
+  (`GET /api/cows/{id}/history`), en segundo plano; si no hay red, lo hace al volver la conexión. Se
+  guarda como ya sincronizado y cuenta como "Última sincronización". Si el celular ya tiene vacas no
+  se trae nada, para no competir con cambios hechos en él (`lib/data/sync/restore_service.dart`).
+  **Las fotos no se restauran**: el servidor guarda los archivos, pero no tiene cómo listarlos.
+  Trabajo futuro: un endpoint en el backend que liste las fotos de cada vaca (datos y diagnóstico) para
+  que la restauración también baje sus archivos con `GET /api/cows/{cowId}/photos/{photoId}/image`.
 - La sesión de demostración no sincroniza.
 
 ## Decisiones de diseño (para revisión)

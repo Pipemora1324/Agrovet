@@ -1,0 +1,120 @@
+{
+  "warning": "Prueba de concepto, NO integrada en la app. Etiquetas del autor del dataset, sin laboratorio ni veterinario; un solo entorno (misma paleta, suelo y mano).",
+  "source": {
+    "name": "Mastitis dataset v3 (Roboflow Universe)",
+    "url": "https://universe.roboflow.com/abdurrehman4198-gmail-com/mastitis-dataset",
+    "license": "CC BY 4.0"
+  },
+  "model": "MobileNetV2 alpha 0.35, mismo entrenamiento que la CNN de la ubre",
+  "validation": "StratifiedGroupKFold 5x1 por grupo de pHash; umbral 0.5",
+  "dataset": {
+    "images": 453,
+    "image_groups": 200,
+    "groups_spanning_roboflow_splits": 40,
+    "wells": 640,
+    "normal": 189,
+    "abnormal": 451,
+    "wells_by_grade": {
+      "Blood tinged Milk": 184,
+      "Curd like Milk": 116,
+      "Normal Milk": 189,
+      "Watery Milk": 151
+    },
+    "wells_by_source": {
+      "PXL": {
+        "normal": 89,
+        "abnormal": 24
+      },
+      "video": {
+        "normal": 100,
+        "abnormal": 427
+      }
+    }
+  },
+  "cv_pooled_mean_probability": {
+    "n_images": 640,
+    "n_groups": 200,
+    "threshold": 0.5,
+    "sensitivity": 0.9600886917960089,
+    "sensitivity_ci95": [
+      0.9377984253874148,
+      0.9746074073526472
+    ],
+    "specificity": 1.0,
+    "specificity_ci95": [
+      0.9800797046227183,
+      1.0
+    ],
+    "balanced_accuracy": 0.9800443458980044,
+    "auc": 0.9988502915332184,
+    "auc_ci95_group_bootstrap": [
+      0.996086546787219,
+      1.0
+    ],
+    "confusion": {
+      "tn": 189,
+      "fp": 0,
+      "fn": 18,
+      "tp": 433
+    }
+  },
+  "cv_auc_across_repeats": {
+    "mean": 0.9988502915332184,
+    "min": 0.9988502915332184,
+    "max": 0.9988502915332184
+  },
+  "leave_pxl_session_out": {
+    "n_images": 113,
+    "n_groups": 39,
+    "threshold": 0.5,
+    "sensitivity": 1.0,
+    "sensitivity_ci95": [
+      0.8620237953250198,
+      1.0
+    ],
+    "specificity": 1.0,
+    "specificity_ci95": [
+      0.9586234547637477,
+      1.0
+    ],
+    "balanced_accuracy": 1.0,
+    "auc": 1.0,
+    "auc_ci95_group_bootstrap": [
+      0.9999999999999999,
+      1.0
+    ],
+    "confusion": {
+      "tn": 89,
+      "fp": 0,
+      "fn": 0,
+      "tp": 24
+    }
+  },
+  "pxl_session_inside_cv": {
+    "n_images": 113,
+    "n_groups": 39,
+    "threshold": 0.5,
+    "sensitivity": 1.0,
+    "sensitivity_ci95": [
+      0.8620237953250198,
+      1.0
+    ],
+    "specificity": 1.0,
+    "specificity_ci95": [
+      0.9586234547637477,
+      1.0
+    ],
+    "balanced_accuracy": 1.0,
+    "auc": 1.0,
+    "auc_ci95_group_bootstrap": [
+      0.9999999999999999,
+      1.0
+    ],
+    "confusion": {
+      "tn": 89,
+      "fp": 0,
+      "fn": 0,
+      "tp": 24
+    }
+  }
+}

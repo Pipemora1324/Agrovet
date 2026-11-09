@@ -19,14 +19,14 @@ class CowPhotosScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-        create: (context) => PhotosCubit(
-          cowId: cow.id,
-          repository: context.read<PhotoRepository>(),
-          store: context.read<PhotoStore>(),
-          capture: context.read<PhotoCapture>(),
-        ),
-        child: _CowPhotosView(cow: cow),
-      );
+    create: (context) => PhotosCubit(
+      cowId: cow.id,
+      repository: context.read<PhotoRepository>(),
+      store: context.read<PhotoStore>(),
+      capture: context.read<PhotoCapture>(),
+    ),
+    child: _CowPhotosView(cow: cow),
+  );
 }
 
 class _CowPhotosView extends StatelessWidget {
@@ -57,23 +57,30 @@ class _CowPhotosView extends StatelessWidget {
         ),
       ),
     );
-    if (source != null && context.mounted) await context.read<PhotosCubit>().add(source);
+    if (source != null && context.mounted) {
+      await context.read<PhotosCubit>().add(source);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return BlocListener<PhotosCubit, PhotosState>(
-      listenWhen: (previous, current) => current.message != null && previous.message != current.message,
+      listenWhen: (previous, current) =>
+          current.message != null && previous.message != current.message,
       listener: (context, state) =>
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message!))),
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.message!))),
       child: AppScaffold(
         title: 'Fotos · ${cow.name ?? cow.tag}',
         floatingActionButton: BlocBuilder<PhotosCubit, PhotosState>(
           builder: (context, state) => FloatingActionButton.extended(
             onPressed: state.busy ? null : () => _choose(context),
             icon: state.busy
-                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3))
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  )
                 : const Icon(Icons.add_a_photo, size: 28),
             label: const Text('Agregar foto'),
           ),
@@ -99,9 +106,8 @@ class _CowPhotosView extends StatelessWidget {
                               ),
                       ),
                       Text(
-                        'Las fotos quedan guardadas solo dentro de AgroVet, sin la ubicación, y se suben al '
-                        'servidor cuando hay internet.',
-                        style: theme.textTheme.bodyMedium,
+                        'Las fotos quedan guardadas como registros de esta vaca.',
+                        style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       const SizedBox(height: 16),
                       if (photos.isEmpty)
@@ -109,14 +115,24 @@ class _CowPhotosView extends StatelessWidget {
                           padding: const EdgeInsets.all(32),
                           child: Column(
                             children: [
-                              Icon(Icons.photo_camera_back, size: 72, color: theme.colorScheme.primary),
+                              Icon(
+                                Icons.photo_camera_back,
+                                size: 72,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                               const SizedBox(height: 12),
-                              Text('Todavía no hay fotos de esta vaca.', style: theme.textTheme.titleMedium),
+                              Text(
+                                'Todavía no hay fotos de esta vaca.',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
                             ],
                           ),
                         )
                       else
-                        PhotoGallery(photos: photos, onDelete: context.read<PhotosCubit>().delete),
+                        PhotoGallery(
+                          photos: photos,
+                          onDelete: context.read<PhotosCubit>().delete,
+                        ),
                     ],
                   ),
                 ),

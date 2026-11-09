@@ -1,0 +1,52 @@
+%% Componentes principales de la app (mobile/lib): presentation → domain ← data
+%% domain no depende de Flutter ni de la base; data implementa sus interfaces.
+flowchart LR
+  subgraph P["presentation"]
+    direction TB
+    AUTH["LoginScreen · VerifyEmailScreen<br/>AuthCubit"]
+    HOME["HomeShell<br/>Vacas · Asistente · Perfil"]
+    COWS["CowsScreen · CowDetailScreen<br/>CowsCubit"]
+    REC["DailyRecordScreen<br/>DailyRecordCubit"]
+    RISK["RiskScreen<br/>RiskCubit"]
+    HIST["HistoryScreen<br/>HistoryCubit"]
+    PHO["CowPhotosScreen<br/>PhotosCubit"]
+    ASIS["AssistantScreen<br/>AssistantCubit"]
+    PROF["ProfileScreen<br/>ProfileCubit"]
+    SYNCUI["SyncCubit<br/>(última sincronización en el inicio)"]
+  end
+
+  subgraph D["domain"]
+    direction TB
+    PRED["RiskPredictor<br/>(interfaz)"]
+    REPI["Repositorios (interfaces) y entidades<br/>Cow · DailyRecord · Inference<br/>CowAlert · CowPhoto · AssistantMessage"]
+    EST["RecordEstimator<br/>RecordEquivalences"]
+    EVAL["RiskEvaluator<br/>+ Preprocessor"]
+    SYM["SymptomScore"]
+  end
+
+  subgraph DA["data"]
+    direction TB
+    LREP["LocalRepository"]
+    ADB[("AppDatabase<br/>Drift + SQLCipher<br/>esquema v8")]
+    MODEL["RiskModel (TFLite)"]
+    SYNC["SyncService<br/>lotes de 200<br/>reintentos 2/4/8 s"]
+    BG["BackgroundSync<br/>WorkManager"]
+    APIC["ApiClient (dio)<br/>AuthApi · ProfileApi<br/>AssistantApi · SyncApi"]
+    STORE["SecureStore · PhotoStore"]
+  end
+
+  COWS & REC & RISK & HIST & PHO & ASIS --> REPI
+  REC --> EST
+  RISK --> EVAL
+  EVAL --> SYM
+  EVAL --> PRED
+  LREP == "implementa" ==> REPI
+  MODEL == "implementa" ==> PRED
+  LREP --> ADB
+  SYNCUI --> SYNC
+  BG --> SYNC
+  SYNC --> ADB
+  SYNC --> APIC
+  AUTH & PROF & ASIS --> APIC
+  AUTH & PHO --> STORE
+  APIC -- "HTTPS" --> SRV(["Backend AgroVet"])

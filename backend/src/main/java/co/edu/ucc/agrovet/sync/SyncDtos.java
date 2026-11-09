@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import co.edu.ucc.agrovet.cow.ProductionStatus;
@@ -19,6 +20,7 @@ import co.edu.ucc.agrovet.inference.RiskCause;
 import co.edu.ucc.agrovet.inference.RiskLevel;
 import co.edu.ucc.agrovet.photo.Diagnosis;
 import co.edu.ucc.agrovet.photo.VetConfirmation;
+import co.edu.ucc.agrovet.record.ValueSources;
 
 public final class SyncDtos {
 
@@ -81,6 +83,11 @@ public final class SyncDtos {
             boolean udderHeat,
             Boolean ateNormally,
             Boolean milkDrop,
+            // Origen de cada valor: medido o estimado por la app (null en apps anteriores)
+            @Pattern(regexp = ValueSources.PATTERN, message = "Origen de la temperatura no válido.")
+            String temperatureSource,
+            @Pattern(regexp = ValueSources.PATTERN, message = "Origen de la leche no válido.") String milkSource,
+            @Pattern(regexp = ValueSources.PATTERN, message = "Origen del alimento no válido.") String feedSource,
             @Size(max = 500, message = "Las notas admiten máximo 500 caracteres.") String notes,
             @NotNull(message = "Falta la fecha de modificación.") Instant updatedAt,
             boolean deleted) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/responsive.dart';
+import '../../core/theme.dart';
 import '../widgets/big_button.dart';
 import '../widgets/fade_in.dart';
 import '../widgets/notice_box.dart';
@@ -21,6 +22,11 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _code = TextEditingController();
 
+  /// El servidor acepta 5 intentos por código; se cuentan los rechazados desde el último envío.
+  static const maxAttempts = 5;
+  int _failed = 0;
+  DateTime? _codeSentAt;
+
   @override
   void dispose() {
     _code.dispose();
@@ -37,13 +43,23 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final cubit = context.read<AuthCubit>();
     final state = context.watch<AuthCubit>().state;
     if (state is! AwaitingVerification) return const SizedBox.shrink();
+    _codeSentAt ??= state.resendAvailableAt;
     final theme = Theme.of(context);
+    final attemptsLeft = maxAttempts - _failed;
 
     return BlocListener<AuthCubit, AuthState>(
-      // Un código incorrecto se borra para escribir el siguiente
-      listenWhen: (previous, current) =>
-          current is AwaitingVerification && current.message != null && previous != current,
-      listener: (context, state) => _code.clear(),
+      // Un código incorrecto se borra para escribir el siguiente; un código nuevo reinicia los intentos
+      listenWhen: (previous, current) => current is AwaitingVerification && previous != current,
+      listener: (context, current) {
+        final now = current as AwaitingVerification;
+        if (_codeSentAt != now.resendAvailableAt) {
+          _codeSentAt = now.resendAvailableAt;
+          setState(() => _failed = 0);
+        } else if (now.message != null && !now.busy) {
+          _code.clear();
+          setState(() => _failed = (_failed + 1).clamp(0, maxAttempts));
+        }
+      },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Verificar correo'),
@@ -76,6 +92,23 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     ),
                     const SizedBox(height: 24),
                     CodeField(controller: _code, enabled: !state.busy, onCompleted: (_) => _submit()),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(Icons.shield_outlined,
+                            color: attemptsLeft <= 2 ? AppColors.warningText : AppColors.inkMuted),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            attemptsLeft <= 0
+                                ? 'Se acabaron los intentos con este código. Pida uno nuevo.'
+                                : 'Le quedan $attemptsLeft de $maxAttempts intentos con este código.',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                                color: attemptsLeft <= 2 ? AppColors.warningText : AppColors.inkMuted),
+                          ),
+                        ),
+                      ],
+                    ),
                     if (state.message != null) ...[
                       const SizedBox(height: 12),
                       NoticeBox.error(state.message!),

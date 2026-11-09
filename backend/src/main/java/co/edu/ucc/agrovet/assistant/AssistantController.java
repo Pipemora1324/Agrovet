@@ -40,8 +40,7 @@ public class AssistantController {
 
     @ExceptionHandler(AssistantUnavailableException.class)
     ProblemDetail handleUnavailable(AssistantUnavailableException ex) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
-                "El asistente no está disponible en este momento. Intente más tarde.");
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.userMessage());
         problem.setTitle("Asistente no disponible");
         return problem;
     }

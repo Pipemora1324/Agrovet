@@ -20,7 +20,7 @@ Se aplican al **registro del día** que se evalúa. Cada señal suma una vez.
 | Ubre hinchada | 2 | Inflamación. |
 | Ubre caliente | 2 | Inflamación. |
 | Dolor al tocar la ubre | 2 | Inflamación. |
-| Fiebre: 39,5 °C o más (si se midió) | 2 | Respuesta general a la infección. |
+| Fiebre: 39,5 °C o más (medida o estimada) | 2 | Respuesta general a la infección. |
 | Ubre enrojecida | 1 | Inflamación; por sí sola es un signo débil. |
 | Dio menos leche de lo usual | 1 | Señal temprana, pero tiene muchas otras causas. |
 | No comió normal (o la casilla anterior "decaída") | 1 | Señal general de que la vaca no está bien. |
@@ -36,6 +36,46 @@ signos juntos (por ejemplo, grumos y ubre caliente) lo ponen en rojo. Las señal
 leche, no comió) solo suben el color si se suman a otras.
 
 Las preguntas sin responder no suman. "Comió normal: sí" y "Dio menos leche: no" tampoco.
+
+## Registro por preguntas (equivalencias)
+
+> **Pendiente de validar con un veterinario.** Versión `equivalencias-provisional-1`, en
+> `mobile/lib/domain/record_estimates.dart` (`RecordEquivalences`, el único lugar donde están).
+
+El registro de hoy es un asistente con una pregunta por pantalla. Todas son opcionales: cada una
+tiene "No sé", y "Saltar por hoy" sale sin guardar. Las respuestas se convierten así:
+
+| Pregunta | Respuesta | Valor estimado | Señal del puntaje |
+|---|---|---|---|
+| ¿Cómo comió hoy? | Normal | alimento × 1,0 | "Comió normal: sí" (no suma) |
+| | Menos de lo normal | alimento × 0,85 | No comió normal (+1) |
+| | Casi nada | alimento × 0,5 | No comió normal (+1) |
+| ¿Cuánta leche dio? | Igual | leche × 1,0 | "Dio menos leche: no" (no suma) |
+| | Un poco menos | leche × 0,9 | Dio menos leche (+1) |
+| | Mucho menos | leche × 0,7 | Dio menos leche (+1) |
+| Al tocarla, ¿cómo siente el cuerpo? | Normal | temperatura + 0,0 °C | — |
+| | Tibia | temperatura + 0,5 °C | — |
+| | Caliente | temperatura + 1,5 °C | Fiebre (+2) si la estimada llega a 39,5 °C |
+| ¿Cómo ves la ubre y la leche? | Todo normal | — | — |
+| | Ubre caliente, dura o hinchada | — | Ubre hinchada (+2), una sola vez |
+| | Leche con grumos o sangre | — | Grumos o sangre (+3) |
+
+"No sé" deja el valor igual a la línea base (neutro) y no responde la pregunta Sí/No. A una vaca seca
+o novilla no se le pregunta por la leche y su leche queda vacía.
+
+**Línea base de la vaca.** Es el promedio de sus mediciones exactas de los 30 días anteriores (los
+valores estimados no cuentan, para que el error no se acumule). Con menos de 3 mediciones se usa la
+última medición exacta; sin ninguna, los valores de referencia de una vaca sana del generador del
+dataset (38,6 °C, 13 L, 11 kg). Cuando no hay historial suficiente, la pantalla final lo dice.
+
+**Medidas exactas.** El bloque opcional "Tengo termómetro o litros exactos" reemplaza el valor
+estimado por el medido. Cada valor se guarda con su origen (`measured` o `estimated`) en la app y en
+el servidor (`daily_records.temperature_source`, `milk_source`, `feed_source`), y el historial lo
+muestra. Los registros anteriores al asistente no tienen origen: se escribieron a mano y se tratan
+como medidos.
+
+Los valores estimados también entran al modelo LSTM. Son aproximaciones: las métricas del modelo se
+obtuvieron con datos simulados y no validan su uso con valores estimados.
 
 ## Semáforo final
 
@@ -54,6 +94,8 @@ modelo, `model_version` guarda la versión de las reglas (`sintomas-provisional-
 ## Dónde está
 
 - Reglas: `mobile/lib/domain/symptom_score.dart` (`SymptomScore.rules`).
+- Equivalencias y línea base: `mobile/lib/domain/record_estimates.dart`; pruebas en
+  `mobile/test/presentation/cubits_test.dart` y `record_wizard_test.dart`.
 - Combinación: `RiskEvaluator.combine` en `mobile/lib/domain/risk_evaluator.dart`.
 - Pruebas: `mobile/test/domain/symptom_score_test.dart`.
 

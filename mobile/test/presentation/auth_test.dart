@@ -4,6 +4,7 @@ import 'package:agrovet/data/remote/auth_api.dart';
 import 'package:agrovet/data/security/secure_store.dart';
 import 'package:agrovet/domain/session.dart';
 import 'package:agrovet/presentation/auth/auth_cubit.dart';
+import 'package:agrovet/presentation/auth/code_field.dart';
 import 'package:agrovet/presentation/auth/forgot_password_screen.dart';
 import 'package:agrovet/presentation/auth/login_screen.dart';
 import 'package:agrovet/presentation/auth/password_reset_cubit.dart';
@@ -184,7 +185,7 @@ void main() {
       // Cuenta regresiva activa (0:5x o 1:00 según cuánto tarde la prueba) y botón deshabilitado
       expect(find.textContaining(RegExp(r'Reenviar código en (1:00|0:5\d)')), findsOneWidget);
 
-      await tester.enterText(find.widgetWithText(TextFormField, 'Código'), '123456');
+      await tester.enterText(find.byType(CodeField), '123456');
       await tester.pump();
       expect(auth.state, const Authenticated(_session));
     });
@@ -197,7 +198,7 @@ void main() {
       await tester.pumpWidget(_app(auth, const VerifyEmailScreen()));
       await tester.pump();
       expect(find.text('Reenviar código'), findsOneWidget);
-      await tester.enterText(find.widgetWithText(TextFormField, 'Código'), '12ab');
+      await tester.enterText(find.byType(CodeField), '12ab');
       await tester.tap(find.text('Verificar'));
       await tester.pump();
       expect(find.text('Escriba los 6 números del código'), findsOneWidget);
@@ -209,6 +210,8 @@ void main() {
       final auth = AuthCubit(store: store, api: api, allowDemo: false)..emit(const Unauthenticated());
       await tester.pumpWidget(_app(auth, const LoginScreen()));
       await tester.enterText(find.widgetWithText(TextFormField, 'Correo'), 'ana@correo.co');
+      await tester.ensureVisible(find.text('Olvidé mi contraseña'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Olvidé mi contraseña'));
       await tester.pumpAndSettle();
 
@@ -222,6 +225,8 @@ void main() {
     testWidgets('al registrarse avisa que necesita internet', (tester) async {
       final auth = AuthCubit(store: store, api: api, allowDemo: false)..emit(const Unauthenticated());
       await tester.pumpWidget(_app(auth, const LoginScreen()));
+      await tester.ensureVisible(find.text('No tengo cuenta: crear una'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('No tengo cuenta: crear una'));
       await tester.pumpAndSettle();
       expect(find.textContaining('Necesita internet para crear la cuenta'), findsOneWidget);

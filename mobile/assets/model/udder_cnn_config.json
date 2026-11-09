@@ -1,0 +1,17 @@
+{
+  "modelFile": "udder_cnn.tflite",
+  "inputSize": 224,
+  "inputRange": "RGB 0-255 en float32; el modelo reescala a [-1, 1]",
+  "pad": "cuadrado centrado, relleno negro (0, 0, 0)",
+  "cropMargin": 0.1,
+  "threshold": 0.5,
+  "output": "probabilidad de signos de mastitis según las etiquetas del dataset público",
+  "enabledByDefault": false,
+  "disclaimer": "Orientativo, no es diagnóstico.",
+  "source": {
+    "name": "Mastitis v1 (Roboflow Universe, yield-a2yrd/mastitis-zmser)",
+    "url": "https://universe.roboflow.com/yield-a2yrd/mastitis-zmser",
+    "license": "CC BY 4.0",
+    "labels": "del autor del dataset, sin confirmación veterinaria"
+  }
+}
