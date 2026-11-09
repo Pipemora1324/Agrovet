@@ -70,7 +70,10 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
   reintentos). El servidor vuelve a validar el tipo real, el tamaño y quita los metadatos.
 - Cada foto tiene, opcionalmente, la confirmación del veterinario, el diagnóstico y el interruptor
   "Permitir usar esta foto para investigación", apagado por defecto (ver `ml/README.md`).
-- La CNN no se usa en la app hasta tener un modelo validado.
+- La CNN de la ubre (`assets/model/udder_cnn.tflite`, entrenada con un dataset público) viene
+  **apagada**. Solo se enciende compilando con `--dart-define=UDDER_TRIAGE=true`, y entonces la ficha
+  de la foto muestra una lectura con el aviso "Resultado orientativo, no es diagnóstico". No se
+  recomienda encenderla (ver `ml/README.md`).
 
 ## Asistente
 
