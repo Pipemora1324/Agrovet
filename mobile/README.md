@@ -181,6 +181,13 @@ pantallas usan esos nombres y los roles de Material. La prueba `test/architectur
 algún archivo fuera del tema escribe un color o un tamaño de letra, para que el rediseño se haga
 cambiando un solo archivo.
 
+**Ícono y pantalla de arranque**: el escudo con cruz del ingreso (`Icons.health_and_safety` de
+Material Icons, licencia Apache 2.0) en blanco sobre el verde de la app. Ícono adaptativo con versión
+monocromática (Android 8+ y 13+), ícono clásico para Android 7 y pantalla de arranque verde tanto en
+Android 12+ (`values-v31`) como antes (`launch_background.xml`). Si cambia el verde del tema, hay que
+cambiar también `android/app/src/main/res/values/colors.xml` y regenerar las imágenes:
+`python tool/generate_launcher_icons.py --flutter <ruta del SDK de Flutter>` (requiere Pillow).
+
 ## Seguridad
 
 - **Base local cifrada** con SQLCipher. La clave son 32 bytes aleatorios por usuario guardados en el

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mismo verde que AppColors.primary (lib/core/theme.dart) -->
+    <color name="ic_launcher_background">#FF1F6B45</color>
+    <color name="splash_background">#FF1F6B45</color>
+</resources>
