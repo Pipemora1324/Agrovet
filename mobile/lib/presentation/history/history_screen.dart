@@ -9,7 +9,9 @@ import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
+import '../../domain/symptom_score.dart';
 import '../photos/photo_gallery.dart';
+import '../records/daily_record_screen.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/fade_in.dart';
 import '../widgets/traffic_light.dart';
@@ -52,6 +54,7 @@ class _HistoryView extends StatelessWidget {
               from: from,
               days: state.days,
               values: {for (final r in state.records) r.recordDate: r.temperatureC},
+              estimated: {for (final r in state.records) if (r.temperatureEstimated) r.recordDate},
             ),
             _MetricChart(
               title: 'Leche (L)',
@@ -60,6 +63,7 @@ class _HistoryView extends StatelessWidget {
               from: from,
               days: state.days,
               values: {for (final r in state.records) r.recordDate: r.milkL},
+              estimated: {for (final r in state.records) if (r.milkEstimated) r.recordDate},
             ),
             _MetricChart(
               title: 'Alimento (kg)',
@@ -68,6 +72,7 @@ class _HistoryView extends StatelessWidget {
               from: from,
               days: state.days,
               values: {for (final r in state.records) r.recordDate: r.feedKg},
+              estimated: {for (final r in state.records) if (r.feedEstimated) r.recordDate},
             ),
           ];
           return ListView(
@@ -114,6 +119,15 @@ class _HistoryView extends StatelessWidget {
                           );
                         },
                       ),
+                    if (state.records.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text('Punto relleno: valor medido. Punto hueco: valor estimado por la app.',
+                          style: Theme.of(context).textTheme.bodySmall),
+                      const SizedBox(height: 24),
+                      Text('Registros', style: Theme.of(context).textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      for (final record in state.records.reversed) _RecordTile(record: record),
+                    ],
                     const SizedBox(height: 24),
                     Text('Fotos', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
@@ -163,6 +177,7 @@ class _MetricChart extends StatelessWidget {
     required this.from,
     required this.days,
     required this.values,
+    this.estimated = const {},
   });
 
   final String title;
@@ -171,6 +186,9 @@ class _MetricChart extends StatelessWidget {
   final DateTime from;
   final int days;
   final Map<DateTime, double?> values;
+
+  /// Días con el valor estimado por la app (se dibujan con el punto hueco).
+  final Set<DateTime> estimated;
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +235,12 @@ class _MetricChart extends StatelessWidget {
                       preventCurveOverShooting: true,
                       color: color,
                       barWidth: 3.5,
-                      dotData: FlDotData(show: days <= 30),
+                      dotData: FlDotData(
+                        show: days <= 30,
+                        getDotPainter: (spot, _, _, _) => estimated.contains(DateTime(from.year, from.month, from.day + spot.x.toInt()))
+                            ? FlDotCirclePainter(radius: 4.5, color: AppColors.surface, strokeColor: color, strokeWidth: 2.5)
+                            : FlDotCirclePainter(radius: 4, color: color, strokeWidth: 0),
+                      ),
                       belowBarData: BarAreaData(show: true, color: color.withValues(alpha: 0.10)),
                     ),
                   ],
@@ -263,6 +286,62 @@ class _MetricChart extends StatelessWidget {
                 duration: Responsive.motion(context, const Duration(milliseconds: 400)),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Un registro del historial: valores del día con su origen (medido o estimado) y los signos.
+class _RecordTile extends StatelessWidget {
+  const _RecordTile({required this.record});
+
+  final DailyRecord record;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final values = [
+      (Icons.thermostat, record.temperatureC, '°C', record.temperatureSource),
+      (Icons.water_drop, record.milkL, 'L', record.milkSource),
+      (Icons.grass, record.feedKg, 'kg', record.feedSource),
+    ].where((v) => v.$2 != null);
+    final signs = SymptomScore.assess(record).reasons;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(formatDay(record.recordDate), style: theme.textTheme.titleSmall),
+            const SizedBox(height: 6),
+            if (values.isEmpty)
+              Text('Sin temperatura, leche ni alimento.', style: theme.textTheme.bodyMedium)
+            else
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  for (final (icon, value, unit, source) in values)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon, size: 20, color: AppColors.primary),
+                        const SizedBox(width: 4),
+                        Text('${formatNumber(value)} $unit', style: theme.textTheme.bodyLarge),
+                        const SizedBox(width: 6),
+                        // Los registros anteriores al asistente se escribían a mano: cuentan como medidos
+                        SourceChip(measured: source != ValueSource.estimated),
+                      ],
+                    ),
+                ],
+              ),
+            if (signs.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(signs.map((s) => s.label).join(' · '), style: theme.textTheme.bodyMedium),
+            ],
           ],
         ),
       ),

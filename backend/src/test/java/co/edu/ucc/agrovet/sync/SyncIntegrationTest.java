@@ -376,4 +376,30 @@ class SyncIntegrationTest extends IntegrationTest {
                 .andExpect(jsonPath("$.records[0].milkL").doesNotExist())
                 .andExpect(jsonPath("$.records[0].symptoms.udderSwelling").value(true));
     }
+
+    @Test
+    void valueSourcesAreStoredShownAndValidated() throws Exception {
+        UUID cowId = UUID.randomUUID();
+        UUID recordId = UUID.randomUUID();
+        Map<String, Object> estimated = record(recordId, cowId, LocalDate.now(), 11.7, T1);
+        estimated.put("temperatureC", 39.1);
+        estimated.put("temperatureSource", "estimated");
+        estimated.put("milkSource", "measured");
+        estimated.put("feedSource", "estimated");
+
+        JsonNode response = syncOk(ana, Map.of("cows", List.of(cow(cowId, "S-ORI", "LACTATING", T1)),
+                "dailyRecords", List.of(estimated)));
+        assertThat(response.get("rejected")).isEmpty();
+        assertThat(jdbc.queryForObject("SELECT temperature_source || '/' || milk_source || '/' || feed_source "
+                + "FROM daily_records WHERE id = ?", String.class, recordId)).isEqualTo("estimated/measured/estimated");
+        mvc.perform(get("/api/cows/" + cowId + "/history").header("Authorization", ana.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.records[0].sources.temperature").value("estimated"))
+                .andExpect(jsonPath("$.records[0].sources.milk").value("measured"));
+
+        // Solo se aceptan los dos valores conocidos
+        Map<String, Object> invalid = record(UUID.randomUUID(), cowId, LocalDate.now().minusDays(1), 11.0, T1);
+        invalid.put("milkSource", "inventado");
+        sync(ana, Map.of("dailyRecords", List.of(invalid))).andExpect(status().isBadRequest());
+    }
 }

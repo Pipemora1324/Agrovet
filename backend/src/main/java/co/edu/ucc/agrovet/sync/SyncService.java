@@ -25,6 +25,7 @@ import co.edu.ucc.agrovet.photo.PhotoStorage;
 import co.edu.ucc.agrovet.record.DailyRecord;
 import co.edu.ucc.agrovet.record.DailyRecordRepository;
 import co.edu.ucc.agrovet.record.Symptoms;
+import co.edu.ucc.agrovet.record.ValueSources;
 import co.edu.ucc.agrovet.sync.SyncDtos.AlertSync;
 import co.edu.ucc.agrovet.sync.SyncDtos.Confirmed;
 import co.edu.ucc.agrovet.sync.SyncDtos.CowSync;
@@ -124,6 +125,7 @@ public class SyncService {
             record.update(item.cowId(), item.recordDate(), item.temperatureC(), item.milkL(), item.feedKg(),
                     new Symptoms(item.udderSwelling(), item.abnormalMilk(), item.udderPain(), item.lethargy(),
                             item.udderRedness(), item.udderHeat(), item.ateNormally(), item.milkDrop()),
+                    new ValueSources(item.temperatureSource(), item.milkSource(), item.feedSource()),
                     item.notes(), item.deleted(), item.updatedAt());
             records.saveAndFlush(record);
         }

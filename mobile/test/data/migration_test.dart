@@ -11,6 +11,9 @@ import 'package:sqlite3/sqlite3.dart';
 /// Columnas que agregó la versión 3 del esquema (preguntas simples y signos de la ubre).
 const _v3Columns = ['udder_redness', 'udder_heat', 'ate_normally', 'milk_drop'];
 
+/// Columnas del esquema 8 (origen de cada valor: medido o estimado).
+const _v8Columns = ['temperature_source', 'milk_source', 'feed_source'];
+
 void main() {
   late Directory dir;
 
@@ -63,7 +66,7 @@ void main() {
     // 2. Se deja como estaba en la versión 2: sin las columnas nuevas y con la probabilidad obligatoria
     final raw = sqlite3.open(file.path);
     DatabaseOpener.applyKey(raw, key);
-    for (final column in _v3Columns) {
+    for (final column in [..._v3Columns, ..._v8Columns]) {
       raw.execute('ALTER TABLE daily_records DROP COLUMN $column');
     }
     final v4 = raw.select("SELECT sql FROM sqlite_master WHERE name = 'inferences'").first['sql'] as String;
@@ -87,6 +90,7 @@ void main() {
         .map((row) => row.read<String>('name'))
         .toSet();
     expect(columns, containsAll(_v3Columns));
+    expect(columns, containsAll(_v8Columns));
 
     final record = await LocalRepository(db).recordFor('c1', DateTime(2026, 11, 1));
     expect(record!.temperatureC, 38.6);

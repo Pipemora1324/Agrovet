@@ -7,6 +7,7 @@
 // --dart-define=MAILPIT_URL=http://localhost:8025.
 import 'package:agrovet/core/theme.dart';
 import 'package:agrovet/main.dart' as app;
+import 'package:agrovet/presentation/auth/code_field.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -80,16 +81,25 @@ void main() {
     expect(find.text('Registro de hoy'), findsOneWidget);
     await shot(tester, '03_ficha');
 
+    await reveal(tester, find.text('Registro de hoy'));
     await tester.tap(find.text('Registro de hoy'));
     await settle(tester);
-    expect(find.text('¿Ve alguno de estos signos en la ubre?'), findsOneWidget);
+    // Asistente por preguntas: una por pantalla, pasa sola al tocar una opción
+    expect(find.text('¿Cómo comió hoy?'), findsOneWidget);
     expect(find.text('Ya hay un registro para este día: puede corregirlo.'), findsOneWidget);
     await shot(tester, '04_registro');
-    await tester.scrollUntilVisible(find.text('Guardar registro'), 300, scrollable: find.byType(Scrollable).first);
+    await answer(tester, 'Normal');
+    await answer(tester, 'Igual');
+    await answer(tester, 'Normal');
+    await answer(tester, 'Leche con grumos o sangre');
+    expect(find.text('¡Listo!'), findsOneWidget);
+    await shot(tester, '04b_registro_final');
+    await reveal(tester, find.text('Guardar registro'));
     await tester.tap(find.text('Guardar registro'));
     await settle(tester);
     expect(find.text('Evaluar riesgo'), findsOneWidget);
 
+    await reveal(tester, find.text('Evaluar riesgo'));
     await tester.tap(find.text('Evaluar riesgo'));
     await settle(tester, seconds: 3);
     expect(find.text('Esta herramienta apoya, no reemplaza al veterinario.'), findsOneWidget);
@@ -123,8 +133,10 @@ void main() {
     await back(tester);
     await settle(tester);
     // Paloma tiene pocos días con mediciones: el semáforo se apoya en los síntomas de hoy
+    await reveal(tester, find.text('Paloma'));
     await tester.tap(find.text('Paloma'));
     await settle(tester);
+    await reveal(tester, find.text('Evaluar riesgo'));
     await tester.tap(find.text('Evaluar riesgo'));
     await settle(tester, seconds: 3);
     expect(find.text('Faltan datos para el modelo'), findsOneWidget);
@@ -136,9 +148,10 @@ void main() {
     await settle(tester);
     await back(tester);
     await settle(tester);
-    await tester.scrollUntilVisible(find.text('Luna'), 200, scrollable: find.byType(Scrollable).first);
+    await reveal(tester, find.text('Luna'));
     await tester.tap(find.text('Luna'));
     await settle(tester);
+    await reveal(tester, find.text('Evaluar riesgo'));
     await tester.tap(find.text('Evaluar riesgo'));
     await settle(tester, seconds: 3);
     expect(find.text('Faltan registros'), findsOneWidget);
@@ -150,6 +163,7 @@ void main() {
     await app.main();
     await settle(tester);
 
+    await reveal(tester, find.text('No tengo cuenta: crear una'));
     await tester.tap(find.text('No tengo cuenta: crear una'));
     await settle(tester);
     final email = 'emulador${DateTime.now().millisecondsSinceEpoch}@correo.co';
@@ -163,7 +177,7 @@ void main() {
     expect(find.textContaining('Reenviar código en'), findsOneWidget);
     await shot(tester, '08_verificar_correo');
     final code = await mailpitCode(email);
-    await tester.enterText(find.widgetWithText(TextFormField, 'Código'), code);
+    await tester.enterText(find.byType(CodeField), code);
     await settle(tester, seconds: 5);
     expect(find.text('Todavía no hay vacas'), findsOneWidget);
     expect(find.text('Datos de demostración'), findsNothing);
@@ -180,12 +194,19 @@ void main() {
     // Registro del día para que también viaje un registro diario
     await tester.tap(find.text('Rosita'));
     await settle(tester);
+    await reveal(tester, find.text('Registro de hoy'));
     await tester.tap(find.text('Registro de hoy'));
     await settle(tester);
+    await answer(tester, 'Normal');
+    await answer(tester, 'Igual');
+    await answer(tester, 'Normal');
+    await answer(tester, 'Todo normal');
+    // Con termómetro y litros exactos se guardan como medidos
+    await answer(tester, 'Tengo termómetro o litros exactos');
     await tester.enterText(find.widgetWithText(TextFormField, 'Temperatura (opcional)'), '38,7');
     await tester.enterText(find.widgetWithText(TextFormField, 'Leche del día (opcional)'), '11,5');
     await tester.enterText(find.widgetWithText(TextFormField, 'Alimento consumido (opcional)'), '9');
-    await tester.scrollUntilVisible(find.text('Guardar registro'), 300, scrollable: find.byType(Scrollable).first);
+    await reveal(tester, find.text('Guardar registro'));
     await tester.tap(find.text('Guardar registro'));
     await settle(tester);
     await back(tester);
@@ -227,6 +248,7 @@ void main() {
     await app.main();
     await settle(tester);
 
+    await reveal(tester, find.text('No tengo cuenta: crear una'));
     await tester.tap(find.text('No tengo cuenta: crear una'));
     await settle(tester);
     final email = 'borrar${DateTime.now().millisecondsSinceEpoch}@correo.co';
@@ -234,7 +256,7 @@ void main() {
     await tester.enterText(find.widgetWithText(TextFormField, 'Correo'), email);
     await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave-segura-1');
     await acceptPrivacyAndRegister(tester);
-    await tester.enterText(find.widgetWithText(TextFormField, 'Código'), await mailpitCode(email));
+    await tester.enterText(find.byType(CodeField), await mailpitCode(email));
     await settle(tester, seconds: 5);
 
     // Una vaca sincronizada, para comprobar que también se borra del servidor
@@ -279,6 +301,13 @@ void main() {
 /// la posición anterior.
 Future<void> reveal(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+}
+
+/// Toca una opción del asistente del registro (pasa sola a la siguiente pregunta).
+Future<void> answer(WidgetTester tester, String option) async {
+  await reveal(tester, find.text(option));
+  await tester.tap(find.text(option));
   await tester.pumpAndSettle();
 }
 
