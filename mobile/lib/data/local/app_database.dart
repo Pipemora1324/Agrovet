@@ -39,6 +39,11 @@ class DailyRecords extends Table with SyncColumns {
   RealColumn get temperatureC => real().nullable()();
   RealColumn get milkL => real().nullable()();
   RealColumn get feedKg => real().nullable()();
+
+  /// Origen de cada valor: 'measured' o 'estimated' (null en registros anteriores, escritos a mano).
+  TextColumn get temperatureSource => text().nullable()();
+  TextColumn get milkSource => text().nullable()();
+  TextColumn get feedSource => text().nullable()();
   BoolColumn get udderSwelling => boolean().withDefault(const Constant(false))();
   BoolColumn get abnormalMilk => boolean().withDefault(const Constant(false))();
   BoolColumn get udderPain => boolean().withDefault(const Constant(false))();
@@ -149,7 +154,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -186,6 +191,11 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 7) {
             await m.createTable(assistantMessages);
+          }
+          if (from < 8) {
+            await m.addColumn(dailyRecords, dailyRecords.temperatureSource);
+            await m.addColumn(dailyRecords, dailyRecords.milkSource);
+            await m.addColumn(dailyRecords, dailyRecords.feedSource);
           }
         },
         beforeOpen: (details) async {
