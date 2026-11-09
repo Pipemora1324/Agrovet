@@ -146,6 +146,8 @@ void main() {
     testWidgets('el registro exige aceptar el aviso de privacidad', (tester) async {
       final login = AuthCubit(store: store, api: authApi, allowDemo: false)..emit(const Unauthenticated());
       await tester.pumpWidget(BlocProvider.value(value: login, child: app(const LoginScreen())));
+      await tester.ensureVisible(find.text('No tengo cuenta: crear una'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('No tengo cuenta: crear una'));
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextFormField, 'Nombre'), 'Ana');
@@ -172,6 +174,8 @@ void main() {
     testWidgets('el aviso de privacidad se puede leer desde el registro', (tester) async {
       final login = AuthCubit(store: store, api: authApi, allowDemo: false)..emit(const Unauthenticated());
       await tester.pumpWidget(BlocProvider.value(value: login, child: app(const LoginScreen())));
+      await tester.ensureVisible(find.text('No tengo cuenta: crear una'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('No tengo cuenta: crear una'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Leer el aviso de privacidad'));

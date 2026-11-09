@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import '../../core/validators.dart';
 import '../widgets/big_button.dart';
 import '../widgets/fade_in.dart';
+import '../widgets/motion.dart';
 import '../profile/privacy_notice_screen.dart';
 import '../widgets/notice_box.dart';
 import 'auth_cubit.dart';
@@ -53,34 +54,71 @@ class _LoginScreenState extends State<LoginScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: CenteredContent(
-            maxWidth: 520,
-            child: Form(
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            CurvedHero(
+              minHeight: 260,
+              child: SafeArea(
+                bottom: false,
+                child: CenteredContent(
+                  maxWidth: 520,
+                  child: FadeIn(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 72,
+                          height: 72,
+                          decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+                          child: const Icon(Icons.health_and_safety, color: AppColors.primary, size: 44),
+                        ),
+                        const SizedBox(height: 16),
+                        Text('AgroVet', style: theme.textTheme.heroTitle),
+                        const SizedBox(height: 4),
+                        Text(
+                          _registering
+                              ? 'Cree su cuenta para respaldar sus vacas.'
+                              : 'Alerta temprana de mastitis, también sin internet.',
+                          style: theme.textTheme.heroBody,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              child: CenteredContent(
+                maxWidth: 520,
+                child: FadeIn(
+                  index: 1,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: _form(context, busy: busy, message: message),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _form(BuildContext context, {required bool busy, String? message}) {
+    final theme = Theme.of(context);
+    return Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 24),
-                  FadeIn(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 96,
-                          height: 96,
-                          decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                          child: const Icon(Icons.health_and_safety, color: AppColors.onPrimary, size: 56),
-                        ),
-                        const SizedBox(height: 16),
-                        Text('AgroVet', style: theme.textTheme.headlineMedium),
-                        const SizedBox(height: 4),
-                        Text('Alerta temprana de mastitis', style: theme.textTheme.bodyLarge),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
+                  Text(_registering ? 'Cuenta nueva' : 'Bienvenido de nuevo', style: theme.textTheme.titleLarge),
+                  const SizedBox(height: 16),
                   AnimatedSize(
                     duration: Responsive.motion(context, const Duration(milliseconds: 250)),
                     child: _registering
@@ -122,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     FadeIn(child: NoticeBox.error(message)),
                   ],
                   const SizedBox(height: 24),
-                  BigButton(
+                  ShineButton(
                     icon: _registering ? Icons.person_add : Icons.login,
                     label: _registering ? 'Crear cuenta' : 'Ingresar',
                     busy: busy,
@@ -173,11 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ],
               ),
-            ),
-          ),
-        ),
-      ),
-    );
+            );
   }
 }
 
