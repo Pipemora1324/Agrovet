@@ -515,7 +515,7 @@ class _ProductionCard extends StatelessWidget {
               unit: 'L',
               color: AppColors.chartMilk,
               values: [for (final d in days) d?.milkL],
-              estimated: const {},
+              estimated: {for (var i = 0; i < days.length; i++) if (days[i]?.milkEstimated ?? false) i},
             ),
             const Divider(height: 32),
             _Series(
@@ -524,7 +524,7 @@ class _ProductionCard extends StatelessWidget {
               unit: 'kg',
               color: AppColors.chartFeed,
               values: [for (final d in days) d?.feedKg],
-              estimated: const {},
+              estimated: {for (var i = 0; i < days.length; i++) if (days[i]?.feedEstimated ?? false) i},
             ),
           ],
         ),

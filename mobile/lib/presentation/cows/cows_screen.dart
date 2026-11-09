@@ -191,13 +191,14 @@ class _SyncStatus extends StatelessWidget {
         builder: (context, state) {
           if (!state.enabled) return const SizedBox.shrink();
           final theme = Theme.of(context);
+          // Íconos "outlined": los rellenos son los del botón de la nube en la barra superior
           final (icon, text) = state.syncing
               ? (Icons.sync, 'Respaldando sus datos…')
               : state.hasProblems
-                  ? (Icons.sync_problem, 'Hay un problema con el respaldo')
+                  ? (Icons.sync_problem_outlined, 'Hay un problema con el respaldo')
                   : state.pending > 0
-                      ? (Icons.cloud_upload, '${state.pending} cambio(s) por respaldar')
-                      : (Icons.cloud_done, 'Todo respaldado');
+                      ? (Icons.cloud_upload_outlined, '${state.pending} cambio(s) por respaldar')
+                      : (Icons.cloud_done_outlined, 'Sus datos están respaldados');
           final detail = state.lastSyncAt == null
               ? 'Se respalda solo cuando hay internet.'
               : 'Último respaldo: ${formatDateTime(state.lastSyncAt!)}';
