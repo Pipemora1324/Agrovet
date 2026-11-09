@@ -1,0 +1,46 @@
+%% Registro de la cuenta con verificación del correo (AuthService.register / verifyEmail)
+sequenceDiagram
+  autonumber
+  actor G as Ganadero
+  participant App as App (LoginScreen, VerifyEmailScreen)
+  participant API as /api/auth
+  participant Auth as AuthService
+  participant Lim as CodeRequestLimiter
+  participant Cod as EmailCodeService
+  participant DB as PostgreSQL
+  participant M as AccountMailer → SMTP<br/>(Gmail o Mailpit)
+
+  G->>App: nombre, correo, contraseña<br/>y casilla del aviso de privacidad (Ley 1581)
+  App->>API: POST /register
+  API->>Auth: register(request, IP)
+  Auth->>Lim: acquire(IP, correo, VERIFY_EMAIL)
+  alt límite superado
+    Lim-->>App: 429 con Retry-After
+  end
+  Auth->>Auth: BCrypt(contraseña) siempre<br/>(mismo tiempo exista o no la cuenta)
+  alt el correo ya está verificado
+    Auth->>M: "intento de registro con su correo"
+  else cuenta nueva o sin verificar
+    Auth->>DB: guarda users (email_verified = false)<br/>y versión del aviso aceptada
+    Auth->>Cod: issue(VERIFY_EMAIL)
+    Cod->>DB: email_codes con HMAC del código, vence en 15 min
+    Auth->>M: código de 6 dígitos (después del commit, en otro hilo)
+  end
+  API-->>App: 202 (la respuesta no revela si el correo existe)
+  App->>G: pantalla de 6 casillas, reenviar con cuenta regresiva de 60 s
+
+  G->>App: escribe el código
+  App->>API: POST /verify-email
+  API->>Auth: verifyEmail
+  Auth->>Cod: verify(usuario, VERIFY_EMAIL, código)
+  alt código errado o vencido
+    Cod->>DB: attempts + 1 (máximo 5)
+    API-->>App: 400 código inválido
+  else código correcto
+    Auth->>DB: email_verified = true
+    Auth->>DB: refresh_tokens (familia nueva, solo el hash)
+    API-->>App: 200 con token de acceso (15 min) y refresh token
+    App->>App: guarda la sesión en flutter_secure_storage<br/>y abre la base cifrada del usuario
+  end
+
+  Note over App,API: Un login sin verificar responde 403 EMAIL_NOT_VERIFIED<br/>y la app vuelve a la pantalla del código

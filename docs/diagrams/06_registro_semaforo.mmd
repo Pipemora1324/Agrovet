@@ -1,0 +1,35 @@
+%% Registro diario por preguntas y semáforo combinado
+%% (DailyRecordCubit, RecordEstimator, RiskCubit, RiskEvaluator, SymptomScore)
+flowchart TD
+  INI(["Registro de hoy"]) --> BASE["Línea base de la vaca (30 días anteriores)<br/>promedio si hay 3 o más mediciones exactas ·<br/>si no, la última medición exacta · si no, referencia 38,6 °C / 13 L / 11 kg"]
+  BASE --> Q1["Pregunta 1 · ¿Cómo comió hoy?<br/>Normal ×1,0 · Menos ×0,85 · Casi nada ×0,5 · No sé ×1,0"]
+  Q1 --> LACT{"¿Vaca en ordeño?"}
+  LACT -- sí --> Q2["Pregunta 2 · ¿Cuánta leche dio?<br/>Igual ×1,0 · Un poco menos ×0,9 · Mucho menos ×0,7 · No sé ×1,0"]
+  LACT -- "no (seca o novilla)" --> Q3
+  Q2 --> Q3["Pregunta 3 · Al tocarla, ¿cómo siente el cuerpo?<br/>Normal +0 · Tibia +0,5 · Caliente +1,5 °C · No sé +0"]
+  Q3 --> Q4["Pregunta 4 · ¿Cómo ves la ubre y la leche?<br/>Todo normal · Caliente, dura o hinchada · Grumos o sangre · No sé"]
+  Q4 --> FIN["Pantalla final con visto animado"]
+  FIN --> EXACT{"¿Tengo termómetro<br/>o litros exactos?"}
+  EXACT -- sí --> MED["lo escrito queda medido (source = measured)<br/>lo que falte se estima"]
+  EXACT -- no --> ESTV["valor estimado = línea base × factor o + grados<br/>(source = estimated)"]
+  MED & ESTV --> SAVE[("Guarda daily_record<br/>con valores, origen y señales")]
+  Q1 & Q2 & Q3 & Q4 -. "Saltar por hoy" .-> NOSAVE["sale sin guardar"]
+
+  SAVE --> EV(["Evaluar riesgo"])
+  EV --> WIN["Registros de los últimos 14 días"]
+  WIN --> VALID{"¿10 o más días con<br/>temperatura, leche y alimento?"}
+  VALID -- sí --> LSTM["Preprocessor (igual que Python)<br/>→ LSTM TFLite → probabilidad"]
+  LSTM --> MLEV["Color del modelo<br/>verde < 0,427 · amarillo < 0,854 · rojo ≥ 0,854"]
+  VALID -- no --> MISS["Faltan datos para el modelo<br/>(dice cuántos días hay)"]
+  WIN --> TODAY{"¿Hay registro de hoy?"}
+  TODAY -- sí --> SS["SymptomScore: grumos o sangre +3 · hinchada +2 · caliente +2 ·<br/>dolor +2 · fiebre ≥ 39,5 °C +2 · enrojecida +1 · menos leche +1 · no comió +1"]
+  SS --> SLEV["Color por síntomas<br/>0–1 verde · 2–3 amarillo · ≥ 4 rojo"]
+  TODAY -- no --> NOSYM["sin puntaje"]
+
+  MLEV & MISS & SLEV & NOSYM --> COMB{"RiskEvaluator.combine"}
+  COMB -- "sin modelo ni registro de hoy" --> NADA["Faltan registros: no se guarda evaluación"]
+  COMB -- "hay uno o ambos" --> FINAL["Semáforo final = el más grave<br/>causa: MODEL · SYMPTOMS · BOTH (si coinciden)"]
+  FINAL --> INF[("Guarda inference<br/>probabilidad, puntaje, causa, versión")]
+  FINAL --> ALERT{"¿Amarillo o rojo?"}
+  ALERT -- sí --> AL[("Crea alerta sin atender")]
+  FINAL --> AVISO["Recomendación + aviso fijo:<br/>Esta herramienta apoya, no reemplaza al veterinario."]

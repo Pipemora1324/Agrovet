@@ -1,0 +1,52 @@
+%% Componentes principales del backend (co.edu.ucc.agrovet): controller → service → repository
+flowchart TB
+  APP(["App AgroVet"]) -- "HTTPS + JWT" --> C
+
+  subgraph C["controller"]
+    direction LR
+    AC["AuthController<br/>/api/auth"]
+    CC["CowController<br/>/api/cows"]
+    SC["SyncController<br/>/api/sync"]
+    PC["PhotoController<br/>/api/cows/{cowId}/photos/{photoId}/image"]
+    ASC["AssistantController<br/>/api/assistant/chat"]
+  end
+
+  subgraph S["service"]
+    direction LR
+    AS["AuthService<br/>TokenService · EmailCodeService<br/>LoginRateLimiter · CodeRequestLimiter"]
+    CS["CowService"]
+    SS["SyncService"]
+    PS["PhotoService<br/>PhotoProcessor · PhotoStorage"]
+    ASS["AssistantService<br/>AssistantRateLimiter<br/>LlmClient → GeminiClient"]
+    DEL["AccountDeletionService"]
+    AM["AccountMailer<br/>EmailSender → SmtpEmailSender"]
+  end
+
+  subgraph R["repository · Spring Data JPA"]
+    direction LR
+    UR["UserRepository"]
+    RTR["RefreshTokenRepository"]
+    ECR["EmailCodeRepository"]
+    CR["CowRepository"]
+    DRR["DailyRecordRepository"]
+    IR["InferenceRepository"]
+    ALR["AlertRepository"]
+    CPR["CowPhotoRepository"]
+  end
+
+  AC --> AS
+  CC --> CS
+  SC --> SS
+  PC --> PS
+  ASC --> ASS
+  AS --> AM
+  AS --> DEL
+  AS --> UR & RTR & ECR
+  CS --> CR & DRR & IR & ALR
+  SS --> CR & DRR & IR & ALR & CPR
+  PS --> CR & CPR
+  DEL --> CPR
+  R --> PG[("PostgreSQL 15")]
+  DEL -- "JdbcTemplate" --> PG
+  AM --> SMTP(["SMTP: Gmail o Mailpit"])
+  ASS --> GEM(["API de Gemini"])

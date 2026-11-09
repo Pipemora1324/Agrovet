@@ -1,0 +1,120 @@
+%% Modelo de datos del backend: esquema resultante de las migraciones Flyway V1 a V13
+erDiagram
+  users ||--o{ cows : "owner_id"
+  users ||--o{ refresh_tokens : "user_id"
+  users ||--o{ email_codes : "user_id"
+  cows ||--o{ daily_records : "cow_id"
+  cows ||--o{ inferences : "cow_id"
+  cows ||--o{ alerts : "cow_id"
+  cows ||--o{ cow_photos : "cow_id"
+  inferences |o--o{ alerts : "inference_id"
+
+  users {
+    UUID id PK
+    VARCHAR name
+    VARCHAR email UK
+    VARCHAR password_hash "BCrypt"
+    BOOLEAN email_verified "V7"
+    VARCHAR farm_name "V8"
+    VARCHAR municipality "V8"
+    VARCHAR phone "V8"
+    VARCHAR privacy_policy_version "V8"
+    TIMESTAMPTZ privacy_accepted_at "V8"
+    TIMESTAMPTZ created_at
+    TIMESTAMPTZ updated_at
+  }
+  refresh_tokens {
+    UUID id PK
+    UUID user_id FK
+    UUID family_id "rotación: reuso revoca la familia"
+    VARCHAR token_hash UK
+    TIMESTAMPTZ expires_at
+    TIMESTAMPTZ created_at
+    TIMESTAMPTZ revoked_at
+    UUID replaced_by
+  }
+  email_codes {
+    UUID id PK
+    UUID user_id FK
+    VARCHAR purpose "VERIFY_EMAIL | RESET_PASSWORD"
+    VARCHAR code_hash "HMAC"
+    INTEGER attempts
+    TIMESTAMPTZ expires_at
+    TIMESTAMPTZ created_at
+    TIMESTAMPTZ consumed_at
+  }
+  cows {
+    UUID id PK "generado en el celular"
+    UUID owner_id FK
+    VARCHAR tag "único por dueño si no está borrada"
+    VARCHAR name
+    VARCHAR breed
+    DATE birth_date
+    INTEGER calvings "0 a 30"
+    VARCHAR production_status "LACTATING | DRY | HEIFER"
+    TIMESTAMPTZ created_at
+    TIMESTAMPTZ updated_at
+    BOOLEAN deleted
+  }
+  daily_records {
+    UUID id PK
+    UUID cow_id FK
+    DATE record_date "uno por vaca y día"
+    DOUBLE temperature_c "30 a 45"
+    DOUBLE milk_l "0 a 80"
+    DOUBLE feed_kg "0 a 60"
+    VARCHAR temperature_source "measured | estimated (V13)"
+    VARCHAR milk_source "V13"
+    VARCHAR feed_source "V13"
+    BOOLEAN ate_normally "V9, NULL = sin respuesta"
+    BOOLEAN milk_drop "V9"
+    BOOLEAN udder_swelling
+    BOOLEAN udder_heat "V9"
+    BOOLEAN udder_redness "V9"
+    BOOLEAN udder_pain
+    BOOLEAN abnormal_milk
+    BOOLEAN lethargy
+    VARCHAR notes
+    TIMESTAMPTZ created_at
+    TIMESTAMPTZ updated_at
+    BOOLEAN deleted
+  }
+  inferences {
+    UUID id PK
+    UUID cow_id FK
+    DATE window_end_date
+    DOUBLE probability "NULL si no hubo modelo (V10)"
+    INTEGER symptom_score "V10"
+    VARCHAR cause "MODEL | SYMPTOMS | BOTH (V10)"
+    VARCHAR risk_level "GREEN | YELLOW | RED"
+    VARCHAR model_version
+    TIMESTAMPTZ created_at
+    TIMESTAMPTZ updated_at
+    BOOLEAN deleted
+  }
+  alerts {
+    UUID id PK
+    UUID cow_id FK
+    UUID inference_id FK
+    VARCHAR risk_level "YELLOW | RED"
+    BOOLEAN attended
+    TIMESTAMPTZ attended_at
+    TIMESTAMPTZ created_at
+    TIMESTAMPTZ updated_at
+    BOOLEAN deleted
+  }
+  cow_photos {
+    UUID id PK
+    UUID cow_id FK
+    DATE taken_on
+    BOOLEAN stored "archivo recibido"
+    INTEGER size_bytes
+    VARCHAR vet_confirmed "YES | NO | PENDING (V12)"
+    VARCHAR diagnosis "MASTITIS | HEALTHY | OTHER (V12)"
+    VARCHAR diagnosis_notes "V12"
+    BOOLEAN research_consent "V12, apagado por defecto"
+    TIMESTAMPTZ research_consent_at "V12"
+    TIMESTAMPTZ created_at
+    TIMESTAMPTZ updated_at
+    BOOLEAN deleted
+  }
