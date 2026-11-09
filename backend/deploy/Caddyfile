@@ -1,0 +1,27 @@
+# Proxy con HTTPS automático (Let's Encrypt) delante del backend.
+# El dominio sale de AGROVET_DOMAIN; el DNS del dominio debe apuntar a la IP del servidor.
+
+{$AGROVET_DOMAIN} {
+	encode gzip
+
+	# Solo la API y el chequeo de salud; nada más del backend queda expuesto
+	@public path /api/* /actuator/health /actuator/health/*
+	handle @public {
+		reverse_proxy backend:8080
+	}
+	handle {
+		respond 404
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	# Fotos de hasta 5 MB más el margen del formulario
+	request_body {
+		max_size 8MB
+	}
+}

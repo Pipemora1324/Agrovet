@@ -112,12 +112,15 @@ verificación) llegan a Mailpit en `http://localhost:8025`.
 
 `.env` está en `.gitignore`: las claves (Gmail, `GEMINI_API_KEY`, `JWT_SECRET`) nunca se suben.
 
+**Servidor propio.** `docs/DEPLOY.md` explica cómo levantar el backend en una VPS con
+`docker-compose.prod.yml` (perfil `prod`, HTTPS con Caddy y `/actuator/health` para el chequeo).
+
 **Aplicación (mobile/)**: requiere Flutter y un dispositivo o emulador Android (API 24+).
 
 ```bash
 cd mobile
 flutter pub get
-flutter run                     # emulador: usa http://10.0.2.2:8080
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080   # emulador (el equipo es 10.0.2.2)
 ```
 
 En un celular o tableta por USB, con el backend corriendo en el equipo:
