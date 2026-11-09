@@ -490,8 +490,10 @@ class _TrendCard extends StatelessWidget {
                 style: theme.textTheme.bodyLarge,
               )
             else
-              SizedBox(
+              Container(
                 height: 170,
+                // Margen para que el punto de hoy, en el borde derecho, no quede cortado
+                padding: const EdgeInsets.only(right: 12),
                 child: DrawIn(
                   child: LineChart(
                     LineChartData(
@@ -561,6 +563,8 @@ class _TrendCard extends StatelessWidget {
                               if (index == 12) return const SizedBox.shrink();
                               return SideTitleWidget(
                                 meta: meta,
+                                // "Hoy" en el borde no se corta con letra grande
+                                fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
                                 child: Text(
                                   index == _trendDays - 1
                                       ? 'Hoy'

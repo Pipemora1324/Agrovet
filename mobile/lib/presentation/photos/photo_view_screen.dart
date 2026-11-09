@@ -85,6 +85,51 @@ class PhotoViewScreen extends StatelessWidget {
   );
 }
 
+/// Opciones excluyentes y opcionales (se puede desmarcar). En horizontal si cada opción cabe en una
+/// línea; si no (letra grande o pantalla angosta), una debajo de otra, para no partir palabras.
+class _Choices<T> extends StatelessWidget {
+  const _Choices({required this.options, required this.selected, required this.onChanged});
+
+  final Map<T, String> options;
+  final T? selected;
+  final ValueChanged<T?> onChanged;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final style = Theme.of(context).segmentedButtonTheme.style?.textStyle?.resolve({});
+      final scaler = MediaQuery.textScalerOf(context);
+      final widest = options.values
+          .map((label) => (TextPainter(
+                text: TextSpan(text: label, style: style),
+                textScaler: scaler,
+                textDirection: TextDirection.ltr,
+                maxLines: 1,
+              )..layout()).width)
+          .reduce((a, b) => a > b ? a : b);
+      // Texto + relleno (16) + bordes; sin ícono de marcado (lo elegido se ve por el color)
+      final fits = widest + 24 <= constraints.maxWidth / options.length;
+      return SegmentedButton<T>(
+        direction: fits ? Axis.horizontal : Axis.vertical,
+        // En vertical, la píldora del tema se vería como un óvalo
+        style: fits
+            ? null
+            : SegmentedButton.styleFrom(
+                shape: const RoundedRectangleBorder(borderRadius: AppRadius.field),
+              ),
+        showSelectedIcon: false,
+        emptySelectionAllowed: true,
+        segments: [
+          for (final MapEntry(key: value, value: label) in options.entries)
+            ButtonSegment(value: value, label: Text(label)),
+        ],
+        selected: {?selected},
+        onSelectionChanged: (selection) => onChanged(selection.firstOrNull),
+      );
+    },
+  );
+}
+
 /// Datos opcionales para investigación, plegados por defecto: confirmación del veterinario,
 /// diagnóstico y permiso expreso para usar la foto (apagado por defecto). Solo las fotos con permiso,
 /// confirmadas y con diagnóstico claro sirven para entrenar la CNN (ml/src/build_cnn_dataset.py).
@@ -140,33 +185,25 @@ class _ResearchFormState extends State<_ResearchForm> {
         children: [
           Text('¿Un veterinario confirmó el diagnóstico?', style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
-          SegmentedButton<VetConfirmation>(
-            emptySelectionAllowed: true,
-            segments: [
-              for (final option in VetConfirmation.values)
-                ButtonSegment(value: option, label: Text(option.label)),
-            ],
-            selected: {?_vet},
-            onSelectionChanged: (selection) => setState(() => _vet = selection.firstOrNull),
+          _Choices<VetConfirmation>(
+            options: {for (final option in VetConfirmation.values) option: option.label},
+            selected: _vet,
+            onChanged: (value) => setState(() => _vet = value),
           ),
           const SizedBox(height: 16),
           Text('Diagnóstico', style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
-          SegmentedButton<Diagnosis>(
-            emptySelectionAllowed: true,
-            segments: [
-              for (final option in Diagnosis.values)
-                ButtonSegment(value: option, label: Text(option.label)),
-            ],
-            selected: {?_diagnosis},
-            onSelectionChanged: (selection) => setState(() => _diagnosis = selection.firstOrNull),
+          _Choices<Diagnosis>(
+            options: {for (final option in Diagnosis.values) option: option.label},
+            selected: _diagnosis,
+            onChanged: (value) => setState(() => _diagnosis = value),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _notes,
             maxLength: 300,
             maxLines: 2,
-            decoration: const InputDecoration(labelText: 'Notas del diagnóstico (opcional)'),
+            decoration: const InputDecoration(labelText: 'Notas (opcional)'),
           ),
           const Divider(height: 24),
           SwitchListTile(

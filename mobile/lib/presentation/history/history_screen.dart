@@ -274,8 +274,9 @@ class _MetricChart extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            SizedBox(
+            Container(
               height: 180,
+              padding: const EdgeInsets.only(right: 12),
               child: LineChart(
                 LineChartData(
                   minX: 0,
@@ -361,6 +362,8 @@ class _MetricChart extends StatelessWidget {
                           );
                           return SideTitleWidget(
                             meta: meta,
+                            // El rótulo del borde no se corta con letra grande
+                            fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
                             child: Text(
                               formatShortDay(date),
                               style: Theme.of(context).textTheme.axis,
