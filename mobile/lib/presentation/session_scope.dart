@@ -15,6 +15,7 @@ import '../data/local/local_repository.dart';
 import '../data/photos/photo_capture.dart';
 import '../data/photos/photo_store.dart';
 import '../data/remote/api_client.dart';
+import '../data/remote/online_status.dart';
 import '../data/remote/profile_api.dart';
 import '../data/security/secure_store.dart';
 import '../data/sync/sync_service.dart';
@@ -92,11 +93,13 @@ class _SessionScopeState extends State<SessionScope> {
       widget.photosRoot != null ? await widget.photosRoot!() : await getApplicationSupportDirectory(),
       session.userId,
     );
+    final online = OnlineStatus((widget.connectivity ?? _online()).asBroadcastStream(),
+        initial: widget.connectivity != null || await _isOnlineNow());
     final sync = session.isDemo
         ? SyncCubit.disabled()
         : (SyncCubit(
             SyncService(db, SyncApi(api), photos: photos),
-            connectivity: widget.connectivity ?? _online(),
+            connectivity: online.changes,
             appResumed: _resumed.stream,
             loadLastSync: () => store.lastSyncFor(session.userId),
             saveLastSync: (at) => store.saveLastSync(session.userId, at),
@@ -107,12 +110,15 @@ class _SessionScopeState extends State<SessionScope> {
       await photos.deleteAll();
       await store.forgetUser(session.userId);
     });
-    return _SessionDeps(repository, RiskEvaluator(await widget.predictor), sync, wiper, photos);
+    return _SessionDeps(repository, RiskEvaluator(await widget.predictor), sync, wiper, photos, online);
   }
 
   /// Cierra la base una sola vez. Salir de la sesión y borrar los datos esperan el mismo cierre, así
   /// el archivo nunca se borra mientras sigue abierto.
   Future<void> _closeDatabase() => _closing ??= _db?.close() ?? Future<void>.value();
+
+  static Future<bool> _isOnlineNow() async =>
+      (await Connectivity().checkConnectivity()).any((r) => r != ConnectivityResult.none);
 
   static Stream<bool> _online() => Connectivity()
       .onConnectivityChanged
@@ -122,7 +128,10 @@ class _SessionScopeState extends State<SessionScope> {
   void dispose() {
     _lifecycle.dispose();
     _resumed.close();
-    _deps.then((deps) => deps.sync.close()).whenComplete(_closeDatabase);
+    _deps.then((deps) async {
+      await deps.sync.close();
+      await deps.online.dispose();
+    }).whenComplete(_closeDatabase);
     super.dispose();
   }
 
@@ -146,6 +155,8 @@ class _SessionScopeState extends State<SessionScope> {
               RepositoryProvider<RiskEvaluator>.value(value: deps.evaluator),
               RepositoryProvider<LocalDataWiper>.value(value: deps.wiper),
               RepositoryProvider<PhotoRepository>.value(value: deps.repository),
+              RepositoryProvider<AssistantRepository>.value(value: deps.repository),
+              RepositoryProvider<OnlineStatus>.value(value: deps.online),
               RepositoryProvider<PhotoStore>.value(value: deps.photos),
               RepositoryProvider<PhotoCapture>(create: (_) => widget.photoCapture ?? SystemPhotoCapture()),
               RepositoryProvider<ProfileApi>(create: (context) => ProfileApi(context.read<ApiClient>())),
@@ -157,11 +168,12 @@ class _SessionScopeState extends State<SessionScope> {
 }
 
 class _SessionDeps {
-  _SessionDeps(this.repository, this.evaluator, this.sync, this.wiper, this.photos);
+  _SessionDeps(this.repository, this.evaluator, this.sync, this.wiper, this.photos, this.online);
 
   final LocalRepository repository;
   final RiskEvaluator evaluator;
   final SyncCubit sync;
   final LocalDataWiper wiper;
   final PhotoStore photos;
+  final OnlineStatus online;
 }

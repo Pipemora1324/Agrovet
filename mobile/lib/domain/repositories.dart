@@ -52,3 +52,11 @@ abstract interface class PhotoRepository {
   /// Borrado lógico (para sincronizar); el archivo lo borra quien llama.
   Future<void> deletePhoto(String photoId);
 }
+
+abstract interface class AssistantRepository {
+  /// Conversación de la vaca, de la más antigua a la más reciente.
+  Stream<List<AssistantMessage>> watchMessages(String cowId);
+  Future<List<AssistantMessage>> recentMessages(String cowId, int limit);
+  Future<void> saveMessage(AssistantMessage message);
+  Future<void> clearMessages(String cowId);
+}
