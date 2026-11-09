@@ -11,6 +11,11 @@ class AppConfig {
 
   static const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
 
+  /// Triaje visual de la ubre con la CNN. APAGADO por defecto: el modelo se entrenó con un dataset
+  /// público cuyas etiquetas no confirmó un veterinario (ver ml/README.md). Solo se enciende
+  /// compilando con `--dart-define=UDDER_TRIAGE=true`, y aun así el resultado es orientativo.
+  static const udderTriageEnabled = bool.fromEnvironment('UDDER_TRIAGE');
+
   /// Equipos de desarrollo a los que se permite HTTP en debug.
   static const developmentHosts = {'10.0.2.2', 'localhost', '127.0.0.1'};
 

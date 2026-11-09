@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/config.dart';
 import '../../core/formatters.dart';
 import '../../core/responsive.dart';
 import '../../core/theme.dart';
@@ -8,6 +9,7 @@ import '../../data/photos/photo_store.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
 import '../widgets/big_button.dart';
+import 'udder_triage_card.dart';
 
 /// Foto en grande (con zoom), sus datos para investigación y la opción de borrarla.
 class PhotoViewScreen extends StatelessWidget {
@@ -69,6 +71,10 @@ class PhotoViewScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (AppConfig.udderTriageEnabled) ...[
+                      const SizedBox(height: 16),
+                      UdderTriageCard(photo: context.read<PhotoStore>().fileFor(photo.fileName)),
+                    ],
                     const SizedBox(height: 16),
                     _ResearchForm(photo: photo),
                   ],
