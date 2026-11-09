@@ -121,7 +121,11 @@ class ApiClient {
     if (error is! DioException) return const ApiException('Ocurrió un error inesperado.');
     final response = error.response;
     if (response == null) {
-      return const ApiException('No hay conexión con el servidor. Revise su internet e intente de nuevo.');
+      // Sin respuesta puede faltar la señal o estar caído el servidor; la app no sabe cuál de los dos
+      return const ApiException(
+        'No pudimos comunicarnos con el servidor de AgroVet. Puede ser la señal o que el servidor no '
+        'esté disponible. Intente de nuevo en unos minutos; sus datos siguen guardados en el celular.',
+      );
     }
     final data = response.data;
     final code = data is Map && data['code'] is String ? data['code'] as String : null;
@@ -133,6 +137,6 @@ class ApiClient {
       return build((data['errors'] as Map).values.first.toString());
     }
     if (data is Map && data['detail'] is String) return build(data['detail'] as String);
-    return build('El servidor respondió con un error (${response.statusCode}).');
+    return build('El servidor tuvo un problema y no pudo atender la solicitud. Intente más tarde.');
   }
 }

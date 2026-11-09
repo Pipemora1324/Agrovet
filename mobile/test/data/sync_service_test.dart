@@ -159,7 +159,7 @@ void main() {
     final gateway = FakeGateway(failures: 10);
     final report = await service(gateway).syncNow();
     expect(report.ok, isFalse);
-    expect(report.error, contains('No hay conexión'));
+    expect(report.error, contains('No pudimos comunicarnos con el servidor'));
     expect(gateway.batches, hasLength(4));
     expect(await service(gateway).watchPendingCount().first, 2);
   });

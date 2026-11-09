@@ -136,7 +136,7 @@ void main() {
       );
 
       await cubit.syncNow(silent: true);
-      expect(cubit.state.lastError, contains('No hay conexión'));
+      expect(cubit.state.lastError, contains('No pudimos comunicarnos con el servidor'));
       expect(cubit.state.message, isNull);
       expect(cubit.state.hasProblems, isTrue);
       expect(cubit.state.lastSyncAt, isNull);
