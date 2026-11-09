@@ -18,6 +18,7 @@ import '../data/remote/api_client.dart';
 import '../data/remote/online_status.dart';
 import '../data/remote/profile_api.dart';
 import '../data/security/secure_store.dart';
+import '../data/sync/restore_service.dart';
 import '../data/sync/sync_service.dart';
 import '../domain/repositories.dart';
 import '../domain/risk_evaluator.dart';
@@ -109,6 +110,9 @@ class _SessionScopeState extends State<SessionScope> {
             loadLastSync: () => store.lastSyncFor(session.userId),
             saveLastSync: (at) => store.saveLastSync(session.userId, at),
           ));
+    if (!session.isDemo) {
+      _restoreWhenOnline(RestoreService(db, RestoreApi(api)), online, sync);
+    }
     final wiper = LocalDataWiper(() async {
       await _closeDatabase();
       if (widget.openDatabase == null) {
@@ -125,6 +129,26 @@ class _SessionScopeState extends State<SessionScope> {
       photos,
       online,
     );
+  }
+
+  StreamSubscription<bool>? _restoreOnReconnect;
+
+  /// Celular sin las vacas del ganadero (nuevo, reinstalado o borrado): las trae del servidor en
+  /// segundo plano. Si no hay red ahora, lo intenta una vez cuando vuelva. Las pantallas se
+  /// actualizan solas porque leen la base con consultas que observan los cambios.
+  void _restoreWhenOnline(RestoreService restore, OnlineStatus online, SyncCubit sync) {
+    Future<void> run() async {
+      final report = await restore.restoreIfEmpty();
+      if (report.ok && report.cows > 0) await sync.restoredFromServer();
+    }
+
+    if (online.online) {
+      unawaited(run());
+      return;
+    }
+    _restoreOnReconnect = online.changes.where((isOnline) => isOnline).take(1).listen((_) {
+      if (mounted) unawaited(run());
+    });
   }
 
   /// Cierra la base una sola vez. Salir de la sesión y borrar los datos esperan el mismo cierre, así
@@ -145,6 +169,7 @@ class _SessionScopeState extends State<SessionScope> {
   void dispose() {
     _lifecycle.dispose();
     _resumed.close();
+    _restoreOnReconnect?.cancel();
     _deps
         .then((deps) async {
           await deps.sync.close();
