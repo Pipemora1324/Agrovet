@@ -29,7 +29,10 @@ suele haber señales sutiles: sube un poco la temperatura, baja la leche y la va
 - **Asistente con IA** por vaca: orienta, no diagnostica; sin internet muestra consejos fijos.
 - Todo lo esencial funciona **sin internet**: el modelo corre en el celular y los datos se guardan
   cifrados. Cuando hay conexión, se sincronizan con el servidor.
-- Pendiente: triaje visual con una CNN (MobileNetV2), cuando haya fotos reales confirmadas.
+- Triaje visual con una CNN (MobileNetV2): entrenada y evaluada con un dataset público (CC BY 4.0),
+  **apagada en la app** porque aprende parte del fondo de las fotos y en un mismo establo pierde
+  casi la mitad de las mastitis. Pendiente validarla con fotos reales confirmadas por un veterinario.
+  Ver [ml/README.md](ml/README.md#cnn-de-triaje-visual-de-la-ubre).
 
 ## Arquitectura
 

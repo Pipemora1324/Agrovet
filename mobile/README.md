@@ -65,13 +65,16 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 - Cada foto se reduce (lado mayor de 1280 px, JPEG al 75 %), se le quitan los metadatos EXIF/XMP
   (incluida la ubicación GPS) y se guarda en el almacenamiento privado de la app, vinculada a la vaca y
   al día. El historial muestra la galería del periodo.
-- La foto queda como registro visual; no se analiza automáticamente. La CNN está desactivada hasta
-  contar con fotografías reales suficientes para validarla.
+- Las fotos se sincronizan después de sus datos (el archivo va aparte, multipart y con reintentos);
+  el servidor vuelve a validar el tipo, el tamaño y elimina los metadatos.
 - En la ficha de la foto, la sección plegada **"Para investigación (opcional)"** guarda la
   confirmación del veterinario, el diagnóstico y el interruptor "Permitir usar esta foto para
   investigación", apagado por defecto (ver `ml/README.md`).
-- Las fotos se sincronizan después de sus datos; el servidor vuelve a validar el tipo, el tamaño y
-  elimina los metadatos.
+- La foto queda como registro visual; la app no la analiza. La CNN de la ubre (`assets/model/udder_cnn.tflite`, entrenada con un dataset público) viene
+  **apagada**. Solo se enciende compilando con `--dart-define=UDDER_TRIAGE=true`, y entonces la ficha
+  de la foto muestra una lectura con el aviso "Resultado orientativo, no es diagnóstico". No se
+  recomienda encenderla (ver `ml/README.md`). Apagada, `android/app/build.gradle.kts` deja el
+  `.tflite` fuera del APK (x86_64: 13,98 MiB apagada, 14,82 MiB encendida; el límite es 15 MiB).
 
 ## Asistente
 
