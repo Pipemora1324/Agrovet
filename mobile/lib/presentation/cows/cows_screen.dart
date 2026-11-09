@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -218,9 +220,31 @@ class _SummaryTile extends StatelessWidget {
   }
 }
 
-/// Una sola referencia discreta a la última sincronización.
-class _SyncStatus extends StatelessWidget {
+/// Una sola referencia discreta a la última sincronización. Se vuelve a dibujar cada minuto: el texto
+/// es relativo ("hace 5 min") y sin sincronizaciones nuevas quedaría congelado en "hace un momento".
+class _SyncStatus extends StatefulWidget {
   const _SyncStatus();
+
+  @override
+  State<_SyncStatus> createState() => _SyncStatusState();
+}
+
+class _SyncStatusState extends State<_SyncStatus> {
+  late final Timer _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => BlocBuilder<SyncCubit, SyncState>(
@@ -382,15 +406,26 @@ class _EmptyCows extends StatelessWidget {
   const _EmptyCows();
 
   @override
-  Widget build(BuildContext context) => Center(
+  // La línea de sincronización va arriba, en el mismo lugar que con vacas; solo la ilustración
+  // queda centrada.
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Padding(
+        padding: EdgeInsets.fromLTRB(16, 4, 16, 0),
+        child: CenteredContent(child: _SyncStatus()),
+      ),
+      Expanded(child: _emptyIllustration(context)),
+    ],
+  );
+
+  Widget _emptyIllustration(BuildContext context) => Center(
     child: SingleChildScrollView(
       padding: const EdgeInsets.all(32),
       child: FadeIn(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const _SyncStatus(),
-            const SizedBox(height: 12),
             Container(
               width: 112,
               height: 112,
