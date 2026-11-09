@@ -68,6 +68,42 @@ class _AgroVetAppState extends State<AgroVetApp> {
       );
 }
 
+/// Se muestra en lugar de la app cuando la compilación no trae una dirección válida del servidor.
+class ConfigErrorApp extends StatelessWidget {
+  const ConfigErrorApp({super.key, required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+        title: 'AgroVet',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.settings_suggest, size: 64, color: AppColors.error),
+                    const SizedBox(height: 16),
+                    Builder(
+                      builder: (context) =>
+                          Text('Configuración incompleta', style: Theme.of(context).textTheme.titleLarge),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(message, textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
 class _AuthGate extends StatelessWidget {
   const _AuthGate({required this.predictor});
 

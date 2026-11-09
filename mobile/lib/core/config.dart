@@ -1,8 +1,33 @@
+import 'package:flutter/foundation.dart';
+
 /// Configuración de compilación.
 ///
-/// La URL del backend se pasa con --dart-define=API_BASE_URL=... Por defecto apunta al backend del
-/// docker-compose visto desde el emulador de Android (10.0.2.2 = el equipo). En release debe ser HTTPS:
-/// el permiso para HTTP sin cifrar solo existe en las compilaciones debug.
+/// La dirección del servidor sale **solo** de `--dart-define=API_BASE_URL=...`; no hay una dirección
+/// escrita en el código. En release debe ser HTTPS. HTTP sin cifrar solo se acepta en debug y solo
+/// hacia el equipo de desarrollo (10.0.2.2 desde el emulador, localhost con `adb reverse`), igual que
+/// en android/app/src/debug/res/xml/network_security_config.xml.
 class AppConfig {
-  static const apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:8080');
+  AppConfig._();
+
+  static const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
+
+  /// Equipos de desarrollo a los que se permite HTTP en debug.
+  static const developmentHosts = {'10.0.2.2', 'localhost', '127.0.0.1'};
+
+  /// Por qué la dirección no sirve, o null si está bien.
+  static String? get problem => problemFor(apiBaseUrl, release: kReleaseMode);
+
+  static String? problemFor(String url, {required bool release}) {
+    if (url.isEmpty) {
+      return 'Falta la dirección del servidor. Compile la app con '
+          '--dart-define=API_BASE_URL=https://su-servidor';
+    }
+    final uri = Uri.tryParse(url);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) return 'La dirección del servidor no es válida: $url';
+    if (uri.scheme == 'https') return null;
+    if (uri.scheme == 'http' && !release && developmentHosts.contains(uri.host)) return null;
+    return release
+        ? 'En la versión publicada el servidor debe usar HTTPS: $url'
+        : 'HTTP sin cifrar solo se permite hacia el equipo de desarrollo (10.0.2.2 o localhost): $url';
+  }
 }

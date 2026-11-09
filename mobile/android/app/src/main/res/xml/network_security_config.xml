@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Release y profile: todo el tráfico hacia el servidor va por HTTPS y solo se confía en las
+     autoridades del sistema (no en certificados que instale el usuario). La versión debug reemplaza
+     este archivo para permitir HTTP solo hacia el equipo de desarrollo. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

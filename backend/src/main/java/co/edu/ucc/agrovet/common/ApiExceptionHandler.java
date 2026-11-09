@@ -45,9 +45,20 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     ProblemDetail handleIntegrity(DataIntegrityViolationException ex) {
-        log.warn("Violación de integridad: {}", ex.getMostSpecificCause().getMessage());
+        // Solo el nombre de la restricción: el mensaje de PostgreSQL trae los valores (correo, arete…)
+        log.warn("Violación de integridad: {}", constraintName(ex));
         return problem(HttpStatus.CONFLICT, "Conflicto",
                 "Los datos chocan con otro registro existente (por ejemplo, un identificador repetido).");
+    }
+
+    static String constraintName(Throwable ex) {
+        for (Throwable t = ex; t != null; t = t.getCause()) {
+            if (t instanceof org.hibernate.exception.ConstraintViolationException violation
+                    && violation.getConstraintName() != null) {
+                return violation.getConstraintName();
+            }
+        }
+        return ex.getClass().getSimpleName();
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)

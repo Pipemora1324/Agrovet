@@ -14,8 +14,12 @@ Requiere Flutter (canal estable) y un emulador o celular Android.
 ```bash
 cd mobile
 flutter pub get
-flutter run
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080   # emulador con el backend local
 ```
+
+La dirección del servidor sale **solo** de `--dart-define=API_BASE_URL`; sin ella la app muestra
+"Configuración incompleta". En debug se acepta HTTP solo hacia `10.0.2.2`, `localhost` y
+`127.0.0.1`; en release, solo HTTPS (`lib/core/config.dart` y `network_security_config.xml`).
 
 En la pantalla de ingreso de una compilación **debug** aparece el botón
 **"Ver con datos de demostración"**: abre una sesión local con 6 vacas inventadas (prefijo `DEMO`)
@@ -23,7 +27,7 @@ y un rótulo amarillo "Datos de demostración" en todas las pantallas. Esos dato
 aparte, nunca se sincronizan y el botón no existe en las compilaciones release.
 
 Para ingresar con una cuenta real, el backend debe estar corriendo (`backend/`, `docker compose up`).
-Desde el emulador, la app lo busca en `http://10.0.2.2:8080`. Otra dirección se indica así:
+Desde el emulador el equipo es `10.0.2.2`. Para un servidor publicado:
 
 ```bash
 flutter run --dart-define=API_BASE_URL=https://mi-servidor.example.org
@@ -40,9 +44,15 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 
 ## Registro diario y semáforo
 
-- El registro tiene dos preguntas Sí/No ("¿Comió normal?", "¿Dio menos leche de lo usual?"), cinco
-  signos de la ubre (enrojecida, hinchada, caliente, dolor al tocar, grumos o sangre) y mediciones
-  **opcionales** (temperatura, leche, alimento).
+- **Registro de hoy** es un asistente con una pregunta por pantalla: cómo comió, cuánta leche dio
+  (solo vacas en ordeño), cómo se siente el cuerpo al tocarla y cómo se ven la ubre y la leche. Al
+  tocar una opción pasa sola a la siguiente; todas tienen "No sé", y hay "Atrás", "Empezar de nuevo"
+  y "Saltar por hoy".
+- Con las respuestas la app **estima** temperatura, leche y alimento respecto a la línea base de la
+  vaca (promedio de sus mediciones exactas). El bloque opcional "Tengo termómetro o litros exactos"
+  reemplaza lo estimado por lo medido. Cada valor se guarda como `measured` o `estimated` y el
+  historial lo muestra. Las equivalencias están en `lib/domain/record_estimates.dart` y son
+  provisionales, pendientes de validar con un veterinario (`docs/symptom_score.md`).
 - El semáforo final es el más grave entre el **puntaje por síntomas** del día (reglas provisionales,
   a validar con un veterinario: ver `docs/symptom_score.md`) y el **modelo LSTM**. La pantalla dice
   cuál lo indicó. Si no hay días suficientes con mediciones, muestra "Faltan datos para el modelo" y
@@ -64,7 +74,8 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 
 ## Asistente
 
-- En la ficha de la vaca, **"Preguntar al asistente"** abre un chat sobre esa vaca. La app envía la
+- La pestaña **Asistente** de la barra inferior (o **"Preguntar al asistente"** en la ficha) abre un
+  chat sobre una vaca. La app envía la
   pregunta, el último semáforo y los síntomas de hoy, los últimos mensajes y, si se adjunta, una foto
   sin metadatos. La clave del proveedor de IA nunca está en la app.
 - Aviso fijo en la pantalla: "Orientación de un asistente de IA, no es un diagnóstico".
@@ -84,7 +95,7 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 - **Olvidé mi contraseña**: código al correo, contraseña nueva y la app inicia sesión sola.
 - **Internet**: registro, verificación, recuperación y cambios del perfil necesitan conexión. Una vez
   abierta, la sesión queda guardada y la app funciona sin internet.
-- **Mi perfil** (ícono de la persona en "Mis vacas"):
+- **Perfil** (pestaña de la barra inferior):
   - ver y editar nombre, finca, municipio y teléfono opcional (se guarda una copia para verlo sin
     conexión);
   - cambiar la contraseña, lo que cierra la sesión en los demás celulares;
@@ -99,8 +110,10 @@ subir su versión para que la app lo pida de nuevo.
 ### APK para instalar
 
 ```bash
-flutter build apk --release --split-per-abi
+flutter build apk --release --split-per-abi --dart-define=API_BASE_URL=https://api.su-dominio.co
 ```
+
+(Pasos del servidor en `docs/DEPLOY.md`.)
 
 Genera un APK por arquitectura en `build/app/outputs/flutter-apk/`. La mayoría de los celulares
 actuales usa `arm64-v8a`; los más viejos o de gama muy baja, `armeabi-v7a`.
@@ -119,7 +132,7 @@ Antes un solo APK arm64 pesaba 39,1 MB. Para bajarlo:
 El CI falla si algún APK pasa de 15 MB.
 
 En release solo se permite HTTPS: el permiso para HTTP sin cifrar existe únicamente en debug y
-solo hacia `10.0.2.2` y `localhost`.
+solo hacia `10.0.2.2`, `localhost` y `127.0.0.1`.
 
 ## Pruebas
 
@@ -127,12 +140,13 @@ solo hacia `10.0.2.2` y `localhost`.
 flutter analyze
 flutter test
 # En el emulador o un celular conectado:
-flutter test integration_test/test_vectors_on_device_test.dart -d <dispositivo>
+flutter test integration_test/test_vectors_on_device_test.dart -d <dispositivo> \
+  --dart-define=API_BASE_URL=http://10.0.2.2:8080
 # Recorrido completo (demo, cuenta real con verificación, perfil y eliminación). Necesita el backend
 # y Mailpit del docker-compose; en un celular por USB, con adb reverse de 8080 y 8025:
 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_flow_test.dart \
-  -d <dispositivo> --keep-app-running
-#   celular por USB: --dart-define=API_BASE_URL=http://localhost:8080 --dart-define=MAILPIT_URL=http://localhost:8025
+  -d <dispositivo> --keep-app-running --dart-define=API_BASE_URL=http://10.0.2.2:8080
+#   celular por USB, en lugar de las anteriores: --dart-define=API_BASE_URL=http://localhost:8080 --dart-define=MAILPIT_URL=http://localhost:8025
 ```
 
 - `test/model/test_vectors_test.dart` es la **prueba bloqueante**: la app reproduce los 8 casos de

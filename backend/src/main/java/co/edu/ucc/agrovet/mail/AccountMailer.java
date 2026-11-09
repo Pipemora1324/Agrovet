@@ -65,7 +65,8 @@ public class AccountMailer {
             try {
                 sender.send(to, subject, body);
             } catch (RuntimeException e) {
-                log.warn("No se pudo enviar el correo \"{}\" a {}: {}", subject, mask(to), e.getMessage());
+                // Sin el texto del error: el servidor SMTP suele repetir en él la dirección completa
+                log.warn("No se pudo enviar el correo \"{}\" a {}: {}", subject, mask(to), e.getClass().getSimpleName());
             }
         };
         if (TransactionSynchronizationManager.isSynchronizationActive()) {

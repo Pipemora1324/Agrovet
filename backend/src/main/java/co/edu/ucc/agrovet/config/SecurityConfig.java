@@ -47,7 +47,9 @@ public class SecurityConfig {
                                 "/api/auth/resend-code", "/api/auth/login", "/api/auth/password/forgot",
                                 "/api/auth/password/reset", "/api/auth/refresh", "/api/auth/logout").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
+                        // Chequeo de salud del servidor (sin detalles) y sus sondas
+                        .requestMatchers("/actuator/health", "/actuator/health/liveness",
+                                "/actuator/health/readiness").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
         return http.build();

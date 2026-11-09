@@ -1,0 +1,77 @@
+# Servidor de producción: PostgreSQL 15 + backend (perfil "prod") + Caddy con HTTPS automático.
+# Uso (ver docs/DEPLOY.md):  docker compose -f docker-compose.prod.yml up -d --build
+# Los valores salen de backend/.env (copiar desde .env.example); nada sensible va en este archivo.
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Defina POSTGRES_DB en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Defina POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en .env}
+    # Sin puertos publicados: solo el backend llega a la base, por la red interna
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET en .env}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-PT15M}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-P14D}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      # En producción el SMTP real es obligatorio (sin Mailpit)
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:?Defina MAIL_USERNAME en .env}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:?Defina MAIL_PASSWORD en .env}
+      MAIL_FROM: ${MAIL_FROM:-}
+      PHOTO_STORAGE_DIR: /app/data/photos
+      ASSISTANT_PROVIDER: ${ASSISTANT_PROVIDER:-gemini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+    volumes:
+      - photos:/app/data/photos
+    # Sin puertos publicados: el tráfico entra solo por Caddy (HTTPS)
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
+
+  caddy:
+    image: caddy:2.8.4-alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      AGROVET_DOMAIN: ${AGROVET_DOMAIN:?Defina AGROVET_DOMAIN en .env (por ejemplo api.agrovet.co)}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  photos:
+  caddy_data:
+  caddy_config:
