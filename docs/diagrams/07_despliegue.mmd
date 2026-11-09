@@ -1,0 +1,35 @@
+%% Despliegue: local actual (docker-compose.yml) y objetivo (docker-compose.prod.yml + Caddy)
+flowchart LR
+  subgraph Local["Local actual"]
+    direction TB
+    EMU["Emulador Android<br/>API_BASE_URL: http a 10.0.2.2, puerto 8080"]
+    USB["Celular o tableta por USB<br/>adb reverse 8080 y 8025<br/>API_BASE_URL: http a localhost, puerto 8080"]
+    subgraph DC["docker-compose.yml"]
+      BE1["backend<br/>puerto 8080 publicado"]
+      DB1[("db: postgres:15-alpine<br/>127.0.0.1:DB_HOST_PORT")]
+      MP["mailpit v1.32.0<br/>UI 8025 · SMTP 1025"]
+      V1[("volúmenes pgdata y photos")]
+    end
+    EMU -- "HTTP (solo debug)" --> BE1
+    USB -- "HTTP (solo debug)" --> BE1
+    BE1 --> DB1
+    BE1 -- "MAIL_USERNAME vacío" --> MP
+    DB1 --- V1
+  end
+
+  EXT["Servicios externos<br/>Gmail SMTP 587 con STARTTLS<br/>API de Gemini"]
+  BE1 -. "correo si MAIL_* tiene valor<br/>Gemini con GEMINI_API_KEY" .-> EXT
+
+  subgraph Prod["Objetivo en una VPS (aún no desplegado)"]
+    direction TB
+    CAD["docker-compose.prod.yml<br/>caddy:2.8.4-alpine<br/>80 / 443 · HTTPS automático (Let's Encrypt)<br/>solo /api/* y /actuator/health*"]
+    BE2["backend · SPRING_PROFILES_ACTIVE=prod<br/>Swagger apagado · solo expose 8080<br/>healthcheck /actuator/health/readiness"]
+    DB2[("db: postgres:15-alpine<br/>sin puertos publicados")]
+    V2[("volúmenes pgdata, photos,<br/>caddy_data, caddy_config")]
+    CAD --> BE2 --> DB2
+    DB2 --- V2
+  end
+
+  APK["App release<br/>API_BASE_URL: https a AGROVET_DOMAIN<br/>(solo HTTPS)"]
+  APK -- HTTPS --> CAD
+  BE2 -- "SMTP real obligatorio<br/>Gemini con GEMINI_API_KEY" --> EXT

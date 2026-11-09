@@ -1,0 +1,40 @@
+%% Arquitectura general de AgroVet (estado del código en develop)
+flowchart LR
+  subgraph Celular["Celular Android (minSdk 24) · funciona sin conexión"]
+    direction TB
+    UI["App Flutter<br/>presentation: pantallas + cubits (flutter_bloc)"]
+    DOM["domain<br/>RiskEvaluator · SymptomScore · RecordEstimator · Preprocessor"]
+    TFL["Modelo LSTM TFLite<br/>assets/model/mastitis_lstm.tflite<br/>(flutter_litert, solo CPU)"]
+    DB[("Base local Drift + SQLCipher<br/>una base cifrada por usuario")]
+    SEC["flutter_secure_storage<br/>tokens y clave de la base"]
+    FOT["PhotoStore<br/>fotos sin metadatos, almacenamiento privado"]
+    WM["WorkManager<br/>sincronización cada 15 min con red"]
+    UI --> DOM
+    DOM --> TFL
+    UI --> DB
+    UI --> SEC
+    UI --> FOT
+    WM --> DB
+  end
+
+  subgraph Servidor["Backend Spring Boot 3.5 (Java 21)"]
+    direction TB
+    API["API REST<br/>/api/auth · /api/cows · /api/sync<br/>/api/cows/{id}/photos/{id}/image · /api/assistant/chat"]
+    SECB["Spring Security<br/>JWT HS256 15 min + refresh con rotación · BCrypt 12"]
+    SVC["Servicios<br/>AuthService · CowService · SyncService · PhotoService · AssistantService"]
+    MAIL["AccountMailer<br/>SMTP real (STARTTLS) o Mailpit"]
+    VOL[("Volumen de fotos<br/>PHOTO_STORAGE_DIR")]
+    API --> SECB --> SVC
+    SVC --> MAIL
+    SVC --> VOL
+  end
+
+  PG[("PostgreSQL 15<br/>esquema Flyway V1–V13")]
+  GEM["Gemini<br/>(Google AI Studio)<br/>clave solo en el servidor"]
+  SMTP["Servidor de correo<br/>Gmail con contraseña de aplicación<br/>o Mailpit en desarrollo"]
+
+  UI -- "HTTPS (release) · dio<br/>login, sync, fotos, asistente" --> API
+  WM -- "POST /api/sync" --> API
+  SVC -- "JPA / JDBC" --> PG
+  SVC -- "GeminiClient (RestClient)" --> GEM
+  MAIL -- "códigos de 6 dígitos" --> SMTP

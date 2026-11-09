@@ -1,0 +1,45 @@
+%% Sincronización idempotente por UUID (mobile/lib/data/sync/sync_service.dart y
+%% backend/.../sync/SyncService.java)
+sequenceDiagram
+  autonumber
+  participant D as Disparador<br/>(abrir sesión, volver al frente,<br/>volver la red, WorkManager 15 min, botón)
+  participant S as SyncService (app)
+  participant L as Base local (SQLCipher)
+  participant A as POST /api/sync
+  participant B as SyncService (backend)
+  participant P as PostgreSQL
+
+  D->>S: syncNow()
+  loop hasta 20 rondas mientras haya pendientes
+    S->>L: filas con sync_pending = 1 y no demo<br/>(hasta 200 por tabla: vacas, registros,<br/>evaluaciones, alertas, fotos)
+    L-->>S: lote con id (UUID del celular) y updated_at
+    S->>A: lote JSON + token de acceso
+    alt falla de red o error 5xx
+      A--xS: error
+      Note over S: reintenta con espera 2 s, 4 s, 8 s (±20 %)<br/>si se agota, nada se marca y queda pendiente
+    else otro error HTTP (por ejemplo 400)
+      A--xS: error
+      Note over S: se informa el error, lo enviado sigue pendiente
+    else el servidor responde
+      A->>B: sync(ownerId, lote) en una transacción
+      loop por cada elemento
+        B->>P: findById(id)
+        alt existe y es de otro usuario, o su vaca no es del usuario
+          B-->>B: rejected[id] = motivo
+        else otra vaca con el mismo arete u otro registro el mismo día
+          B-->>B: rejected[id] = motivo
+        else nuevo, o updatedAt del celular es más reciente
+          B->>P: upsert por UUID (última escritura gana)
+          B-->>B: confirmed[entidad] += id
+        else versión más vieja que la guardada
+          B-->>B: confirmed[entidad] += id (no se sobrescribe)
+        end
+      end
+      B-->>A: { confirmed, rejected }
+      A-->>S: 200 con confirmed y rejected
+      S->>L: UPDATE … SET sync_pending = 0, sync_error = motivo<br/>WHERE id = ? AND updated_at = ?
+      Note over S,L: si la fila cambió mientras viajaba el lote,<br/>updated_at no coincide y sigue pendiente
+    end
+  end
+  S->>A: PUT /api/cows/{cowId}/photos/{photoId}/image<br/>(archivos de fotos ya confirmadas)
+  Note over A,P: Reenviar el mismo lote no duplica nada:<br/>el UUID es la clave primaria en ambos lados
