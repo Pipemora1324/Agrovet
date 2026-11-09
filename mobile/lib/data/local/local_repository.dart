@@ -17,7 +17,13 @@ DateTime parseDateKey(String value) {
 /// Repositorio local sobre la base cifrada. Todo cambio queda pendiente de sincronizar;
 /// en la sesión de demostración se marca isDemo y nunca se envía al servidor.
 class LocalRepository
-    implements CowRepository, RecordRepository, InferenceRepository, AlertRepository, PhotoRepository {
+    implements
+        CowRepository,
+        RecordRepository,
+        InferenceRepository,
+        AlertRepository,
+        PhotoRepository,
+        AssistantRepository {
   LocalRepository(this.db, {this.isDemo = false, DateTime Function()? clock}) : _now = clock ?? DateTime.now;
 
   final AppDatabase db;
@@ -344,6 +350,51 @@ class LocalRepository
         diagnosis: Diagnosis.fromCode(row.diagnosis),
         diagnosisNotes: row.diagnosisNotes,
         researchConsent: row.researchConsent,
+      );
+
+  // ---- Asistente ----
+
+  @override
+  Stream<List<AssistantMessage>> watchMessages(String cowId) =>
+      (db.select(db.assistantMessages)
+            ..where((m) => m.cowId.equals(cowId))
+            ..orderBy([(m) => OrderingTerm.asc(m.createdAt)]))
+          .watch()
+          .map((rows) => rows.map(_toMessage).toList());
+
+  @override
+  Future<List<AssistantMessage>> recentMessages(String cowId, int limit) async {
+    final rows = await (db.select(db.assistantMessages)
+          ..where((m) => m.cowId.equals(cowId))
+          ..orderBy([(m) => OrderingTerm.desc(m.createdAt)])
+          ..limit(limit))
+        .get();
+    return rows.reversed.map(_toMessage).toList();
+  }
+
+  @override
+  Future<void> saveMessage(AssistantMessage message) => db.into(db.assistantMessages).insert(
+        AssistantMessagesCompanion.insert(
+          id: message.id,
+          cowId: message.cowId,
+          fromUser: message.fromUser,
+          body: message.text,
+          withPhoto: Value(message.withPhoto),
+          createdAt: message.createdAt,
+        ),
+      );
+
+  @override
+  Future<void> clearMessages(String cowId) =>
+      (db.delete(db.assistantMessages)..where((m) => m.cowId.equals(cowId))).go();
+
+  AssistantMessage _toMessage(AssistantMessageRow row) => AssistantMessage(
+        id: row.id,
+        cowId: row.cowId,
+        fromUser: row.fromUser,
+        text: row.body,
+        createdAt: row.createdAt,
+        withPhoto: row.withPhoto,
       );
 
   CowAlert _toAlert(AlertRow row) => CowAlert(

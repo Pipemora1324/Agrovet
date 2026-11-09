@@ -305,6 +305,28 @@ class CowPhoto extends Equatable {
         diagnosis, diagnosisNotes, researchConsent];
 }
 
+/// Mensaje de la conversación con el asistente.
+class AssistantMessage extends Equatable {
+  const AssistantMessage({
+    required this.id,
+    required this.cowId,
+    required this.fromUser,
+    required this.text,
+    required this.createdAt,
+    this.withPhoto = false,
+  });
+
+  final String id;
+  final String cowId;
+  final bool fromUser;
+  final String text;
+  final DateTime createdAt;
+  final bool withPhoto;
+
+  @override
+  List<Object?> get props => [id, cowId, fromUser, text, createdAt, withPhoto];
+}
+
 enum VetConfirmation {
   yes('YES', 'Sí'),
   no('NO', 'No'),
