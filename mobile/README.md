@@ -62,6 +62,16 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
   "Permitir usar esta foto para investigación", apagado por defecto (ver `ml/README.md`).
 - La CNN no se usa en la app hasta tener un modelo validado.
 
+## Asistente
+
+- En la ficha de la vaca, **"Preguntar al asistente"** abre un chat sobre esa vaca. La app envía la
+  pregunta, el último semáforo y los síntomas de hoy, los últimos mensajes y, si se adjunta, una foto
+  sin metadatos. La clave del proveedor de IA nunca está en la app.
+- Aviso fijo en la pantalla: "Orientación de un asistente de IA, no es un diagnóstico".
+- La conversación se guarda solo en el celular (base cifrada); no se sincroniza.
+- Sin internet aparece un banner y consejos fijos: aislar a la vaca, higiene del ordeño y cuándo
+  llamar al veterinario (`lib/domain/assistant_tips.dart`).
+
 ## Cuenta
 
 - **Registro**: nombre, correo, contraseña y la casilla obligatoria de autorización de datos

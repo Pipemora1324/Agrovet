@@ -78,6 +78,10 @@ En GitHub Actions, `setup-java` crea ese archivo automáticamente. Dentro de Doc
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | Servidor de correo saliente. En el docker-compose, Mailpit por defecto. |
 | `SMTP_AUTH`, `SMTP_STARTTLS` | `true` con un proveedor real; `false` con Mailpit. |
 | `MAIL_FROM` | Remitente de los correos. Sin él la aplicación no arranca. |
+| `PHOTO_STORAGE_DIR` | Carpeta de las fotos (en el docker-compose, el volumen `photos`). |
+| `GEMINI_API_KEY` | Clave del asistente (Google AI Studio). Sin ella el asistente responde 503. Solo en el servidor. |
+| `ASSISTANT_PROVIDER`, `GEMINI_MODEL` | Proveedor (`gemini` o `disabled`) y modelo (`gemini-2.5-flash`). |
+| `ASSISTANT_MAX_PER_HOUR`, `ASSISTANT_MAX_PER_DAY` | Preguntas al asistente por usuario (20 por hora, 60 por día). |
 | `CODE_MAX_REQUESTS_PER_IP` | Solicitudes de código por IP en una hora (20 por defecto). |
 
 Para pasar a un servidor propio (VPS) solo cambian estas variables: el mismo código y las mismas
@@ -103,7 +107,9 @@ migraciones sirven para cualquier PostgreSQL 15.
 | GET / POST | `/api/cows` | Lista o crea vacas del usuario. |
 | GET / PUT / DELETE | `/api/cows/{id}` | Consulta, edita o da de baja (borrado lógico). |
 | GET | `/api/cows/{id}/history?from=&to=` | Registros, inferencias y alertas (60 días por defecto). |
-| POST | `/api/sync` | Lote de cambios del celular. |
+| POST | `/api/sync` | Lote de cambios del celular (incluye los datos de las fotos). |
+| PUT / GET | `/api/cows/{cowId}/photos/{photoId}/image` | Sube (multipart, campo `file`) o descarga el archivo de una foto; solo su dueño. |
+| POST | `/api/assistant/chat` | Pregunta al asistente de IA: orienta, no diagnostica. |
 
 ## Seguridad
 
@@ -144,6 +150,30 @@ migraciones sirven para cualquier PostgreSQL 15.
 - **Consultas** solo con métodos de Spring Data y JPQL con parámetros; nada concatenado.
 - **Aislamiento**: cada consulta filtra por el dueño. Una vaca ajena responde 404, igual que una
   inexistente. Las pruebas `CowIntegrationTest` y `SyncIntegrationTest` lo verifican.
+
+## Fotos
+
+- Los datos de cada foto llegan por `/api/sync` y el archivo se sube aparte. Límite de 5 MB y 6000 px
+  por lado; el tipo se decide por los primeros bytes (JPEG o PNG), no por el nombre ni por el
+  Content-Type. La imagen se vuelve a codificar como JPEG: no queda ningún metadato (EXIF con la
+  ubicación, XMP, comentarios).
+- Una foto ajena, borrada o de otra vaca responde 404. Borrar la foto o la cuenta borra el archivo.
+- Para investigación: `vet_confirmed`, `diagnosis` y `research_consent` (apagado por defecto, con la
+  fecha en que se dio). Ver `ml/README.md`.
+
+## Asistente
+
+- `POST /api/assistant/chat` recibe la pregunta, un contexto mínimo de la vaca (último semáforo, causa,
+  puntaje y síntomas), hasta 6 mensajes anteriores y, opcionalmente, una foto en Base64. La foto pasa
+  por el mismo control que las fotos de las vacas. No se envía el nombre ni el correo de la persona.
+- Proveedor configurable; el primero es Gemini (`GeminiClient`). La clave solo vive en el servidor y
+  viaja en una cabecera, nunca en la URL; no se registran preguntas ni respuestas.
+- Instrucciones fijas en español (`AssistantPrompt`): orientar y no diagnosticar, describir solo lo que
+  se ve en la foto, recomendar al veterinario ante signos graves, no indicar medicamentos, lenguaje
+  sencillo y respuestas cortas.
+- Límite por usuario (por hora y por día) y 503 si el proveedor no está configurado o falla. Las
+  pruebas usan un proveedor simulado; `GeminiClientTest` comprueba el formato de la petición contra un
+  servidor simulado.
 
 ## Sincronización
 

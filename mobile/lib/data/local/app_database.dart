@@ -128,12 +128,28 @@ class CowPhotos extends Table with SyncColumns {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Cows, DailyRecords, Inferences, Alerts, CowPhotos])
+/// Conversación con el asistente, por vaca. Solo vive en este celular (cifrada); no se sincroniza.
+@DataClassName('AssistantMessageRow')
+class AssistantMessages extends Table {
+  TextColumn get id => text()();
+  TextColumn get cowId => text().references(Cows, #id)();
+  BoolColumn get fromUser => boolean()();
+  TextColumn get body => text()();
+
+  /// La pregunta llevaba una foto (la foto no se guarda aquí).
+  BoolColumn get withPhoto => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [Cows, DailyRecords, Inferences, Alerts, CowPhotos, AssistantMessages])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -167,6 +183,9 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(cowPhotos, cowPhotos.diagnosis);
             await m.addColumn(cowPhotos, cowPhotos.diagnosisNotes);
             await m.addColumn(cowPhotos, cowPhotos.researchConsent);
+          }
+          if (from < 7) {
+            await m.createTable(assistantMessages);
           }
         },
         beforeOpen: (details) async {

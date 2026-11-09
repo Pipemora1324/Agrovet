@@ -17,10 +17,10 @@ class PhotoProcessorTest {
 
     @Test
     void imagesLargerThanTheLimitAreRejectedBeforeDecoding() throws Exception {
-        assertThatThrownBy(() -> processor.clean(PhotoIntegrationTest.image("png", 101, 10)))
+        assertThatThrownBy(() -> processor.clean(co.edu.ucc.agrovet.TestImages.image("png", 101, 10)))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("100 píxeles");
-        assertThat(processor.clean(PhotoIntegrationTest.image("png", 100, 100))).isNotEmpty();
+        assertThat(processor.clean(co.edu.ucc.agrovet.TestImages.image("png", 100, 100))).isNotEmpty();
     }
 
     @Test

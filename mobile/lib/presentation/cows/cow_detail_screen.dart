@@ -6,6 +6,7 @@ import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
+import '../assistant/assistant_screen.dart';
 import '../history/history_screen.dart';
 import '../photos/cow_photos_screen.dart';
 import '../records/daily_record_screen.dart';
@@ -294,6 +295,14 @@ class _Actions extends StatelessWidget {
             label: 'Evaluar riesgo',
             onPressed: () =>
                 Navigator.push(context, MaterialPageRoute(builder: (_) => RiskScreen(cow: cow))),
+          ),
+          const SizedBox(height: 12),
+          BigButton(
+            icon: Icons.smart_toy,
+            label: 'Preguntar al asistente',
+            outlined: true,
+            onPressed: () =>
+                Navigator.push(context, MaterialPageRoute(builder: (_) => AssistantScreen(cow: cow))),
           ),
           const SizedBox(height: 12),
           BigButton(

@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.edu.ucc.agrovet.IntegrationTest;
 import co.edu.ucc.agrovet.RecordingEmailSender;
+import co.edu.ucc.agrovet.TestImages;
 import co.edu.ucc.agrovet.TestUsers;
 import co.edu.ucc.agrovet.TestUsers.TestUser;
 
@@ -87,36 +88,9 @@ class PhotoIntegrationTest extends IntegrationTest {
         }).header("Authorization", user.bearer()));
     }
 
-    static byte[] image(String format, int width, int height) throws Exception {
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                image.setRGB(x, y, (x * 7 + y * 3) & 0xFFFFFF);
-            }
-        }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ImageIO.write(image, format, out);
-        return out.toByteArray();
-    }
-
-    /** Inserta un segmento EXIF con coordenadas GPS justo después del inicio del JPEG. */
-    static byte[] withGpsExif(byte[] jpeg) {
-        byte[] payload = "Exif\0\0GPSLatitude=1.2136;GPSLongitude=-77.2811".getBytes(StandardCharsets.ISO_8859_1);
-        int length = payload.length + 2;
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        out.write(jpeg, 0, 2);
-        out.write(0xFF);
-        out.write(0xE1);
-        out.write(length >> 8);
-        out.write(length & 0xFF);
-        out.write(payload, 0, payload.length);
-        out.write(jpeg, 2, jpeg.length - 2);
-        return out.toByteArray();
-    }
-
     @Test
     void uploadedPhotoLosesItsLocationAndOnlyTheOwnerCanSeeIt() throws Exception {
-        byte[] original = withGpsExif(image("jpg", 64, 48));
+        byte[] original = TestImages.withGpsExif(TestImages.image("jpg", 64, 48));
         assertThat(new String(original, StandardCharsets.ISO_8859_1)).contains("GPSLatitude");
 
         upload(ana, photoId, original, MediaType.IMAGE_JPEG_VALUE).andExpect(status().isNoContent());
@@ -134,7 +108,7 @@ class PhotoIntegrationTest extends IntegrationTest {
 
         // Otro usuario no la ve ni la puede reemplazar: igual que si no existiera
         mvc.perform(get(imageUrl(photoId)).header("Authorization", beto.bearer())).andExpect(status().isNotFound());
-        upload(beto, photoId, image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE).andExpect(status().isNotFound());
+        upload(beto, photoId, TestImages.image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE).andExpect(status().isNotFound());
         mvc.perform(get(imageUrl(photoId))).andExpect(status().isUnauthorized());
     }
 
@@ -149,7 +123,7 @@ class PhotoIntegrationTest extends IntegrationTest {
         upload(ana, photoId, broken, MediaType.IMAGE_JPEG_VALUE).andExpect(status().isBadRequest());
 
         // Un PNG verdadero se acepta y se guarda como JPEG
-        upload(ana, photoId, image("png", 20, 10), MediaType.APPLICATION_OCTET_STREAM_VALUE)
+        upload(ana, photoId, TestImages.image("png", 20, 10), MediaType.APPLICATION_OCTET_STREAM_VALUE)
                 .andExpect(status().isNoContent());
         byte[] stored = mvc.perform(get(imageUrl(photoId)).header("Authorization", ana.bearer()))
                 .andReturn().getResponse().getContentAsByteArray();
@@ -168,10 +142,10 @@ class PhotoIntegrationTest extends IntegrationTest {
 
     @Test
     void photoOfUnknownOrDeletedRecordIsNotFound() throws Exception {
-        upload(ana, UUID.randomUUID(), image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE)
+        upload(ana, UUID.randomUUID(), TestImages.image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE)
                 .andExpect(status().isNotFound());
 
-        upload(ana, photoId, image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE).andExpect(status().isNoContent());
+        upload(ana, photoId, TestImages.image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE).andExpect(status().isNoContent());
         Path file = properties.storageDir().resolve(photoId + ".jpg");
         assertThat(Files.exists(file)).isTrue();
 
@@ -207,7 +181,7 @@ class PhotoIntegrationTest extends IntegrationTest {
 
     @Test
     void deletingTheAccountDeletesThePhotoFiles() throws Exception {
-        upload(ana, photoId, image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE).andExpect(status().isNoContent());
+        upload(ana, photoId, TestImages.image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE).andExpect(status().isNoContent());
         Path file = properties.storageDir().resolve(photoId + ".jpg");
         assertThat(Files.exists(file)).isTrue();
 

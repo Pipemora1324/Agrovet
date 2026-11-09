@@ -4337,6 +4337,422 @@ class CowPhotosCompanion extends UpdateCompanion<CowPhotoRow> {
   }
 }
 
+class $AssistantMessagesTable extends AssistantMessages
+    with TableInfo<$AssistantMessagesTable, AssistantMessageRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AssistantMessagesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cowIdMeta = const VerificationMeta('cowId');
+  @override
+  late final GeneratedColumn<String> cowId = GeneratedColumn<String>(
+    'cow_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES cows (id)',
+    ),
+  );
+  static const VerificationMeta _fromUserMeta = const VerificationMeta(
+    'fromUser',
+  );
+  @override
+  late final GeneratedColumn<bool> fromUser = GeneratedColumn<bool>(
+    'from_user',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("from_user" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _withPhotoMeta = const VerificationMeta(
+    'withPhoto',
+  );
+  @override
+  late final GeneratedColumn<bool> withPhoto = GeneratedColumn<bool>(
+    'with_photo',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("with_photo" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    cowId,
+    fromUser,
+    body,
+    withPhoto,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'assistant_messages';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AssistantMessageRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('cow_id')) {
+      context.handle(
+        _cowIdMeta,
+        cowId.isAcceptableOrUnknown(data['cow_id']!, _cowIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cowIdMeta);
+    }
+    if (data.containsKey('from_user')) {
+      context.handle(
+        _fromUserMeta,
+        fromUser.isAcceptableOrUnknown(data['from_user']!, _fromUserMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fromUserMeta);
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['body']!, _bodyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('with_photo')) {
+      context.handle(
+        _withPhotoMeta,
+        withPhoto.isAcceptableOrUnknown(data['with_photo']!, _withPhotoMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AssistantMessageRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AssistantMessageRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      cowId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cow_id'],
+      )!,
+      fromUser: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}from_user'],
+      )!,
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body'],
+      )!,
+      withPhoto: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}with_photo'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AssistantMessagesTable createAlias(String alias) {
+    return $AssistantMessagesTable(attachedDatabase, alias);
+  }
+}
+
+class AssistantMessageRow extends DataClass
+    implements Insertable<AssistantMessageRow> {
+  final String id;
+  final String cowId;
+  final bool fromUser;
+  final String body;
+
+  /// La pregunta llevaba una foto (la foto no se guarda aquí).
+  final bool withPhoto;
+  final DateTime createdAt;
+  const AssistantMessageRow({
+    required this.id,
+    required this.cowId,
+    required this.fromUser,
+    required this.body,
+    required this.withPhoto,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['cow_id'] = Variable<String>(cowId);
+    map['from_user'] = Variable<bool>(fromUser);
+    map['body'] = Variable<String>(body);
+    map['with_photo'] = Variable<bool>(withPhoto);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  AssistantMessagesCompanion toCompanion(bool nullToAbsent) {
+    return AssistantMessagesCompanion(
+      id: Value(id),
+      cowId: Value(cowId),
+      fromUser: Value(fromUser),
+      body: Value(body),
+      withPhoto: Value(withPhoto),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory AssistantMessageRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AssistantMessageRow(
+      id: serializer.fromJson<String>(json['id']),
+      cowId: serializer.fromJson<String>(json['cowId']),
+      fromUser: serializer.fromJson<bool>(json['fromUser']),
+      body: serializer.fromJson<String>(json['body']),
+      withPhoto: serializer.fromJson<bool>(json['withPhoto']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'cowId': serializer.toJson<String>(cowId),
+      'fromUser': serializer.toJson<bool>(fromUser),
+      'body': serializer.toJson<String>(body),
+      'withPhoto': serializer.toJson<bool>(withPhoto),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  AssistantMessageRow copyWith({
+    String? id,
+    String? cowId,
+    bool? fromUser,
+    String? body,
+    bool? withPhoto,
+    DateTime? createdAt,
+  }) => AssistantMessageRow(
+    id: id ?? this.id,
+    cowId: cowId ?? this.cowId,
+    fromUser: fromUser ?? this.fromUser,
+    body: body ?? this.body,
+    withPhoto: withPhoto ?? this.withPhoto,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  AssistantMessageRow copyWithCompanion(AssistantMessagesCompanion data) {
+    return AssistantMessageRow(
+      id: data.id.present ? data.id.value : this.id,
+      cowId: data.cowId.present ? data.cowId.value : this.cowId,
+      fromUser: data.fromUser.present ? data.fromUser.value : this.fromUser,
+      body: data.body.present ? data.body.value : this.body,
+      withPhoto: data.withPhoto.present ? data.withPhoto.value : this.withPhoto,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AssistantMessageRow(')
+          ..write('id: $id, ')
+          ..write('cowId: $cowId, ')
+          ..write('fromUser: $fromUser, ')
+          ..write('body: $body, ')
+          ..write('withPhoto: $withPhoto, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, cowId, fromUser, body, withPhoto, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AssistantMessageRow &&
+          other.id == this.id &&
+          other.cowId == this.cowId &&
+          other.fromUser == this.fromUser &&
+          other.body == this.body &&
+          other.withPhoto == this.withPhoto &&
+          other.createdAt == this.createdAt);
+}
+
+class AssistantMessagesCompanion extends UpdateCompanion<AssistantMessageRow> {
+  final Value<String> id;
+  final Value<String> cowId;
+  final Value<bool> fromUser;
+  final Value<String> body;
+  final Value<bool> withPhoto;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const AssistantMessagesCompanion({
+    this.id = const Value.absent(),
+    this.cowId = const Value.absent(),
+    this.fromUser = const Value.absent(),
+    this.body = const Value.absent(),
+    this.withPhoto = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AssistantMessagesCompanion.insert({
+    required String id,
+    required String cowId,
+    required bool fromUser,
+    required String body,
+    this.withPhoto = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       cowId = Value(cowId),
+       fromUser = Value(fromUser),
+       body = Value(body),
+       createdAt = Value(createdAt);
+  static Insertable<AssistantMessageRow> custom({
+    Expression<String>? id,
+    Expression<String>? cowId,
+    Expression<bool>? fromUser,
+    Expression<String>? body,
+    Expression<bool>? withPhoto,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (cowId != null) 'cow_id': cowId,
+      if (fromUser != null) 'from_user': fromUser,
+      if (body != null) 'body': body,
+      if (withPhoto != null) 'with_photo': withPhoto,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AssistantMessagesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? cowId,
+    Value<bool>? fromUser,
+    Value<String>? body,
+    Value<bool>? withPhoto,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return AssistantMessagesCompanion(
+      id: id ?? this.id,
+      cowId: cowId ?? this.cowId,
+      fromUser: fromUser ?? this.fromUser,
+      body: body ?? this.body,
+      withPhoto: withPhoto ?? this.withPhoto,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (cowId.present) {
+      map['cow_id'] = Variable<String>(cowId.value);
+    }
+    if (fromUser.present) {
+      map['from_user'] = Variable<bool>(fromUser.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (withPhoto.present) {
+      map['with_photo'] = Variable<bool>(withPhoto.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AssistantMessagesCompanion(')
+          ..write('id: $id, ')
+          ..write('cowId: $cowId, ')
+          ..write('fromUser: $fromUser, ')
+          ..write('body: $body, ')
+          ..write('withPhoto: $withPhoto, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4345,6 +4761,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $InferencesTable inferences = $InferencesTable(this);
   late final $AlertsTable alerts = $AlertsTable(this);
   late final $CowPhotosTable cowPhotos = $CowPhotosTable(this);
+  late final $AssistantMessagesTable assistantMessages =
+      $AssistantMessagesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4355,6 +4773,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     inferences,
     alerts,
     cowPhotos,
+    assistantMessages,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -4464,6 +4883,27 @@ final class $$CowsTableReferences
     ).filter((f) => f.cowId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_cowPhotosRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$AssistantMessagesTable, List<AssistantMessageRow>>
+  _assistantMessagesRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.assistantMessages,
+        aliasName: 'cows__id__assistant_messages__cow_id',
+      );
+
+  $$AssistantMessagesTableProcessedTableManager get assistantMessagesRefs {
+    final manager = $$AssistantMessagesTableTableManager(
+      $_db,
+      $_db.assistantMessages,
+    ).filter((f) => f.cowId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _assistantMessagesRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4629,6 +5069,31 @@ class $$CowsTableFilterComposer extends Composer<_$AppDatabase, $CowsTable> {
           }) => $$CowPhotosTableFilterComposer(
             $db: $db,
             $table: $db.cowPhotos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> assistantMessagesRefs(
+    Expression<bool> Function($$AssistantMessagesTableFilterComposer f) f,
+  ) {
+    final $$AssistantMessagesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.assistantMessages,
+      getReferencedColumn: (t) => t.cowId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssistantMessagesTableFilterComposer(
+            $db: $db,
+            $table: $db.assistantMessages,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4856,6 +5321,32 @@ class $$CowsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> assistantMessagesRefs<T extends Object>(
+    Expression<T> Function($$AssistantMessagesTableAnnotationComposer a) f,
+  ) {
+    final $$AssistantMessagesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.assistantMessages,
+          getReferencedColumn: (t) => t.cowId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$AssistantMessagesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.assistantMessages,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$CowsTableTableManager
@@ -4876,6 +5367,7 @@ class $$CowsTableTableManager
             bool inferencesRefs,
             bool alertsRefs,
             bool cowPhotosRefs,
+            bool assistantMessagesRefs,
           })
         > {
   $$CowsTableTableManager(_$AppDatabase db, $CowsTable table)
@@ -4963,6 +5455,7 @@ class $$CowsTableTableManager
                 inferencesRefs = false,
                 alertsRefs = false,
                 cowPhotosRefs = false,
+                assistantMessagesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -4971,6 +5464,7 @@ class $$CowsTableTableManager
                     if (inferencesRefs) db.inferences,
                     if (alertsRefs) db.alerts,
                     if (cowPhotosRefs) db.cowPhotos,
+                    if (assistantMessagesRefs) db.assistantMessages,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -5048,6 +5542,25 @@ class $$CowsTableTableManager
                           referencedColumn: 'cow_id',
                           typedResults: items,
                         ),
+                      if (assistantMessagesRefs)
+                        await $_getPrefetchedDataByColumns<
+                          CowRow,
+                          $CowsTable,
+                          AssistantMessageRow,
+                          $AssistantMessagesTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CowsTableReferences
+                              ._assistantMessagesRefsTable(db),
+                          managerFromTypedResult: (p0) => $$CowsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).assistantMessagesRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'cow_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -5073,6 +5586,7 @@ typedef $$CowsTableProcessedTableManager =
         bool inferencesRefs,
         bool alertsRefs,
         bool cowPhotosRefs,
+        bool assistantMessagesRefs,
       })
     >;
 typedef $$DailyRecordsTableCreateCompanionBuilder =
@@ -7318,6 +7832,356 @@ typedef $$CowPhotosTableProcessedTableManager =
       CowPhotoRow,
       PrefetchHooks Function({bool cowId})
     >;
+typedef $$AssistantMessagesTableCreateCompanionBuilder =
+    AssistantMessagesCompanion Function({
+      required String id,
+      required String cowId,
+      required bool fromUser,
+      required String body,
+      Value<bool> withPhoto,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$AssistantMessagesTableUpdateCompanionBuilder =
+    AssistantMessagesCompanion Function({
+      Value<String> id,
+      Value<String> cowId,
+      Value<bool> fromUser,
+      Value<String> body,
+      Value<bool> withPhoto,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$AssistantMessagesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $AssistantMessagesTable,
+          AssistantMessageRow
+        > {
+  $$AssistantMessagesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CowsTable _cowIdTable(_$AppDatabase db) =>
+      db.cows.createAlias('assistant_messages__cow_id__cows__id');
+
+  $$CowsTableProcessedTableManager get cowId {
+    final $_column = $_itemColumn<String>('cow_id')!;
+
+    final manager = $$CowsTableTableManager(
+      $_db,
+      $_db.cows,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_cowIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$AssistantMessagesTableFilterComposer
+    extends Composer<_$AppDatabase, $AssistantMessagesTable> {
+  $$AssistantMessagesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get fromUser => $composableBuilder(
+    column: $table.fromUser,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get withPhoto => $composableBuilder(
+    column: $table.withPhoto,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CowsTableFilterComposer get cowId {
+    final $$CowsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cowId,
+      referencedTable: $db.cows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CowsTableFilterComposer(
+            $db: $db,
+            $table: $db.cows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AssistantMessagesTableOrderingComposer
+    extends Composer<_$AppDatabase, $AssistantMessagesTable> {
+  $$AssistantMessagesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get fromUser => $composableBuilder(
+    column: $table.fromUser,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get withPhoto => $composableBuilder(
+    column: $table.withPhoto,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CowsTableOrderingComposer get cowId {
+    final $$CowsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cowId,
+      referencedTable: $db.cows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CowsTableOrderingComposer(
+            $db: $db,
+            $table: $db.cows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AssistantMessagesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AssistantMessagesTable> {
+  $$AssistantMessagesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<bool> get fromUser =>
+      $composableBuilder(column: $table.fromUser, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<bool> get withPhoto =>
+      $composableBuilder(column: $table.withPhoto, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$CowsTableAnnotationComposer get cowId {
+    final $$CowsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cowId,
+      referencedTable: $db.cows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CowsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.cows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AssistantMessagesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AssistantMessagesTable,
+          AssistantMessageRow,
+          $$AssistantMessagesTableFilterComposer,
+          $$AssistantMessagesTableOrderingComposer,
+          $$AssistantMessagesTableAnnotationComposer,
+          $$AssistantMessagesTableCreateCompanionBuilder,
+          $$AssistantMessagesTableUpdateCompanionBuilder,
+          (AssistantMessageRow, $$AssistantMessagesTableReferences),
+          AssistantMessageRow,
+          PrefetchHooks Function({bool cowId})
+        > {
+  $$AssistantMessagesTableTableManager(
+    _$AppDatabase db,
+    $AssistantMessagesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AssistantMessagesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AssistantMessagesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AssistantMessagesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> cowId = const Value.absent(),
+                Value<bool> fromUser = const Value.absent(),
+                Value<String> body = const Value.absent(),
+                Value<bool> withPhoto = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AssistantMessagesCompanion(
+                id: id,
+                cowId: cowId,
+                fromUser: fromUser,
+                body: body,
+                withPhoto: withPhoto,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String cowId,
+                required bool fromUser,
+                required String body,
+                Value<bool> withPhoto = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => AssistantMessagesCompanion.insert(
+                id: id,
+                cowId: cowId,
+                fromUser: fromUser,
+                body: body,
+                withPhoto: withPhoto,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AssistantMessagesTable, AssistantMessageRow>(
+                    table,
+                  ),
+                  $$AssistantMessagesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({cowId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (cowId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.cowId,
+                        referencedTable: $$AssistantMessagesTableReferences
+                            ._cowIdTable(db),
+                        referencedColumn: $$AssistantMessagesTableReferences
+                            ._cowIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$AssistantMessagesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AssistantMessagesTable,
+      AssistantMessageRow,
+      $$AssistantMessagesTableFilterComposer,
+      $$AssistantMessagesTableOrderingComposer,
+      $$AssistantMessagesTableAnnotationComposer,
+      $$AssistantMessagesTableCreateCompanionBuilder,
+      $$AssistantMessagesTableUpdateCompanionBuilder,
+      (AssistantMessageRow, $$AssistantMessagesTableReferences),
+      AssistantMessageRow,
+      PrefetchHooks Function({bool cowId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7331,4 +8195,6 @@ class $AppDatabaseManager {
       $$AlertsTableTableManager(_db, _db.alerts);
   $$CowPhotosTableTableManager get cowPhotos =>
       $$CowPhotosTableTableManager(_db, _db.cowPhotos);
+  $$AssistantMessagesTableTableManager get assistantMessages =>
+      $$AssistantMessagesTableTableManager(_db, _db.assistantMessages);
 }
