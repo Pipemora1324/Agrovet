@@ -17,14 +17,19 @@ suele haber señales sutiles: sube un poco la temperatura, baja la leche y la va
 
 ## Qué hace
 
-- El ganadero registra a diario, desde el celular, temperatura (°C), leche (L) y alimento (kg) de cada vaca.
-- Un modelo **LSTM** analiza los últimos 14 días y estima la probabilidad de que aparezcan
-  síntomas clínicos de mastitis en los próximos 1 a 5 días.
-- El resultado se muestra como **semáforo**: verde (sano), amarillo (alerta temprana), rojo (alto riesgo),
-  con una recomendación básica.
-- Todo funciona **sin internet**: el modelo corre en el celular y los datos se guardan localmente.
-  Cuando hay conexión, se sincronizan con el servidor.
-- Más adelante: triaje visual de la ubre con una foto (CNN MobileNetV2), cuando haya imágenes reales.
+- **Cuenta segura**: registro con verificación del correo (código de 6 números), recuperación de
+  contraseña, perfil editable, eliminación de la cuenta con todos sus datos y aviso de privacidad
+  (Ley 1581 de 2012).
+- **Registro diario flexible**: dos preguntas simples (¿comió normal?, ¿dio menos leche?), cinco signos
+  de la ubre y, si se toman, temperatura (°C), leche (L) y alimento (kg).
+- **Semáforo**: verde (sin señales), amarillo (alerta temprana) o rojo (alto riesgo). Es el más grave
+  entre un **puntaje por síntomas** (reglas provisionales, a validar con un veterinario) y un modelo
+  **LSTM** que analiza los últimos 14 días; la pantalla dice cuál lo indicó.
+- **Fotos** de la ubre por vaca, sin ubicación, con permiso expreso opcional para investigación.
+- **Asistente con IA** por vaca: orienta, no diagnostica; sin internet muestra consejos fijos.
+- Todo lo esencial funciona **sin internet**: el modelo corre en el celular y los datos se guardan
+  cifrados. Cuando hay conexión, se sincronizan con el servidor.
+- Pendiente: triaje visual con una CNN (MobileNetV2), cuando haya fotos reales confirmadas.
 
 ## Arquitectura
 
@@ -78,18 +83,27 @@ python src/export_test_vectors.py
 
 ```bash
 cd backend
-cp .env.example .env            # y definir JWT_SECRET
+cp .env.example .env            # y definir JWT_SECRET (y GEMINI_API_KEY para el asistente)
 docker compose up -d
 ```
 
-Documentación de la API en `http://localhost:8080/swagger-ui.html`.
+Documentación de la API en `http://localhost:8080/swagger-ui.html`; los correos de prueba (códigos de
+verificación) llegan a Mailpit en `http://localhost:8025`.
 
 **Aplicación (mobile/)**: requiere Flutter y un dispositivo o emulador Android (API 24+).
 
 ```bash
 cd mobile
 flutter pub get
-flutter run
+flutter run                     # emulador: usa http://10.0.2.2:8080
+```
+
+En un celular o tableta por USB, con el backend corriendo en el equipo:
+
+```bash
+adb reverse tcp:8080 tcp:8080
+adb reverse tcp:8025 tcp:8025   # para abrir Mailpit desde el celular
+flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 ```
 
 ## Sobre los datos
