@@ -159,7 +159,7 @@ class _DailyRecordView extends StatelessWidget {
                                       ),
                                     RecordStep.udder => _Question<UdderAnswer>(
                                         icon: Icons.visibility,
-                                        question: '¿Cómo ves la ubre y la leche?',
+                                        question: '¿Cómo ve la ubre y la leche?',
                                         selected: state.answers.udder,
                                         options: const [
                                           _Option(UdderAnswer.normal, 'Todo normal', Icons.check_circle),
@@ -400,10 +400,16 @@ class _SummaryState extends State<_Summary> {
     final state = widget.state;
     final estimate = state.estimate;
     final baselines = state.baselines!;
+    // Agrupado por fuente: "valores de referencia (temperatura, leche y alimento)" en vez de repetirla
+    final bySource = <String, List<String>>{};
+    void fallback(String value, BaselineKind kind) {
+      if (kind != BaselineKind.average) bySource.putIfAbsent(kind.label, () => []).add(value);
+    }
+    fallback('temperatura', baselines.temperature.kind);
+    if (state.milking) fallback('leche', baselines.milk.kind);
+    fallback('alimento', baselines.feed.kind);
     final fallbacks = [
-      if (baselines.temperature.kind != BaselineKind.average) 'temperatura: ${baselines.temperature.kind.label}',
-      if (state.milking && baselines.milk.kind != BaselineKind.average) 'leche: ${baselines.milk.kind.label}',
-      if (baselines.feed.kind != BaselineKind.average) 'alimento: ${baselines.feed.kind.label}',
+      for (final MapEntry(key: source, value: values) in bySource.entries) '$source (${joinSpanish(values)})',
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -444,7 +450,8 @@ class _SummaryState extends State<_Summary> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Esta vaca todavía no tiene historial suficiente; para estimar se usó ${fallbacks.join('; ')}.',
+                    'Esta vaca todavía no tiene historial suficiente; para estimar se usaron '
+                    '${joinSpanish(fallbacks)}.',
                     style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.warningText),
                   ),
                 ),

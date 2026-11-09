@@ -66,7 +66,7 @@ void main() {
     await choose(tester, 'Un poco menos');
     expect(find.text('Al tocarla, ¿cómo siente el cuerpo?'), findsOneWidget);
     await choose(tester, 'Caliente');
-    expect(find.text('¿Cómo ves la ubre y la leche?'), findsOneWidget);
+    expect(find.text('¿Cómo ve la ubre y la leche?'), findsOneWidget);
     await choose(tester, 'Ubre caliente, dura o hinchada');
 
     // Pantalla final: sin historial se usan los valores de referencia y se dice
@@ -75,7 +75,11 @@ void main() {
     expect(find.text('Leche: 11,7 L'), findsOneWidget);
     expect(find.text('Alimento: 9,4 kg'), findsOneWidget);
     expect(find.text('estimado'), findsNWidgets(3));
-    expect(find.textContaining('valores de referencia'), findsOneWidget);
+    // La fuente se nombra una sola vez, no una por variable
+    expect(
+      find.textContaining('se usaron valores de referencia (temperatura, leche y alimento).'),
+      findsOneWidget,
+    );
     expect(find.text(RiskAdvice.disclaimer), findsOneWidget);
 
     // Con termómetro, la medida exacta reemplaza a la estimada

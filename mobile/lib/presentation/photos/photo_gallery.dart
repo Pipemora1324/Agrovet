@@ -32,7 +32,7 @@ class PhotoGallery extends StatelessWidget {
           itemBuilder: (context, index) {
             final photo = photos[index];
             return Semantics(
-              label: 'Foto del ${formatDay(photo.takenOn)}',
+              label: 'Foto: ${formatDay(photo.takenOn).toLowerCase()}',
               button: true,
               child: InkWell(
                 borderRadius: BorderRadius.circular(AppRadius.small),
