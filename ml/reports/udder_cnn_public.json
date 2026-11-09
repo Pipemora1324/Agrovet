@@ -1,0 +1,311 @@
+{
+  "warning": "Etiquetas del autor del dataset público, sin confirmación veterinaria. Las métricas miden concordancia con esas etiquetas, no capacidad diagnóstica.",
+  "source": {
+    "name": "Mastitis v1 (Roboflow Universe, yield-a2yrd/mastitis-zmser)",
+    "url": "https://universe.roboflow.com/yield-a2yrd/mastitis-zmser",
+    "license": "CC BY 4.0",
+    "labels": "del autor del dataset, sin confirmación veterinaria"
+  },
+  "preprocessing": {
+    "crop_margin": 0.1,
+    "min_crop_side_px": 96,
+    "pad": "cuadrado, relleno negro",
+    "input_size": 224
+  },
+  "model": "MobileNetV2 alpha 0.35 (ImageNet), cabeza GAP + Dropout 0.3 + Dense sigmoide; fase 1 cabeza lr 1e-3, fase 2 ajuste fino de las últimas 30 capas lr 1e-5; pesos de clase balanceados; parada temprana (val_loss, paciencia 5)",
+  "validation": "StratifiedGroupKFold 5x5 por vaca; parada temprana con un sexto de los grupos de entrenamiento; umbral 0.5",
+  "dataset": {
+    "images_total": 124,
+    "images_used": 117,
+    "dropped_short_side_lt_96px": [
+      "15.jpg",
+      "19.jpg",
+      "4.jpg",
+      "6.jpg",
+      "IMG_3053-Copy-2-Copy.jpg",
+      "img-2-.jpg",
+      "img-3-.jpg"
+    ],
+    "healthy": 56,
+    "mastitis": 61,
+    "groups": 71,
+    "multi_image_groups": 28,
+    "images_in_multi_image_groups": 74,
+    "groups_with_mixed_label": 2,
+    "series_counts": {
+      "N": {
+        "healthy": 0,
+        "mastitis": 30
+      },
+      "img-N": {
+        "healthy": 54,
+        "mastitis": 31
+      },
+      "otro": {
+        "healthy": 2,
+        "mastitis": 0
+      }
+    }
+  },
+  "experiments": {
+    "main": {
+      "pooled_mean_probability": {
+        "n_images": 117,
+        "n_groups": 71,
+        "threshold": 0.5,
+        "sensitivity": 0.7704918032786885,
+        "sensitivity_ci95": [
+          0.65086594876416,
+          0.8580676964712871
+        ],
+        "specificity": 0.8928571428571429,
+        "specificity_ci95": [
+          0.7853155482892853,
+          0.9499606442888293
+        ],
+        "balanced_accuracy": 0.8316744730679158,
+        "auc": 0.8659250585480093,
+        "auc_ci95_group_bootstrap": [
+          0.7635132640796704,
+          0.9599697763596978
+        ],
+        "confusion": {
+          "tn": 50,
+          "fp": 6,
+          "fn": 14,
+          "tp": 47
+        }
+      },
+      "across_repeats": {
+        "auc": {
+          "mean": 0.8539227166276346,
+          "sd": 0.013939775703523562,
+          "min": 0.8404566744730678,
+          "max": 0.8767564402810304
+        },
+        "sensitivity": {
+          "mean": 0.7508196721311475,
+          "sd": 0.03153341649454317,
+          "min": 0.7049180327868853,
+          "max": 0.7868852459016393
+        },
+        "specificity": {
+          "mean": 0.8535714285714286,
+          "sd": 0.03194382824999698,
+          "min": 0.8392857142857143,
+          "max": 0.9107142857142857
+        },
+        "balanced_accuracy": {
+          "mean": 0.8021955503512881,
+          "sd": 0.028735086241268786,
+          "min": 0.7721018735362998,
+          "max": 0.8487997658079625
+        }
+      },
+      "repeats_completed": 5,
+      "epochs_head_median": 22.0,
+      "epochs_fine_tune_median": 12.0,
+      "restricted_to_series": {
+        "img-N": {
+          "n_images": 85,
+          "n_groups": 44,
+          "threshold": 0.5,
+          "sensitivity": 0.5806451612903226,
+          "sensitivity_ci95": [
+            0.4076626249536972,
+            0.7358445693268778
+          ],
+          "specificity": 0.8888888888888888,
+          "specificity_ci95": [
+            0.7780529897881872,
+            0.9480697750300044
+          ],
+          "balanced_accuracy": 0.7347670250896057,
+          "auc": 0.7580645161290323,
+          "auc_ci95_group_bootstrap": [
+            0.5796209248132326,
+            0.9220102754373528
+          ],
+          "confusion": {
+            "tn": 48,
+            "fp": 6,
+            "fn": 13,
+            "tp": 18
+          }
+        }
+      },
+      "series_N_all_mastitis_sensitivity": {
+        "detected": 29,
+        "total": 30,
+        "ci95": [
+          0.8332960900859082,
+          0.9940914096183874
+        ]
+      }
+    },
+    "img_n": {
+      "pooled_mean_probability": {
+        "n_images": 85,
+        "n_groups": 44,
+        "threshold": 0.5,
+        "sensitivity": 0.5483870967741935,
+        "sensitivity_ci95": [
+          0.37772167637354503,
+          0.7083826401947998
+        ],
+        "specificity": 0.9074074074074074,
+        "specificity_ci95": [
+          0.8009011740903732,
+          0.9597988652429706
+        ],
+        "balanced_accuracy": 0.7278972520908005,
+        "auc": 0.8112305854241338,
+        "auc_ci95_group_bootstrap": [
+          0.6531191222570532,
+          0.9372848316011285
+        ],
+        "confusion": {
+          "tn": 49,
+          "fp": 5,
+          "fn": 14,
+          "tp": 17
+        }
+      },
+      "across_repeats": {
+        "auc": {
+          "mean": 0.7775388291517323,
+          "sd": 0.03010242982778733,
+          "min": 0.7275985663082438,
+          "max": 0.8058542413381122
+        },
+        "sensitivity": {
+          "mean": 0.5741935483870968,
+          "sd": 0.08032193289024991,
+          "min": 0.5161290322580645,
+          "max": 0.7096774193548387
+        },
+        "specificity": {
+          "mean": 0.8666666666666666,
+          "sd": 0.05138680342782076,
+          "min": 0.7777777777777778,
+          "max": 0.9074074074074074
+        },
+        "balanced_accuracy": {
+          "mean": 0.7204301075268816,
+          "sd": 0.023252453174013168,
+          "min": 0.6932497013142174,
+          "max": 0.744026284348865
+        }
+      },
+      "repeats_completed": 5,
+      "epochs_head_median": 26.0,
+      "epochs_fine_tune_median": 16.0
+    },
+    "background": {
+      "pooled_mean_probability": {
+        "n_images": 117,
+        "n_groups": 71,
+        "threshold": 0.5,
+        "sensitivity": 0.7377049180327869,
+        "sensitivity_ci95": [
+          0.6156325821638563,
+          0.8316121363763852
+        ],
+        "specificity": 0.6964285714285714,
+        "specificity_ci95": [
+          0.5666413471427517,
+          0.8009967491463056
+        ],
+        "balanced_accuracy": 0.7170667447306791,
+        "auc": 0.75,
+        "auc_ci95_group_bootstrap": [
+          0.6223566326812555,
+          0.8681361607142858
+        ],
+        "confusion": {
+          "tn": 39,
+          "fp": 17,
+          "fn": 16,
+          "tp": 45
+        }
+      },
+      "across_repeats": {
+        "auc": {
+          "mean": 0.7193208430913349,
+          "sd": 0.04358160995222896,
+          "min": 0.6607142857142857,
+          "max": 0.7628805620608898
+        },
+        "sensitivity": {
+          "mean": 0.718032786885246,
+          "sd": 0.021374434115418544,
+          "min": 0.6885245901639344,
+          "max": 0.7377049180327869
+        },
+        "specificity": {
+          "mean": 0.5928571428571429,
+          "sd": 0.05841224012070046,
+          "min": 0.5357142857142857,
+          "max": 0.6607142857142857
+        },
+        "balanced_accuracy": {
+          "mean": 0.6554449648711944,
+          "sd": 0.035081050434283625,
+          "min": 0.6121194379391101,
+          "max": 0.6992096018735363
+        }
+      },
+      "repeats_completed": 5,
+      "epochs_head_median": 15.0,
+      "epochs_fine_tune_median": 11.0
+    }
+  },
+  "export": {
+    "exported": "float16",
+    "tolerance": 0.03,
+    "bytes": 870056,
+    "real_crops_max_abs_diff": 0.024033933877944946,
+    "real_crops_mean_abs_diff": 0.006411462194389767,
+    "real_crops_same_decision": 0.9829059829059829,
+    "flipped_keras_vs_tflite": [
+      [
+        0.496,
+        0.509
+      ],
+      [
+        0.4963,
+        0.5076
+      ]
+    ],
+    "patterns_max_abs_diff": 0.008164271712303162,
+    "other_variants": {
+      "float32": {
+        "bytes": 1618508,
+        "real_crops_max_abs_diff": 5.125999450683594e-06,
+        "real_crops_mean_abs_diff": 1.4650898102002266e-06,
+        "real_crops_same_decision": 1.0,
+        "flipped_keras_vs_tflite": []
+      },
+      "int8": {
+        "bytes": 568080,
+        "real_crops_max_abs_diff": 0.09070712327957153,
+        "real_crops_mean_abs_diff": 0.0234301455764689,
+        "real_crops_same_decision": 0.9743589743589743,
+        "flipped_keras_vs_tflite": [
+          [
+            0.5198,
+            0.4806
+          ],
+          [
+            0.5456,
+            0.4549
+          ],
+          [
+            0.5207,
+            0.461
+          ]
+        ]
+      }
+    }
+  }
+}
