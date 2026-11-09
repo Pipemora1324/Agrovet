@@ -5,6 +5,7 @@
 // La prueba de cuenta real lee el código de verificación en Mailpit. En el emulador Mailpit está en
 // 10.0.2.2:8025; en un celular por USB, `adb reverse tcp:8025 tcp:8025` y
 // --dart-define=MAILPIT_URL=http://localhost:8025.
+import 'package:agrovet/core/theme.dart';
 import 'package:agrovet/main.dart' as app;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +32,8 @@ Future<String> mailpitCode(String email) async {
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  // Las animaciones que se repiten hacen un solo ciclo, para que pumpAndSettle termine
+  AppMotion.ambient = false;
   var surfaceConverted = false;
   // El binding revierte la conversión de la superficie al terminar cada prueba
   setUp(() => surfaceConverted = false);
@@ -209,8 +212,8 @@ void main() {
     // EMAIL_SINCRONIZADO lo lee la verificación hecha desde el equipo contra PostgreSQL
     debugPrint('EMAIL_SINCRONIZADO=$email');
 
-    // Cerrar sesión ahora está en "Mi perfil"
-    await tester.tap(find.byTooltip('Mi perfil'));
+    // Cerrar sesión está en la pestaña "Perfil"
+    await tester.tap(find.text('Perfil'));
     await settle(tester);
     await reveal(tester, find.text('Cerrar sesión'));
     await tester.tap(find.text('Cerrar sesión'));
@@ -248,7 +251,7 @@ void main() {
     expect(find.text('Todo respaldado'), findsOneWidget);
     await back(tester);
 
-    await tester.tap(find.byTooltip('Mi perfil'));
+    await tester.tap(find.text('Perfil'));
     await settle(tester, seconds: 3);
     expect(find.text(email), findsOneWidget);
     await tester.enterText(find.widgetWithText(TextFormField, 'Municipio (opcional)'), 'Pasto');
