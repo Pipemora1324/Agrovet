@@ -16,7 +16,15 @@ Reglas:
 - Cada rama de funcionalidad sale de `develop` y vuelve a `develop` con merge `--no-ff`,
   para que quede visible en el historial qué entró junto.
 - Cuando una fase está terminada y probada, `develop` se integra a `main` también con `--no-ff`.
-- Solo se suben `main` y `develop`. La rama de funcionalidad se borra apenas se integra.
+- Solo `main` y `develop` viven en el remoto. Una rama de trabajo se sube solo mientras su pull
+  request está abierto y se borra apenas se integra.
+
+Desde el sprint 3 (2026-11-10) cada cambio entra por un **pull request** hacia `develop`, con la
+[plantilla](../.github/pull_request_template.md) completa y el issue enlazado (`Cierra #n`). Para eso
+la rama de trabajo se sube mientras el PR está abierto. Después de revisarlo, se integra con
+`git merge --no-ff` local (así el merge queda a nombre del autor), se sube `develop` (GitHub marca el
+PR como integrado) y la rama se borra en local y en el remoto. Las ramas de documentación usan
+`docs/<tema>`.
 
 ```bash
 git checkout develop
