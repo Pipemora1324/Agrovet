@@ -5,13 +5,13 @@ fincas de Nariño. Es el trabajo de grado de Juan Felipe Mora (Ingeniería de So
 Esta carpeta reúne cómo se gestiona el proyecto en GitHub: backlog, sprints, cronograma, seguimiento
 y evidencias de pruebas.
 
-**Tablero:** [AgroVet – Gestión del proyecto (GitHub Project)](PROJECT_URL)
+**Tablero:** AgroVet – Gestión del proyecto (GitHub Project). Al 2026-11-10 **está pendiente de crear**: la CLI necesita el permiso `project` del autor. Se publicará en los [Projects de Pipemora1324](https://github.com/Pipemora1324?tab=projects) y este enlace se actualizará.
 
 ## Criterio de evaluación → dónde verlo
 
 | Criterio | Dónde verlo |
 |---|---|
-| Implementación coherente y profesional en GitHub | [Project](PROJECT_URL) con 5 vistas; [plantillas de issues](../../.github/ISSUE_TEMPLATE) y [de PR](../../.github/pull_request_template.md); etiquetas por tipo, área, prioridad y estado; flujo `feature → develop → main` con `--no-ff` ([CONTRIBUTING](../CONTRIBUTING.md)) |
+| Implementación coherente y profesional en GitHub | [Project](https://github.com/Pipemora1324?tab=projects) con 5 vistas; [plantillas de issues](../../.github/ISSUE_TEMPLATE) y [de PR](../../.github/pull_request_template.md); etiquetas por tipo, área, prioridad y estado; flujo `feature → develop → main` con `--no-ff` ([CONTRIBUTING](../CONTRIBUTING.md)) |
 | Backlog priorizado y trazable a los requerimientos | [backlog.md](backlog.md); vista «Backlog» del Project (por épica y prioridad); [issues](https://github.com/Pipemora1324/Agrovet/issues); cada issue enlaza su RF/RNF/HU de [REQUISITOS.md](../REQUISITOS.md) |
 | Tareas y sprints organizados con avance visible | [Milestones](https://github.com/Pipemora1324/Agrovet/milestones?state=all) (un sprint cada uno, con su % de avance); sub-issues en cada épica; vista «Sprint actual» del Project |
 | Fechas y cronograma con control | [sprints.md](sprints.md) con fechas, objetivo, resultado y revisión; vista «Cronograma» del Project (fecha de inicio y objetivo); [gráfica de velocidad](velocidad.png) |
@@ -63,7 +63,7 @@ Es un **Scrum adaptado a un equipo de una persona**, con flujo **Kanban** en el 
 
 ## GitHub Project
 
-[AgroVet – Gestión del proyecto](PROJECT_URL), enlazado al repositorio.
+[AgroVet – Gestión del proyecto](https://github.com/Pipemora1324?tab=projects), enlazado al repositorio.
 
 | Campo | Valores |
 |---|---|
