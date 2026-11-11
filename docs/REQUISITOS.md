@@ -8,9 +8,11 @@ tiene su issue en GitHub, donde está la evidencia completa. Los estados salen d
 - **Parcial**: el issue sigue abierto; la columna "Falta" dice qué.
 - **Pendiente**: no se ha empezado. Hoy no hay ninguno en este estado.
 
-Las pruebas citadas existen en el código actual. Resultado de la última corrida: `./mvnw verify`
-99 pruebas OK, `flutter test` 159 OK, `pytest` 54 OK y el recorrido completo en el emulador
-(`integration_test/app_flow_test.dart`) 4/4.
+Las pruebas citadas existen en el código actual. Resultado de la última corrida, en el CI de `main`
+(v0.1.0, commit `97fe632`): `./mvnw verify` 104 pruebas (1 omitida: la prueba en vivo de Gemini),
+`flutter test` 188 OK y `pytest` 80 OK. El recorrido completo en el emulador
+(`integration_test/app_flow_test.dart`) da 4/4. La matriz completa requisito → issue → commit →
+prueba está en [gestion/pruebas/trazabilidad.md](gestion/pruebas/trazabilidad.md).
 
 > Los resultados del modelo LSTM salen de un **dataset sintético**. Sus métricas (F1 0,492 en test)
 > sirven para comprobar el pipeline, pero **no validan** la hipótesis del proyecto (F1 ≥ 0,80).
@@ -36,7 +38,7 @@ Las pruebas citadas existen en el código actual. Resultado de la última corrid
 | RF-15 | Perfil, eliminación de cuenta y consentimiento (#29) | Cumplido | `9c92554`, `a0784d3` · `ProfileIntegrationTest`, `profile_test.dart` | El autor debe confirmar los datos del responsable en el aviso de privacidad. |
 | RF-16 | Registro diario flexible y puntaje por síntomas (#30) | Cumplido | `ea07f71`, `af469e7`, `03caee6`, `131ad7a`, `7312e35` · `symptom_score_test.dart`, `cubits_test.dart`, `record_wizard_test.dart`, `SyncIntegrationTest.valueSourcesAreStoredShownAndValidated` | Reglas y equivalencias provisionales, pendientes de validar con un veterinario (`docs/symptom_score.md`). |
 | RF-17 | Fotos de la ubre por vaca (#31) | Cumplido | `07a949c`, `e65d0ff`, `2efce77`, `73e245c` · `PhotoIntegrationTest`, `photos_test.dart` | La cámara real no se ha probado a mano en un dispositivo. |
-| RF-18 | Asistente con IA por vaca (#32) | Cumplido | `5c887dd`, `c28a272` · `AssistantIntegrationTest`, `GeminiClientTest`, `assistant_test.dart` | Probado con un proveedor simulado; las respuestas reales de Gemini aún no se han probado. |
+| RF-18 | Asistente con IA por vaca (#32) | Cumplido | `5c887dd`, `c28a272` · `AssistantIntegrationTest`, `GeminiClientTest`, `assistant_test.dart` | Probado con un proveedor simulado en el CI y con Gemini real el 2026-11-09: `GeminiLiveTest` 1/1 y 3 preguntas en el emulador ([informe](gestion/pruebas/emulador.md)). |
 
 ## Requisitos no funcionales
 
@@ -51,13 +53,36 @@ Las pruebas citadas existen en el código actual. Resultado de la última corrid
 | RNF-07 | Documentación de la API (#23) | Cumplido | `a8fe6de` · `AuthIntegrationTest.swaggerIsAvailable` | Swagger está disponible en desarrollo y apagado en el perfil `prod` (`ProdProfileIntegrationTest`). |
 | RNF-08 | Protección de los datos en el celular (#24) | Cumplido | `9e17cd7` · `encrypted_database_test.dart` ("la biblioteca cargada es SQLCipher", "el archivo queda cifrado…") | |
 
-## Avances sin issue propio
+## Historias de usuario
 
-Trabajo hecho después de cerrar los issues y que todavía no tiene un requisito propio:
+Agregadas el 2026-11-10 a partir de los requisitos anteriores, para ordenar el backlog en
+épicas → historias → requisitos y tareas. Cada una es un issue con sus requisitos como sub-issues.
+Su estado sale de esos requisitos.
+
+| Id | Historia | Requisitos | Issue | Estado |
+|---|---|---|---|---|
+| HU-01 | Como ganadero, quiero crear mi cuenta, confirmar mi correo y entrar con seguridad, para que solo yo vea y maneje los datos de mis vacas. | RF-01, RF-14, RF-15, RNF-03 | #45 | Cumplida |
+| HU-02 | Como ganadero, quiero registrar mis vacas con su arete, raza, edad y estado productivo, para llevar el seguimiento de cada una aunque no tenga señal. | RF-02 | #46 | Cumplida |
+| HU-03 | Como ganadero, quiero anotar cada día cómo está cada vaca respondiendo preguntas simples, con medidas exactas solo si las tengo. | RF-03, RF-16 | #47 | Cumplida |
+| HU-04 | Como ganadero, quiero ver un semáforo de riesgo con una recomendación clara, calculado en el celular sin internet, para actuar a tiempo. | RF-05, RF-06, RNF-04 | #48 | Cumplida |
+| HU-05 | Como ganadero, quiero ver la evolución de cada vaca y sus alertas, y marcar las que ya atendí. | RF-04, RF-07 | #49 | Cumplida |
+| HU-06 | Como ganadero sin señal en la finca, quiero usar la app sin internet y que mis datos se respalden solos cuando haya señal, sin perder nada y sin duplicados. | RF-08, RF-09, RNF-01, RNF-08 | #50 | Cumplida |
+| HU-07 | Como ganadero, quiero tomar fotos de la ubre y guardarlas por vaca; como investigador, quiero usar solo las fotos con permiso y diagnóstico confirmado. | RF-17, RF-10 | #51 | **Parcial** (RF-10) |
+| HU-08 | Como ganadero, quiero preguntarle a un asistente sobre una vaca y recibir orientación sencilla, sabiendo que no es un diagnóstico. | RF-18 | #52 | Cumplida |
+| HU-09 | Como investigador, quiero un modelo entrenado, evaluado sin fuga entre vacas y exportado a TFLite con vectores de prueba, para confiar en que el celular calcula lo mismo. | RF-11, RF-12, RF-13 | #53 | Cumplida |
+
+## Avances registrados como issues
+
+Trabajo hecho después de cerrar los requisitos; desde el 2026-11-10 cada uno tiene su issue:
 
 - Registro de hoy como asistente por preguntas, con el origen de cada valor (medido o estimado):
-  `131ad7a`, `ed236f5`, `7312e35`, `31c097a`; amplía RF-16.
-- Rediseño visual y pruebas de tamaños de pantalla: `298fb2a`, `1469989`, `f18ee9e`, `83b2b53`;
+  #57 (`131ad7a`, `ed236f5`, `7312e35`, `31c097a`); amplía RF-16.
+- Rediseño visual y pruebas de tamaños de pantalla: #56 (`298fb2a`, `1469989`, `f18ee9e`, `83b2b53`);
   apoya RNF-02.
 - Preparación para el despliegue (perfil `prod`, HTTPS obligatorio en release, Compose con Caddy y
-  `docs/DEPLOY.md`): `33f9fd7`, `b3be9c2`, `6f44661`. El backend **no está desplegado** todavía.
+  `docs/DEPLOY.md`): #59 (`33f9fd7`, `b3be9c2`, `6f44661`). El backend **no está desplegado**
+  todavía (#88).
+- Restauración de vacas e historial en otro celular: #63 (`4800bd2`, `095b3c8`); amplía RF-08. Las
+  fotos aún no se recuperan (#91).
+
+El backlog completo, los sprints y las evidencias están en [docs/gestion/](gestion/README.md).
