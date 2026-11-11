@@ -5,13 +5,13 @@ fincas de Nariño. Es el trabajo de grado de Juan Felipe Mora (Ingeniería de So
 Esta carpeta reúne cómo se gestiona el proyecto en GitHub: backlog, sprints, cronograma, seguimiento
 y evidencias de pruebas.
 
-**Tablero:** AgroVet – Gestión del proyecto (GitHub Project). Al 2026-11-10 **está pendiente de crear**: la CLI necesita el permiso `project` del autor. Se publicará en los [Projects de Pipemora1324](https://github.com/Pipemora1324?tab=projects) y este enlace se actualizará.
+**Tablero:** [AgroVet – Gestión del proyecto (GitHub Project)](https://github.com/users/Pipemora1324/projects/2)
 
 ## Criterio de evaluación → dónde verlo
 
 | Criterio | Dónde verlo |
 |---|---|
-| Implementación coherente y profesional en GitHub | [Project](https://github.com/Pipemora1324?tab=projects) con 5 vistas; [plantillas de issues](../../.github/ISSUE_TEMPLATE) y [de PR](../../.github/pull_request_template.md); etiquetas por tipo, área, prioridad y estado; flujo `feature → develop → main` con `--no-ff` ([CONTRIBUTING](../CONTRIBUTING.md)) |
+| Implementación coherente y profesional en GitHub | [Project](https://github.com/users/Pipemora1324/projects/2) con 5 vistas; [plantillas de issues](../../.github/ISSUE_TEMPLATE) y [de PR](../../.github/pull_request_template.md); etiquetas por tipo, área, prioridad y estado; flujo `feature → develop → main` con `--no-ff` ([CONTRIBUTING](../CONTRIBUTING.md)) |
 | Backlog priorizado y trazable a los requerimientos | [backlog.md](backlog.md); vista «Backlog» del Project (por épica y prioridad); [issues](https://github.com/Pipemora1324/Agrovet/issues); cada issue enlaza su RF/RNF/HU de [REQUISITOS.md](../REQUISITOS.md) |
 | Tareas y sprints organizados con avance visible | [Milestones](https://github.com/Pipemora1324/Agrovet/milestones?state=all) (un sprint cada uno, con su % de avance); sub-issues en cada épica; vista «Sprint actual» del Project |
 | Fechas y cronograma con control | [sprints.md](sprints.md) con fechas, objetivo, resultado y revisión; vista «Cronograma» del Project (fecha de inicio y objetivo); [gráfica de velocidad](velocidad.png) |
@@ -63,11 +63,11 @@ Es un **Scrum adaptado a un equipo de una persona**, con flujo **Kanban** en el 
 
 ## GitHub Project
 
-[AgroVet – Gestión del proyecto](https://github.com/Pipemora1324?tab=projects), enlazado al repositorio.
+[AgroVet – Gestión del proyecto](https://github.com/users/Pipemora1324/projects/2), enlazado al repositorio.
 
 | Campo | Valores |
 |---|---|
-| Estado | Backlog, Listo, En progreso, En revisión, Hecho |
+| Status (estado) | Backlog, Listo, En progreso, En revisión, Hecho (GitHub no permite renombrar este campo integrado) |
 | Prioridad | Must, Should, Could, Won't |
 | Estimación | puntos de historia (1, 2, 3, 5, 8, 13) |
 | Sprint | iteraciones de 2 semanas: Sprint 1 a Sprint 5 |
@@ -77,11 +77,11 @@ Es un **Scrum adaptado a un equipo de una persona**, con flujo **Kanban** en el 
 | Épica y Tipo | para agrupar y filtrar |
 
 Vistas:
-1. **Backlog:** tabla agrupada por épica y ordenada por prioridad.
-2. **Sprint actual:** kanban por Estado, filtrado al sprint en curso.
-3. **Cronograma:** roadmap por fecha de inicio y fecha objetivo.
-4. **Por área.**
-5. **Hecho / entregado.**
+1. [Backlog](https://github.com/users/Pipemora1324/projects/2/views/2): tabla agrupada por épica y ordenada por prioridad.
+2. [Sprint actual](https://github.com/users/Pipemora1324/projects/2/views/3): kanban por estado, filtrado al sprint en curso (`sprint:@current`).
+3. [Cronograma](https://github.com/users/Pipemora1324/projects/2/views/4): roadmap por fecha de inicio y fecha objetivo.
+4. [Por área](https://github.com/users/Pipemora1324/projects/2/views/5): tabla agrupada por área.
+5. [Hecho / entregado](https://github.com/users/Pipemora1324/projects/2/views/6): solo los ítems en estado Hecho.
 
 ## Notas de transparencia
 
