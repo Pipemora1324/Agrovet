@@ -1,7 +1,7 @@
 # Backlog del producto
 
 El backlog vive en los [issues del repositorio](https://github.com/Pipemora1324/Agrovet/issues) y en el
-[GitHub Project](https://github.com/Pipemora1324?tab=projects). Este archivo explica cómo está organizado y resume su estado al
+[GitHub Project](https://github.com/users/Pipemora1324/projects/2). Este archivo explica cómo está organizado y resume su estado al
 2026-11-10.
 
 ## Estructura
