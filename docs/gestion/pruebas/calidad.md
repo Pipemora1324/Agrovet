@@ -126,7 +126,7 @@ Decisiones:
 
 | Herramienta | Resultado local | Notas |
 |---|---|---|
-| gitleaks (historial, 180 commits) | 0 | 3 apariciones del secreto JWT de prueba de `application-test.yml` (en Base64 dice "test-secret-solo-para-pruebas-…") quedan exceptuadas en `.gitleaks.toml`, solo para ese archivo y ese valor |
+| gitleaks (historial completo) | 0 | Dos excepciones en `.gitleaks.toml`, cada una atada a un archivo y un valor: el secreto JWT de prueba de `application-test.yml` (3 apariciones; en Base64 dice "test-secret-solo-para-pruebas-…") y las líneas `sonar.projectKey`/`sonar.organization` de `sonar-project.properties`, que son identificadores públicos. Se comprobó que un token real en ese mismo archivo sí se detecta |
 | Trivy (`backend/`) | 0 HIGH/CRITICAL | 1 LOW aceptado en `backend/.trivyignore`: `DS-0026` (falta `HEALTHCHECK`); el chequeo de salud está en `docker-compose.prod.yml` |
 | actionlint y zizmor (workflows) | 0 | zizmor encontró un `checkout` sin `persist-credentials: false` en `dependency-review.yml`; corregido |
 | CodeQL, Scorecard | — | solo corren en GitHub |
@@ -156,6 +156,11 @@ actualiza cada semana) y todos los `checkout` usan `persist-credentials: false`.
 | `seguridad` | push/PR y cada lunes | `security-events: write` | gitleaks y Trivy, con SARIF en la pestaña Security |
 | `scorecard` | push a `main`, cada lunes y al cambiar la protección de ramas | `security-events: write`, `id-token: write`, `actions: read` | OpenSSF Scorecard |
 | `dependency-review` | push/PR | — | sin cambios (solo `persist-credentials: false`) |
+
+Flutter va fijado en **3.47.7**, la versión del entorno de desarrollo. Con `stable` sin versión, el CI
+tomó 3.50.0 el día que se activó este análisis: esa versión depreca `package:flutter/material.dart`
+(reemplazado por `material_ui`) y con `--fatal-infos` el análisis falla en todas las pantallas.
+Subir de versión queda como un cambio aparte, con esa migración.
 
 `calidad` repite las pruebas que ya corren los workflows de cada módulo. Es a propósito: los de
 módulo dan la señal rápida con filtro por ruta, y `calidad` necesita los tres informes en cada cambio
