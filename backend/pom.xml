@@ -20,6 +20,13 @@
     <properties>
         <java.version>21</java.version>
         <springdoc.version>2.10.0</springdoc.version>
+        <jacoco.version>0.8.16</jacoco.version>
+        <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
+        <checkstyle.version>14.4.0</checkstyle.version>
+        <spotbugs-plugin.version>4.10.5.0</spotbugs-plugin.version>
+        <findsecbugs.version>1.14.0</findsecbugs.version>
+        <pitest.version>1.30.2</pitest.version>
+        <pitest-junit5.version>1.2.3</pitest-junit5.version>
     </properties>
 
     <dependencies>
@@ -102,6 +109,142 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- Cobertura: el agente se engancha a las pruebas y el informe (HTML y XML para
+                 SonarCloud) queda en target/site/jacoco al terminar verify. -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Estilo: reglas en config/checkstyle.xml; cualquier violación rompe verify. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${checkstyle-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <configLocation>config/checkstyle.xml</configLocation>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <consoleOutput>true</consoleOutput>
+                    <violationSeverity>warning</violationSeverity>
+                    <failOnViolation>true</failOnViolation>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>checkstyle</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Errores probables y de seguridad (FindSecBugs) sobre el bytecode de main.
+                 Las excepciones justificadas están en config/spotbugs-exclude.xml. -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs-plugin.version}</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>Medium</threshold>
+                    <xmlOutput>true</xmlOutput>
+                    <excludeFilterFile>config/spotbugs-exclude.xml</excludeFilterFile>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.h3xstream.findsecbugs</groupId>
+                            <artifactId>findsecbugs-plugin</artifactId>
+                            <version>${findsecbugs.version}</version>
+                        </plugin>
+                    </plugins>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotbugs</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Pruebas de mutación del módulo de seguridad (auth) y de sincronización (sync).
+                 No corre en verify: ./mvnw test-compile org.pitest:pitest-maven:mutationCoverage
+                 Solo usa las pruebas unitarias; las de integración levantan Spring y PostgreSQL
+                 por cada mutante y harían la corrida inviable. -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>${pitest.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-junit5-plugin</artifactId>
+                        <version>${pitest-junit5.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <targetClasses>
+                        <param>co.edu.ucc.agrovet.auth.*</param>
+                        <param>co.edu.ucc.agrovet.sync.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>co.edu.ucc.agrovet.auth.*</param>
+                        <param>co.edu.ucc.agrovet.sync.*</param>
+                    </targetTests>
+                    <!-- Controladores, DTO, excepciones y propiedades no tienen lógica propia:
+                         se prueban por HTTP en las pruebas de integración. -->
+                    <excludedClasses>
+                        <param>co.edu.ucc.agrovet.*.*Controller</param>
+                        <param>co.edu.ucc.agrovet.*.*Dtos*</param>
+                        <param>co.edu.ucc.agrovet.*.*Exception</param>
+                        <param>co.edu.ucc.agrovet.*.*ExceptionHandler</param>
+                        <param>co.edu.ucc.agrovet.*.*Properties</param>
+                        <param>co.edu.ucc.agrovet.*.*Repository</param>
+                        <param>co.edu.ucc.agrovet.auth.code.CodePurpose</param>
+                    </excludedClasses>
+                    <excludedTestClasses>
+                        <param>co.edu.ucc.agrovet.*IntegrationTest</param>
+                        <param>co.edu.ucc.agrovet.*LiveTest</param>
+                    </excludedTestClasses>
+                    <mutators>
+                        <mutator>STRONGER</mutator>
+                    </mutators>
+                    <outputFormats>
+                        <format>HTML</format>
+                        <format>XML</format>
+                    </outputFormats>
+                    <timestampedReports>false</timestampedReports>
+                    <!-- La corrida actual elimina el 100 %; el margen es para mutantes equivalentes -->
+                    <mutationThreshold>90</mutationThreshold>
+                    <threads>4</threads>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Hallazgos de SpotBugs que se descartan, cada uno con su motivo. Todo lo demás rompe verify.
+-->
+<FindBugsFilter
+        xmlns="https://github.com/spotbugs/filter/3.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
+
+    <!-- Spring inyecta los beans por constructor (servicios, repositorios, JdbcTemplate) y los
+         records de DTO solo viajan entre Jackson y los servicios. Copiar cada lista cambiaría el
+         comportamiento (List.copyOf rechaza null) sin cerrar ningún riesgo real. -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Constructores que fallan a propósito al arrancar si la configuración es inválida
+         (clave HMAC, carpeta de fotos). Son beans de Spring: nadie los hereda ni los finaliza. -->
+    <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+        <Or>
+            <Class name="co.edu.ucc.agrovet.auth.code.EmailCodeService"/>
+            <Class name="co.edu.ucc.agrovet.photo.PhotoStorage"/>
+        </Or>
+    </Match>
+
+    <!-- El nombre de tabla sale de una constante del código (COW_CHILDREN); el id del usuario va
+         siempre como parámetro de la consulta. -->
+    <Match>
+        <Bug pattern="SQL_INJECTION_SPRING_JDBC"/>
+        <Class name="co.edu.ucc.agrovet.user.AccountDeletionService"/>
+        <Method name="deleteEverything"/>
+    </Match>
+</FindBugsFilter>
