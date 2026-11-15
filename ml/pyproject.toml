@@ -54,11 +54,14 @@ output = "coverage.xml"
 # Módulos de lógica pura que no cargan TensorFlow: la ventana de 14 días que la app replica en Dart,
 # las métricas de evaluación y el filtro de consentimiento del dataset de fotos.
 [tool.mutmut]
-source_paths = ["src/preprocess.py", "src/cnn_evaluation.py", "src/build_cnn_dataset.py"]
+source_paths = [
+    "src/preprocess.py", "src/cnn_evaluation.py", "src/build_cnn_dataset.py", "src/milk_evaluation.py",
+]
 pytest_add_cli_args_test_selection = [
     "tests/test_preprocess.py", "tests/test_preprocess_limits.py",
     "tests/test_cnn_evaluation.py", "tests/test_cnn_evaluation_limits.py",
     "tests/test_build_cnn_dataset.py", "tests/test_build_cnn_dataset_limits.py",
+    "tests/test_milk_evaluation.py", "tests/test_milk_evaluation_limits.py",
 ]
 also_copy = ["src", "pytest.ini"]
 pytest_add_cli_args = ["-p", "no:cacheprovider"]
