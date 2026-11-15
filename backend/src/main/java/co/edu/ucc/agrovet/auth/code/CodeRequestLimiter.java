@@ -64,6 +64,16 @@ public class CodeRequestLimiter {
         }
     }
 
+    /** Correos guardados en memoria; las pruebas lo usan para comprobar que la limpieza funciona. */
+    int trackedEmails() {
+        return lastRequest.size();
+    }
+
+    /** IP guardadas en memoria, por el mismo motivo. */
+    int trackedIps() {
+        return perIp.size();
+    }
+
     private void cleanup(Instant now) {
         if (lastRequest.size() > CLEANUP_THRESHOLD) {
             lastRequest.values().removeIf(at -> !now.isBefore(at.plus(properties.resendCooldown())));

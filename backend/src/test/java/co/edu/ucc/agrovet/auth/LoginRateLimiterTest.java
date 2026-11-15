@@ -71,6 +71,29 @@ class LoginRateLimiterTest {
         assertThatCode(() -> limiter.registerAttempt("3.3.3.3", "otro@correo.co")).doesNotThrowAnyException();
     }
 
+    @Test
+    void expiredCountersAreDroppedOnlyAfterTheThreshold() {
+        // Cada intento con IP y correo nuevos guarda dos contadores: el de la pareja y el de la IP
+        for (int i = 0; i < 5_000; i++) {
+            limiter.registerAttempt("10.0." + (i / 250) + "." + (i % 250), "u" + i + "@correo.co");
+        }
+        assertThat(limiter.trackedKeys()).isEqualTo(10_000);
+        clock.advance(Duration.ofMinutes(5));
+
+        // Justo en el umbral todavía no se limpia
+        limiter.registerAttempt("20.0.0.1", "a@correo.co");
+        assertThat(limiter.trackedKeys()).isEqualTo(10_002);
+
+        // Por encima se borran los vencidos y quedan los vigentes
+        limiter.registerAttempt("20.0.0.2", "b@correo.co");
+        assertThat(limiter.trackedKeys()).isEqualTo(4);
+        for (int i = 0; i < 2; i++) {
+            limiter.registerAttempt("20.0.0.1", "a@correo.co");
+        }
+        assertThatThrownBy(() -> limiter.registerAttempt("20.0.0.1", "a@correo.co"))
+                .isInstanceOf(TooManyLoginAttemptsException.class);
+    }
+
     static final class MutableClock extends Clock {
         private Instant now;
 
