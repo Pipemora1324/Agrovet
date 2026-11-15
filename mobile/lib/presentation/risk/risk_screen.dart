@@ -158,7 +158,7 @@ class _NothingToEvaluate extends StatelessWidget {
               label: 'Hacer el registro de hoy',
               onPressed: () => Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => DailyRecordScreen(cow: cow)),
+                MaterialPageRoute<void>(builder: (_) => DailyRecordScreen(cow: cow)),
               ),
             ),
           ],

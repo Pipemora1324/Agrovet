@@ -128,7 +128,7 @@ class AssistantCubit extends Cubit<AssistantState> {
       cause: latest?.cause,
       symptomScore: assessment?.score ?? latest?.symptomScore,
       probability: latest?.probability,
-      symptoms: [for (final reason in assessment?.reasons ?? const []) reason.label],
+      symptoms: [for (final reason in assessment?.reasons ?? const <({String label, int points})>[]) reason.label],
     );
   }
 

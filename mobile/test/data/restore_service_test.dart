@@ -34,7 +34,7 @@ class FakeRestoreGateway implements RestoreGateway {
         type: DioExceptionType.connectionError,
       );
     }
-    return histories[cowId] ?? {'records': [], 'inferences': [], 'alerts': []};
+    return histories[cowId] ?? {'records': <dynamic>[], 'inferences': <dynamic>[], 'alerts': <dynamic>[]};
   }
 }
 
@@ -154,8 +154,8 @@ void main() {
   test('una alerta cuya evaluación quedó fuera del año se guarda sin ese vínculo', () async {
     final gateway = FakeRestoreGateway(cows: [cow], histories: {
       'c1': {
-        'records': [],
-        'inferences': [],
+        'records': <dynamic>[],
+        'inferences': <dynamic>[],
         'alerts': [
           {'id': 'a9', 'inferenceId': 'vieja', 'riskLevel': 'YELLOW', 'attended': true,
             'attendedAt': '2026-01-02T10:00:00Z', 'createdAt': '2026-01-01T10:00:00Z'},

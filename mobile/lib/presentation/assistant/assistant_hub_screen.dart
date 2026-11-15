@@ -75,7 +75,7 @@ class AssistantHubScreen extends StatelessWidget {
                                   subtitle: Text(cows[i].cow.tag),
                                   trailing: const Icon(Icons.chat, color: AppColors.primary),
                                   onTap: () => Navigator.push(context,
-                                      MaterialPageRoute(builder: (_) => AssistantScreen(cow: cows[i].cow))),
+                                      MaterialPageRoute<void>(builder: (_) => AssistantScreen(cow: cows[i].cow))),
                                 ),
                               ),
                             ),

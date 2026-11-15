@@ -227,7 +227,7 @@ class _ProfileViewState extends State<_ProfileView> {
                             ? null
                             : () => Navigator.push(
                                   context,
-                                  MaterialPageRoute(
+                                  MaterialPageRoute<void>(
                                     builder: (_) => BlocProvider.value(
                                       value: context.read<ProfileCubit>(),
                                       child: const ChangePasswordScreen(),
@@ -244,7 +244,7 @@ class _ProfileViewState extends State<_ProfileView> {
                             : 'Aceptado (versión ${session.privacyPolicyVersion})'),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => Navigator.push(
-                            context, MaterialPageRoute(builder: (_) => const PrivacyNoticeScreen())),
+                            context, MaterialPageRoute<void>(builder: (_) => const PrivacyNoticeScreen())),
                       ),
                     ],
                   ),
@@ -300,7 +300,7 @@ class _ConsentCard extends StatelessWidget {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () =>
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyNoticeScreen())),
+                    Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const PrivacyNoticeScreen())),
                 child: const Text('Leer el aviso'),
               ),
               BigButton(icon: Icons.check, label: 'Acepto', busy: busy, onPressed: onAccept),

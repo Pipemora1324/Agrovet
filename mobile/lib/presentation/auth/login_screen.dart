@@ -206,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ? null
                   : () => Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      MaterialPageRoute<void>(
                         builder: (_) => ForgotPasswordScreen(
                           api: context.read<AuthCubit>().api,
                           initialEmail: _email.text,
@@ -274,7 +274,7 @@ class _PrivacyConsent extends StatelessWidget {
           child: TextButton.icon(
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const PrivacyNoticeScreen()),
+              MaterialPageRoute<void>(builder: (_) => const PrivacyNoticeScreen()),
             ),
             icon: const Icon(Icons.privacy_tip),
             label: const Text('Leer el aviso de privacidad'),

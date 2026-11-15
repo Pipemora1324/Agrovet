@@ -38,7 +38,7 @@ class PhotoGallery extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.small),
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(
+                  MaterialPageRoute<void>(
                     builder: (_) => RepositoryProvider.value(
                       value: store,
                       child: PhotoViewScreen(photo: photo, onDelete: onDelete),
