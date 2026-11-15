@@ -1,0 +1,215 @@
+name: calidad
+
+# Cobertura de los tres módulos juntos, comentario con el resumen en el pull request y análisis de
+# SonarCloud. Los workflows backend, ml y mobile siguen dando la señal rápida por módulo (con filtro
+# por ruta); este corre siempre para que SonarCloud vea el repositorio completo en cada cambio.
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: calidad-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: cobertura backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      # Checkstyle y SpotBugs ya corren en el workflow backend
+      - name: Pruebas con JaCoCo
+        run: |
+          chmod +x mvnw
+          ./mvnw -B verify -Dcheckstyle.skip -Dspotbugs.skip
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cobertura-backend
+          path: |
+            backend/target/site/jacoco/jacoco.xml
+            backend/target/site/jacoco/jacoco.csv
+            backend/target/classes/
+            backend/target/test-classes/
+          retention-days: 7
+
+  ml:
+    name: cobertura ml
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ml
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: ml/requirements.txt
+
+      - run: pip install -r requirements.txt
+
+      - name: Pruebas con pytest-cov
+        run: pytest -q --cov --cov-report=xml
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cobertura-ml
+          path: ml/coverage.xml
+          retention-days: 7
+
+  mobile:
+    name: cobertura mobile
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Pruebas con cobertura
+        run: flutter test --coverage
+
+      # SonarCloud resuelve las rutas desde la raíz del repositorio
+      - name: Rutas del informe desde la raíz
+        run: sed -i 's#^SF:lib/#SF:mobile/lib/#' coverage/lcov.info
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cobertura-mobile
+          path: mobile/coverage/lcov.info
+          retention-days: 7
+
+  resumen:
+    name: resumen de cobertura
+    needs: [backend, ml, mobile]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Solo para crear o actualizar el comentario con el resumen
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: cobertura-*
+          path: informes
+
+      - name: Armar el resumen
+        run: |
+          python3 scripts/ci/coverage_summary.py \
+            --jacoco informes/cobertura-backend/site/jacoco/jacoco.csv \
+            --cobertura informes/cobertura-ml/coverage.xml \
+            --lcov informes/cobertura-mobile/lcov.info > resumen.md
+          cat resumen.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Un solo comentario por pull request, que se actualiza en cada push. En PR desde forks el
+      # token no puede escribir y el resumen queda solo en la pestaña del job.
+      - name: Comentar en el pull request
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.actor != 'dependabot[bot]'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- agrovet-coverage -->"))) | .id' | head -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -F body=@resumen.md > /dev/null
+          else
+            gh api "repos/$REPO/issues/$PR/comments" -F body=@resumen.md > /dev/null
+          fi
+
+  sonarcloud:
+    name: sonarcloud
+    needs: [backend, ml, mobile]
+    # Si una cobertura falló, el análisis igual corre con los informes que haya
+    if: always()
+    runs-on: ubuntu-latest
+    env:
+      # Sin el secreto (forks, Dependabot o antes de configurarlo) el análisis se salta sin fallar
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - name: Falta SONAR_TOKEN
+        if: env.SONAR_TOKEN == ''
+        run: echo "::notice::No hay SONAR_TOKEN; se omite el análisis de SonarCloud."
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.SONAR_TOKEN != ''
+        with:
+          # Historial completo: SonarCloud lo usa para el código nuevo y la autoría por línea
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        if: env.SONAR_TOKEN != ''
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: env.SONAR_TOKEN != ''
+        with:
+          name: cobertura-backend
+          path: backend/target
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: env.SONAR_TOKEN != ''
+        with:
+          name: cobertura-ml
+          path: ml
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: env.SONAR_TOKEN != ''
+        with:
+          name: cobertura-mobile
+          path: mobile/coverage
+
+      # El analizador de Java necesita las bibliotecas para resolver tipos (sin compilar de nuevo)
+      - name: Bibliotecas del backend
+        if: env.SONAR_TOKEN != ''
+        working-directory: backend
+        run: |
+          chmod +x mvnw
+          ./mvnw -B -q dependency:copy-dependencies -DincludeScope=test -DoutputDirectory=target/dependency
+
+      - uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
+        if: env.SONAR_TOKEN != ''
