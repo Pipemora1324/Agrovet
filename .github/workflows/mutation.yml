@@ -91,7 +91,7 @@ jobs:
           pip install -r /tmp/mutmut-requirements.txt
 
       # Módulos y pruebas en [tool.mutmut] de pyproject.toml
-      - name: Mutantes de preprocess, cnn_evaluation y build_cnn_dataset
+      - name: Mutantes de la lógica pura de ml
         run: |
           mutmut run --max-children 4
           mutmut results --all true > mutmut.txt
