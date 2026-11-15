@@ -73,7 +73,8 @@ def test_rates_percentiles_with_many_mixed_groups():
     sens, spec = reference_rates(labels, preds, groups, 400, 2)
     assert rates["sensitivity"] == pytest.approx(sens, abs=1e-12)
     assert rates["specificity"] == pytest.approx(spec, abs=1e-12)
-    assert sens[0] < sens[1] and spec[0] < spec[1]
+    assert sens[0] < sens[1]
+    assert spec[0] < spec[1]
 
 
 def test_paired_difference_follows_the_documented_algorithm():
@@ -95,9 +96,9 @@ def test_defaults_and_seeds_are_reproducible():
     default = paired_auc_difference(labels, scores, other, groups)
     assert default == paired_auc_difference(labels, scores, other, groups, n_boot=2000, seed=0)
     assert default != paired_auc_difference(labels, scores, other, groups, n_boot=2000, seed=1)
-    assert paired_auc_difference(labels, scores, other, groups, n_boot=200, seed=9) == paired_auc_difference(
-        labels, scores, other, groups, n_boot=200, seed=9
-    )
+    first = paired_auc_difference(labels, scores, other, groups, n_boot=200, seed=9)
+    second = paired_auc_difference(labels, scores, other, groups, n_boot=200, seed=9)
+    assert first == second
 
     report = full_report(labels, scores, groups)
     explicit = full_report(labels, scores, groups, threshold=0.5, n_boot=2000, seed=0)
@@ -114,7 +115,8 @@ def test_full_report_uses_the_given_threshold_seed_and_bootstrap():
     assert report["sensitivity"] == pytest.approx(np.mean(preds[labels == 1] == 1))
     assert report["sensitivity_ci95_group_bootstrap"] == rates["sensitivity"]
     assert report["specificity_ci95_group_bootstrap"] == rates["specificity"]
-    assert report == full_report(labels, scores, groups, threshold=0.6, n_boot=150, seed=11)
+    repeated = full_report(labels, scores, groups, threshold=0.6, n_boot=150, seed=11)
+    assert report == repeated
     # El AUC y su intervalo salen de summarize con el mismo bootstrap y la misma semilla
     from cnn_evaluation import summarize
 

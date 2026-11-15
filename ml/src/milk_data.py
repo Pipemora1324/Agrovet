@@ -161,15 +161,19 @@ def label_conflicts(
     conflicts = []
     for i in range(len(images)):
         for k in range(i + 1, len(images)):
-            if hamming(hashes[i], hashes[k]) > max_phash:
-                continue
-            for grade_a, box_a in images[i].boxes:
-                for grade_b, box_b in images[k].boxes:
-                    if grade_a != grade_b and iou(box_a, box_b) >= min_iou:
-                        conflicts.append(
-                            {"a": images[i].name, "b": images[k].name, "grade_a": grade_a, "grade_b": grade_b}
-                        )
+            if hamming(hashes[i], hashes[k]) <= max_phash:
+                conflicts += _box_conflicts(images[i], images[k], min_iou)
     return conflicts
+
+
+def _box_conflicts(a: MilkImage, b: MilkImage, min_iou: float) -> list[dict]:
+    """Cajas de a y b que se solapan (el mismo pozo) con grados distintos."""
+    return [
+        {"a": a.name, "b": b.name, "grade_a": grade_a, "grade_b": grade_b}
+        for grade_a, box_a in a.boxes
+        for grade_b, box_b in b.boxes
+        if grade_a != grade_b and iou(box_a, box_b) >= min_iou
+    ]
 
 
 @dataclass

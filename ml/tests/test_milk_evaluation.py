@@ -23,7 +23,8 @@ def test_calibration_bins_by_hand():
     assert [(b["low"], b["count"]) for b in bins] == [(0.0, 1), (0.1, 2), (0.9, 2)]
     assert bins[1]["mean_probability"] == pytest.approx(0.15)
     assert bins[1]["fraction_abnormal"] == 0.5
-    assert bins[2]["high"] == 1.0 and bins[2]["fraction_abnormal"] == 1.0
+    assert bins[2]["high"] == 1.0
+    assert bins[2]["fraction_abnormal"] == 1.0
 
 
 def test_ece_by_hand():

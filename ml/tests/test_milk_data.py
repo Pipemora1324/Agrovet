@@ -146,8 +146,10 @@ def test_context_only_blacks_out_every_well_with_its_margin():
     image = Image.new("RGB", (100, 50), (200, 200, 200))
     out = context_only(image, [(10, 10, 20, 20), (60, 10, 20, 20)], size=100, margin=0.1)
     # Cuadrado 100 x 100 con la foto centrada (filas 25-74); cajas + 10 % tapadas
-    assert out.shape == (100, 100, 3) and out.dtype == np.uint8
-    assert (out[25 + 20, 20] == 0).all() and (out[25 + 20, 70] == 0).all()
+    assert out.shape == (100, 100, 3)
+    assert out.dtype == np.uint8
+    assert (out[25 + 20, 20] == 0).all()
+    assert (out[25 + 20, 70] == 0).all()
     assert (out[25 + 20, 45] == 200).all()  # entre los dos pozos queda el fondo
     assert (out[25 + 9, 9] == 0).all()  # el margen también se tapa
     assert (out[25 + 40, 95] == 200).all()
@@ -163,7 +165,8 @@ def test_build_wells_one_entry_per_box_with_labels_and_groups():
 
     wells = build_wells(images, pils, [4, 9, 2], size=32)
 
-    assert wells.crops.shape == (3, 32, 32, 3) and wells.context.shape == (3, 32, 32, 3)
+    assert wells.crops.shape == (3, 32, 32, 3)
+    assert wells.context.shape == (3, 32, 32, 3)
     assert wells.labels.tolist() == [0, 1, 1]
     assert wells.groups.tolist() == [4, 4, 9]
     assert wells.sources.tolist() == ["video", "video", "PXL"]
@@ -205,7 +208,8 @@ def test_degradations_keep_shape_and_type_and_change_the_image(crop):
     for kind, (_, levels) in DEGRADATIONS.items():
         for level in levels:
             out = degrade(crop[None], kind, level)
-            assert out.shape == (1, 40, 40, 3) and out.dtype == np.uint8
+            assert out.shape == (1, 40, 40, 3)
+            assert out.dtype == np.uint8
             assert not np.array_equal(out[0], crop), (kind, level)
 
 

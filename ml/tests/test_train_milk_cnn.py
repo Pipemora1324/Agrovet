@@ -35,7 +35,8 @@ def test_both_architectures_train_in_stages_and_explain(arch, toy, tmp_path):
     images, labels = toy
     tf.keras.utils.set_random_seed(0)
     model, backbone = build_model(arch, SIZE, weights=None)
-    assert model.input_shape == (None, SIZE, SIZE, 3) and model.output_shape == (None, 1)
+    assert model.input_shape == (None, SIZE, SIZE, 3)
+    assert model.output_shape == (None, 1)
     assert not backbone.trainable
 
     idx = np.arange(len(labels))
@@ -54,21 +55,26 @@ def test_both_architectures_train_in_stages_and_explain(arch, toy, tmp_path):
         predict_idx=idx[20:],
     )
 
-    assert result["head_epochs"] == 2 and result["tune_epochs"] == 1
-    assert result["frozen"].shape == (4,) and result["tuned"].shape == (4,)
+    assert result["head_epochs"] == 2
+    assert result["tune_epochs"] == 1
+    assert result["frozen"].shape == (4,)
+    assert result["tuned"].shape == (4,)
     assert ((result["tuned"] >= 0) & (result["tuned"] <= 1)).all()
     # Etapa 2: solo las últimas capas quedan entrenables
     trainable = [layer for layer in backbone.layers if layer.trainable]
     assert 0 < len(trainable) <= ARCHITECTURES[arch][2]
 
     cam, prob = grad_cam(model, images[:3].astype(np.float32))
-    assert cam.ndim == 3 and cam.shape[0] == 3
-    assert cam.min() >= 0 and cam.max() <= 1 + 1e-6
+    assert cam.ndim == 3
+    assert cam.shape[0] == 3
+    assert cam.min() >= 0
+    assert cam.max() <= 1 + 1e-6
     np.testing.assert_allclose(
         prob, model.predict(images[:3].astype(np.float32), verbose=0).ravel(), atol=1e-5
     )
     blended = overlay(images[0], cam[0])
-    assert blended.shape == images[0].shape and blended.dtype == np.uint8
+    assert blended.shape == images[0].shape
+    assert blended.dtype == np.uint8
 
     path = tmp_path / f"{arch}.tflite"
     size = export_tflite(model, path, quantize="float16")
