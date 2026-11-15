@@ -28,15 +28,17 @@ concordancia con esas etiquetas, no una capacidad diagnóstica. Resultados y lim
 Cita sugerida: *Mastitis (v1) [Conjunto de datos]. Roboflow Universe, yield-a2yrd.
 https://universe.roboflow.com/yield-a2yrd/mastitis-zmser. Licencia CC BY 4.0.*
 
-## Leche en paleta — prueba de concepto, no se usa en la app
+## Leche en paleta — evaluación del clasificador de leche, no se usa en la app
 
 | Campo | Valor |
 |---|---|
 | Nombre | Mastitis dataset, versión 3 (2026-09-03) |
 | Fuente | Roboflow Universe — <https://universe.roboflow.com/abdurrehman4198-gmail-com/mastitis-dataset> |
-| Autor | Usuario de Roboflow (sin autor declarado) |
+| Autor | Espacio de Roboflow `abdurrehman4198` (no declara un nombre de autor) |
 | Licencia | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | Contenido | 453 imágenes (frames de video y fotos de teléfono) de una paleta de 4 pocillos, 640 cajas: Normal, Watery, Curd like y Blood tinged Milk |
+| Cita | abdurrehman4198. *Mastitis dataset* (v3). Roboflow Universe, 2026. https://universe.roboflow.com/abdurrehman4198-gmail-com/mastitis-dataset. CC BY 4.0 |
+| Uso | Evaluación con validación agrupada 5 × 5; resultados en [gestion/pruebas/calidad_datos.md](gestion/pruebas/calidad_datos.md#4-clasificador-de-leche-normal-o-anormal-evaluación-no-se-integra-en-la-app) |
 
 ## Series IoT — revisado y descartado
 
