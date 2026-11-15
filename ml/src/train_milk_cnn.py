@@ -167,11 +167,12 @@ def train_on(
     test_idx: np.ndarray,
     seed: int,
     args: argparse.Namespace,
-    weights: str | None = "imagenet",
 ) -> tuple[tf.keras.Model, dict]:
     tf.keras.backend.clear_session()
     tf.keras.utils.set_random_seed(seed)
     fit_idx, val_idx = inner_validation_split(labels, groups, train_idx, seed=seed)
+    # --weights none solo para la prueba de humo: así no descarga los pesos de ImageNet
+    weights = None if args.weights == "none" else args.weights
     model, backbone = build_model(arch, args.size, weights=weights)
     result = fit_staged(
         model,
@@ -567,6 +568,9 @@ def main() -> int:
     parser.add_argument("--tune-epochs", type=int, default=15)
     parser.add_argument("--batch", type=int, default=32)
     parser.add_argument("--n-boot", type=int, default=2000)
+    parser.add_argument("--weights", choices=("imagenet", "none"), default="imagenet")
+    # Por defecto las dos redes; la prueba de punta a punta corre solo una para no tardar
+    parser.add_argument("--archs", nargs="+", choices=list(ARCHITECTURES), default=list(ARCHITECTURES))
     args = parser.parse_args()
     repo = ML_DIR.parent.resolve()
     if any(repo == p or repo in p.parents for p in (args.work_dir.resolve(), args.coco.resolve())):
@@ -582,7 +586,8 @@ def main() -> int:
     print("[datos]", json.dumps(dataset, ensure_ascii=False), flush=True)
 
     reports, states = {}, {}
-    for arch in ARCHITECTURES:
+    names = list(args.archs)
+    for arch in names:
         states[arch] = run_cv(arch, arch, wells.crops, wells, args, args.work_dir, keep_models=True)
         reports[arch] = cv_report(states[arch], wells, args)
     context_state = run_cv(
@@ -605,11 +610,21 @@ def main() -> int:
         seed=SEED,
     )
 
-    names = list(ARCHITECTURES)
     mean_probs = {arch: np.array(states[arch]["tuned"], dtype=float).mean(axis=0) for arch in names}
-    comparison = paired_auc_difference(
-        wells.labels, mean_probs[names[0]], mean_probs[names[1]], wells.groups, n_boot=args.n_boot, seed=SEED
-    )
+    comparison = None
+    if len(names) >= 2:
+        comparison = {
+            "a": names[0],
+            "b": names[1],
+            **paired_auc_difference(
+                wells.labels,
+                mean_probs[names[0]],
+                mean_probs[names[1]],
+                wells.groups,
+                n_boot=args.n_boot,
+                seed=SEED,
+            ),
+        }
     figures = {"calibration": save_calibration_plot(reports)}
     explain = {arch: gradcam_examples(arch, wells, states[arch], args.work_dir) for arch in names}
     robust = {arch: robustness(arch, wells, states[arch], args.work_dir) for arch in names}
@@ -629,7 +644,7 @@ def main() -> int:
         "lr 1e-5, parada temprana 3. Pesos por clase balanceados.",
         "dataset": dataset,
         "cv": reports,
-        "comparison_auc_difference": {"a": names[0], "b": names[1], **comparison},
+        "comparison_auc_difference": comparison,
         "context_only_control": context,
         "leave_pxl_session_out": {
             "train_wells": int(len(train_idx)),
