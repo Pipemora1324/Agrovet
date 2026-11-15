@@ -143,7 +143,8 @@ public class SyncService {
             return;
         }
         if (item.probability() == null && item.symptomScore() == null) {
-            batch.reject("inference", item.id(), "La evaluación no trae ni probabilidad del modelo ni puntaje de síntomas.");
+            batch.reject("inference", item.id(),
+                    "La evaluación no trae ni probabilidad del modelo ni puntaje de síntomas.");
             return;
         }
         Inference inference = existing.orElseGet(() -> new Inference(item.id(), clock.instant()));

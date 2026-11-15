@@ -1,0 +1,64 @@
+# Configuración de las herramientas de calidad de ml/. Las dependencias están en requirements.txt
+# y la de pytest en pytest.ini.
+
+[tool.ruff]
+target-version = "py313"
+line-length = 110
+src = ["src", "tests"]
+extend-exclude = ["mutants"]
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, imports, bugbear, pyupgrade, comprehensions, nombres y reglas propias de ruff
+select = ["E", "W", "F", "I", "B", "UP", "C4", "PIE", "N", "RUF"]
+ignore = [
+    "N803", "N806",  # X, X_train, y: convención de ML para matrices
+    "RUF046",        # int(...) explícito: convierte tipos de NumPy antes de pasarlos a JSON
+    "B905",          # zip(strict=True) cambiaría el comportamiento; los largos coinciden por construcción
+]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "build_cnn_dataset", "cnn_evaluation", "export_test_vectors", "export_tflite", "generate_dataset",
+    "milk_public_poc", "preprocess", "train_cnn", "train_lstm", "train_udder_public", "udder_public_data",
+]
+
+[tool.mypy]
+python_version = "3.13"
+mypy_path = "src"
+files = ["src"]
+explicit_package_bases = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+strict_equality = true
+check_untyped_defs = true
+no_implicit_optional = true
+
+# TensorFlow, Keras, scikit-learn, matplotlib y LiteRT no publican tipos completos
+[[tool.mypy.overrides]]
+module = ["tensorflow.*", "keras.*", "sklearn.*", "matplotlib.*", "ai_edge_litert.*"]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+# Pruebas de mutación (solo Linux o WSL: mutmut 3 no corre en Windows).
+# Módulos de lógica pura que no cargan TensorFlow: la ventana de 14 días que la app replica en Dart,
+# las métricas de evaluación y el filtro de consentimiento del dataset de fotos.
+[tool.mutmut]
+source_paths = ["src/preprocess.py", "src/cnn_evaluation.py", "src/build_cnn_dataset.py"]
+pytest_add_cli_args_test_selection = [
+    "tests/test_preprocess.py", "tests/test_preprocess_limits.py",
+    "tests/test_cnn_evaluation.py", "tests/test_cnn_evaluation_limits.py",
+    "tests/test_build_cnn_dataset.py", "tests/test_build_cnn_dataset_limits.py",
+]
+also_copy = ["src", "pytest.ini"]
+pytest_add_cli_args = ["-p", "no:cacheprovider"]

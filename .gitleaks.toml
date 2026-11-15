@@ -1,0 +1,18 @@
+# Configuración de gitleaks: reglas por defecto más excepciones puntuales y justificadas.
+# Cada excepción exige el archivo Y el valor, para no tapar un secreto real que aparezca al lado.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Secreto JWT de las pruebas del backend: solo existe en Testcontainers y no sirve en ningún despliegue"
+condition = "AND"
+paths = ['''^backend/src/test/resources/application-test\.yml$''']
+regexes = ['''dGVzdC1zZWNyZXQtc29sby1wYXJhLXBydWViYXMt[A-Za-z0-9+/=]*''']
+
+[[allowlists]]
+description = "Clave del proyecto y organización de SonarCloud: identificadores públicos, no credenciales (el token va en el secreto SONAR_TOKEN)"
+condition = "AND"
+paths = ['''^sonar-project\.properties$''']
+regexTarget = "line"
+regexes = ['''sonar\.(projectKey|organization)=[A-Za-z0-9_.:-]+\s*$''']

@@ -14,8 +14,17 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 
-from preprocess import (BASE_DAYS, FEATURES, HORIZON_MAX_DAYS, HORIZON_MIN_DAYS, MIN_VALID_DAYS,
-                        RATIO_SCALE, TEMP_SCALE, VALID_RANGES, WINDOW_DAYS)
+from preprocess import (
+    BASE_DAYS,
+    FEATURES,
+    HORIZON_MAX_DAYS,
+    HORIZON_MIN_DAYS,
+    MIN_VALID_DAYS,
+    RATIO_SCALE,
+    TEMP_SCALE,
+    VALID_RANGES,
+    WINDOW_DAYS,
+)
 from train_lstm import MODEL_PATH, REPORTS_DIR, SYNTHETIC_NOTE, build_model, load_split_windows
 
 ML_DIR = Path(__file__).resolve().parents[1]

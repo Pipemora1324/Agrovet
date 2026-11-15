@@ -83,9 +83,12 @@ public class GeminiClient implements LlmClient {
 
     private static java.time.Duration retryAfter(HttpHeaders headers) {
         String seconds = headers == null ? null : headers.getFirst(HttpHeaders.RETRY_AFTER);
+        if (seconds == null) {
+            return java.time.Duration.ofMinutes(1);
+        }
         try {
             return java.time.Duration.ofSeconds(Math.max(1, Long.parseLong(seconds)));
-        } catch (NumberFormatException | NullPointerException e) {
+        } catch (NumberFormatException e) {
             return java.time.Duration.ofMinutes(1);
         }
     }

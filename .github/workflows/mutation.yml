@@ -1,0 +1,112 @@
+name: mutacion
+
+# Pruebas de mutación: PIT sobre seguridad (auth) y sincronización (sync) del backend, y mutmut sobre
+# la lógica pura de ml. Fallan si se eliminan menos del 90 % de los mutantes.
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "backend/src/**"
+      - "backend/pom.xml"
+      - "ml/src/**"
+      - "ml/tests/**"
+      - "ml/pyproject.toml"
+      - "scripts/ci/**"
+      - ".github/workflows/mutation.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "backend/src/**"
+      - "backend/pom.xml"
+      - "ml/src/**"
+      - "ml/tests/**"
+      - "ml/pyproject.toml"
+      - "scripts/ci/**"
+      - ".github/workflows/mutation.yml"
+  schedule:
+    - cron: "5 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pit:
+    name: PIT (backend)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      # Clases, umbral (90 %) y pruebas en la configuración de pitest-maven del pom.xml
+      - name: Mutantes de auth y sync
+        run: |
+          chmod +x mvnw
+          ./mvnw -B test-compile org.pitest:pitest-maven:mutationCoverage
+
+      - name: Resumen
+        if: always() && hashFiles('backend/target/pit-reports/mutations.xml') != ''
+        working-directory: .
+        run: python3 scripts/ci/mutation_summary.py --pit backend/target/pit-reports/mutations.xml >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always() && hashFiles('backend/target/pit-reports/index.html') != ''
+        with:
+          name: pit
+          path: backend/target/pit-reports/
+          retention-days: 14
+
+  mutmut:
+    name: mutmut (ml)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ml
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: ml/requirements.txt
+
+      # Los módulos que se mutan no usan TensorFlow: se instala solo lo necesario, con las
+      # mismas versiones fijadas en requirements.txt
+      - name: Dependencias
+        run: |
+          grep -E '^(numpy|pandas|scikit-learn|pytest|mutmut)==' requirements.txt > /tmp/mutmut-requirements.txt
+          pip install -r /tmp/mutmut-requirements.txt
+
+      # Módulos y pruebas en [tool.mutmut] de pyproject.toml
+      - name: Mutantes de preprocess, cnn_evaluation y build_cnn_dataset
+        run: |
+          mutmut run --max-children 4
+          mutmut results --all true > mutmut.txt
+
+      - name: Resumen y umbral
+        working-directory: .
+        run: |
+          status=0
+          python3 scripts/ci/mutation_summary.py --mutmut ml/mutmut.txt --min 90 > mutmut.md || status=$?
+          cat mutmut.md >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always() && hashFiles('ml/mutmut.txt') != ''
+        with:
+          name: mutmut
+          path: ml/mutmut.txt
+          retention-days: 14

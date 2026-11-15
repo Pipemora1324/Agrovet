@@ -3,10 +3,10 @@ name: ml
 on:
   push:
     branches: [main, develop]
-    paths: ["ml/**", ".github/workflows/ml.yml"]
+    paths: ["ml/**", "scripts/ci/**", ".github/workflows/ml.yml"]
   pull_request:
     branches: [main, develop]
-    paths: ["ml/**", ".github/workflows/ml.yml"]
+    paths: ["ml/**", "scripts/ci/**", ".github/workflows/ml.yml"]
 
 permissions:
   contents: read
@@ -19,6 +19,8 @@ jobs:
         working-directory: ml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         if: hashFiles('ml/requirements.txt') != ''
@@ -31,13 +33,27 @@ jobs:
         if: hashFiles('ml/requirements.txt') != ''
         run: pip install -r requirements.txt
 
-      - name: Lint
+      # Reglas de ruff y mypy en pyproject.toml
+      - name: Estilo (ruff)
         if: hashFiles('ml/requirements.txt') != ''
-        run: flake8 src tests
+        run: |
+          ruff check --output-format github src tests
+          ruff check --output-format github --config pyproject.toml ../scripts/ci
 
-      - name: Pruebas
+      - name: Tipos (mypy)
+        if: hashFiles('ml/requirements.txt') != ''
+        run: |
+          mypy
+          mypy --strict ../scripts/ci
+
+      - name: Pruebas con cobertura
         if: hashFiles('ml/tests/**/*.py') != ''
-        run: pytest -q
+        run: pytest -q --cov --cov-report=term --cov-report=xml
+
+      - name: Resumen de cobertura
+        if: always() && hashFiles('ml/coverage.xml') != ''
+        working-directory: .
+        run: python3 scripts/ci/coverage_summary.py --cobertura ml/coverage.xml >> "$GITHUB_STEP_SUMMARY"
 
       - name: Sin código aún
         if: hashFiles('ml/requirements.txt') == ''

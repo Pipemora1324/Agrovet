@@ -68,7 +68,7 @@ def main():
     interpreter = make_interpreter(TFLITE_PATH.read_bytes())
 
     wanted = ("healthy", "subclinical", "estrus", "erroneous_record")
-    chosen = {kind: [] for kind in wanted}
+    chosen: dict[str, list] = {kind: [] for kind in wanted}
     used_cows, used_errors = set(), set()
     for cow_id, end, sick, onset, rows in candidate_windows(df, test_ids):
         kind = classify(sick, onset, end, rows)

@@ -1,8 +1,15 @@
 import numpy as np
 import pytest
 
-from cnn_evaluation import (balanced_class_weight, confusion, grouped_bootstrap_auc,
-                            inner_validation_split, repeated_group_folds, summarize, wilson_interval)
+from cnn_evaluation import (
+    balanced_class_weight,
+    confusion,
+    grouped_bootstrap_auc,
+    inner_validation_split,
+    repeated_group_folds,
+    summarize,
+    wilson_interval,
+)
 
 
 def _toy(n_groups=40, seed=0):

@@ -1,0 +1,5 @@
+# Hallazgos de Trivy que se aceptan, con su motivo.
+
+# HEALTHCHECK en el Dockerfile: el chequeo de salud se define en docker-compose.prod.yml
+# (readiness de Actuator), donde están el intervalo y el tiempo de arranque de producción.
+DS-0026
