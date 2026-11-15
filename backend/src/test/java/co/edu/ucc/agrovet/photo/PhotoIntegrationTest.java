@@ -11,7 +11,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -108,7 +107,8 @@ class PhotoIntegrationTest extends IntegrationTest {
 
         // Otro usuario no la ve ni la puede reemplazar: igual que si no existiera
         mvc.perform(get(imageUrl(photoId)).header("Authorization", beto.bearer())).andExpect(status().isNotFound());
-        upload(beto, photoId, TestImages.image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE).andExpect(status().isNotFound());
+        upload(beto, photoId, TestImages.image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE)
+                .andExpect(status().isNotFound());
         mvc.perform(get(imageUrl(photoId))).andExpect(status().isUnauthorized());
     }
 
@@ -145,7 +145,8 @@ class PhotoIntegrationTest extends IntegrationTest {
         upload(ana, UUID.randomUUID(), TestImages.image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE)
                 .andExpect(status().isNotFound());
 
-        upload(ana, photoId, TestImages.image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE).andExpect(status().isNoContent());
+        upload(ana, photoId, TestImages.image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE)
+                .andExpect(status().isNoContent());
         Path file = properties.storageDir().resolve(photoId + ".jpg");
         assertThat(Files.exists(file)).isTrue();
 
@@ -160,10 +161,11 @@ class PhotoIntegrationTest extends IntegrationTest {
         assertThat(jdbc.queryForObject("SELECT research_consent FROM cow_photos WHERE id = ?", Boolean.class, photoId))
                 .isFalse();
 
-        sendResearch("\"vetConfirmed\":\"YES\",\"diagnosis\":\"MASTITIS\",\"diagnosisNotes\":\"Cuarto anterior derecho\","
-                + "\"researchConsent\":true");
+        sendResearch("\"vetConfirmed\":\"YES\",\"diagnosis\":\"MASTITIS\","
+                + "\"diagnosisNotes\":\"Cuarto anterior derecho\",\"researchConsent\":true");
         assertThat(jdbc.queryForObject("SELECT research_consent AND research_consent_at IS NOT NULL AND "
-                + "vet_confirmed = 'YES' AND diagnosis = 'MASTITIS' FROM cow_photos WHERE id = ?", Boolean.class, photoId))
+                + "vet_confirmed = 'YES' AND diagnosis = 'MASTITIS' FROM cow_photos WHERE id = ?", Boolean.class,
+                photoId))
                 .isTrue();
 
         sendResearch("\"vetConfirmed\":\"YES\",\"diagnosis\":\"MASTITIS\",\"researchConsent\":false");
@@ -173,7 +175,8 @@ class PhotoIntegrationTest extends IntegrationTest {
 
     private void sendResearch(String fields) throws Exception {
         mvc.perform(post("/api/sync").header("Authorization", ana.bearer()).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"photos\":[{\"id\":\"%s\",\"cowId\":\"%s\",\"takenOn\":\"%s\",\"updatedAt\":\"%s\",%s}]}"
+                        .content(("{\"photos\":[{\"id\":\"%s\",\"cowId\":\"%s\",\"takenOn\":\"%s\","
+                                + "\"updatedAt\":\"%s\",%s}]}")
                                 .formatted(photoId, cowId, LocalDate.now(), Instant.now(), fields)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rejected").isEmpty());
@@ -181,12 +184,14 @@ class PhotoIntegrationTest extends IntegrationTest {
 
     @Test
     void deletingTheAccountDeletesThePhotoFiles() throws Exception {
-        upload(ana, photoId, TestImages.image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE).andExpect(status().isNoContent());
+        upload(ana, photoId, TestImages.image("jpg", 8, 8), MediaType.IMAGE_JPEG_VALUE)
+                .andExpect(status().isNoContent());
         Path file = properties.storageDir().resolve(photoId + ".jpg");
         assertThat(Files.exists(file)).isTrue();
 
         mvc.perform(delete("/api/auth/me").header("Authorization", ana.bearer())
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"password\":\"" + TestUsers.PASSWORD + "\"}"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\":\"" + TestUsers.PASSWORD + "\"}"))
                 .andExpect(status().isNoContent());
         assertThat(Files.exists(file)).isFalse();
     }

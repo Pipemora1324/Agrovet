@@ -119,7 +119,8 @@ class GeminiClientTest {
                 .generate("reglas", List.of(new LlmClient.Turn(true, "¿Qué reviso?")), null))
                 .isInstanceOfSatisfying(AssistantUnavailableException.class, error ->
                         assertThat(error.userMessage())
-                                .isEqualTo("El asistente está recibiendo muchas consultas. Intente de nuevo en unos minutos."));
+                                .isEqualTo("El asistente está recibiendo muchas consultas. "
+                                        + "Intente de nuevo en unos minutos."));
         server.verify();
     }
 }

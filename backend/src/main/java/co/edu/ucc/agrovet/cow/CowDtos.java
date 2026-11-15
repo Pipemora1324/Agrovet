@@ -58,7 +58,8 @@ public final class CowDtos {
 
         public static DailyRecordResponse from(DailyRecord record) {
             return new DailyRecordResponse(record.getId(), record.getRecordDate(), record.getTemperatureC(),
-                    record.getMilkL(), record.getFeedKg(), record.getSymptoms(), record.getSources(), record.getNotes());
+                    record.getMilkL(), record.getFeedKg(), record.getSymptoms(), record.getSources(),
+                    record.getNotes());
         }
     }
 

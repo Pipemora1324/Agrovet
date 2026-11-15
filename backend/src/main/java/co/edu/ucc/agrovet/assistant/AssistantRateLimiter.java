@@ -44,7 +44,8 @@ public class AssistantRateLimiter {
             }
             long lastHour = history.stream().filter(at -> now.isBefore(at.plus(HOUR))).count();
             if (lastHour >= properties.maxPerHour()) {
-                Instant oldestInHour = history.stream().filter(at -> now.isBefore(at.plus(HOUR))).findFirst().orElse(now);
+                Instant oldestInHour = history.stream().filter(at -> now.isBefore(at.plus(HOUR))).findFirst()
+                        .orElse(now);
                 throw tooMany(Duration.between(now, oldestInHour.plus(HOUR)));
             }
             history.addLast(now);
