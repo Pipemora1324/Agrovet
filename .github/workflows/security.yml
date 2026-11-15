@@ -1,0 +1,92 @@
+name: seguridad
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: "41 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: secretos (gitleaks)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      # SHA-256 de gitleaks_8.30.1_linux_x64.tar.gz (gitleaks_8.30.1_checksums.txt de la release)
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Todo el historial: un secreto borrado en un commit posterior sigue expuesto
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Binario de la release verificado por hash, en vez de una action de terceros con más permisos
+      - name: Instalar gitleaks
+        run: |
+          curl -sSfL -o /tmp/gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum --check --strict
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+
+      # Excepciones justificadas en .gitleaks.toml
+      - name: Buscar secretos en el historial
+        run: /tmp/gitleaks git --config .gitleaks.toml --redact --no-banner --exit-code 1 --report-format sarif --report-path gitleaks.sarif .
+
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        if: always() && hashFiles('gitleaks.sarif') != ''
+        with:
+          sarif_file: gitleaks.sarif
+          category: gitleaks
+
+  trivy:
+    name: configuración (Trivy)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # trivy-action 0.36.0: publicada después del incidente de marzo de 2026 (GHSA de aquasecurity/trivy),
+      # con release inmutable. El binario también va fijado; nunca "latest".
+      - name: Dockerfile y compose (informe completo)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.2
+          scan-type: config
+          scan-ref: backend
+          skip-dirs: backend/target
+          trivyignores: backend/.trivyignore
+          format: sarif
+          output: trivy.sarif
+          exit-code: "0"
+
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        if: always() && hashFiles('trivy.sarif') != ''
+        with:
+          sarif_file: trivy.sarif
+          category: trivy-config
+
+      - name: Dockerfile y compose (falla con HIGH o CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.2
+          skip-setup-trivy: true
+          scan-type: config
+          scan-ref: backend
+          skip-dirs: backend/target
+          trivyignores: backend/.trivyignore
+          severity: HIGH,CRITICAL
+          format: table
+          exit-code: "1"

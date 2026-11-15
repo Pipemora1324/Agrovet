@@ -1,0 +1,11 @@
+# Configuración de gitleaks: reglas por defecto más excepciones puntuales y justificadas.
+# Cada excepción exige el archivo Y el valor, para no tapar un secreto real que aparezca al lado.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Secreto JWT de las pruebas del backend: solo existe en Testcontainers y no sirve en ningún despliegue"
+condition = "AND"
+paths = ['''^backend/src/test/resources/application-test\.yml$''']
+regexes = ['''dGVzdC1zZWNyZXQtc29sby1wYXJhLXBydWViYXMt[A-Za-z0-9+/=]*''']
