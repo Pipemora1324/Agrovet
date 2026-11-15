@@ -82,8 +82,9 @@ def table(results: dict[str, Coverage | None]) -> str:
         else:
             lines.append(f"| {name} | {percent(cov.lines_covered, cov.lines_total)} | "
                          f"{percent(cov.branches_covered, cov.branches_total)} |")
-    lines += ["", "Backend con JaCoCo, ml con pytest-cov y mobile con `flutter test --coverage` "
-              "(sin el código generado `*.g.dart`). Flutter no mide ramas."]
+    note = ("Backend con JaCoCo, ml con pytest-cov y mobile con `flutter test --coverage` "
+            "(sin el código generado `*.g.dart`). Flutter no mide ramas.")
+    lines += ["", note]
     return "\n".join(lines) + "\n"
 
 
