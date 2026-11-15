@@ -32,6 +32,12 @@ env/
 .ipynb_checkpoints/
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+ml/mutants/
+ml/mutmut.txt
 ml/**/*.csv
 ml/data/raw/
 ml/data/udder_images/

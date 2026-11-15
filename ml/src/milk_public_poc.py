@@ -23,8 +23,7 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
-from cnn_evaluation import (balanced_class_weight, inner_validation_split, repeated_group_folds,
-                            summarize)
+from cnn_evaluation import balanced_class_weight, inner_validation_split, repeated_group_folds, summarize
 from train_cnn import ALPHA, array_dataset, build_cnn, fit_two_phase, make_augmenter
 from udder_public_data import _UnionFind, hamming, phash, udder_crop
 
@@ -39,7 +38,7 @@ THRESHOLD = 0.5
 
 
 def dhash(image):
-    gray = np.asarray(image.convert("L").resize((9, 8), Image.LANCZOS), dtype=float)
+    gray = np.asarray(image.convert("L").resize((9, 8), Image.Resampling.LANCZOS), dtype=np.float64)
     return (gray[:, 1:] > gray[:, :-1]).ravel()
 
 
@@ -55,7 +54,7 @@ def load_boxes(coco_dir):
     for split in SPLITS:
         data = json.loads((coco_dir / split / "_annotations.coco.json").read_text(encoding="utf-8"))
         cats = {c["id"]: c["name"] for c in data["categories"]}
-        boxes = {}
+        boxes: dict[int, list] = {}
         for ann in data["annotations"]:
             boxes.setdefault(ann["image_id"], []).append((cats[ann["category_id"]], ann["bbox"]))
         for im in data["images"]:
@@ -74,7 +73,7 @@ def group_images(images, pils):
         for k in range(i + 1, len(images)):
             if hamming(ph[i], ph[k]) <= PHASH_SAME and hamming(dh[i], dh[k]) <= DHASH_SAME:
                 uf.union(i, k)
-    roots = {}
+    roots: dict[int, int] = {}
     return [roots.setdefault(uf.find(i), len(roots)) for i in range(len(images))]
 
 
