@@ -11,6 +11,9 @@ Autor: Juan Felipe Mora.
 **Gestión del proyecto:** el backlog, los sprints, el cronograma, el tablero de GitHub Projects, la
 trazabilidad y las evidencias de pruebas están en [docs/gestion/](docs/gestion/README.md).
 
+**Calidad y pruebas:** cobertura, pruebas de mutación, linters, SonarCloud y análisis de seguridad
+(CodeQL, gitleaks, Trivy, OpenSSF Scorecard) en [docs/gestion/pruebas/calidad.md](docs/gestion/pruebas/calidad.md).
+
 ## El problema
 
 La mastitis es la enfermedad más costosa de los hatos lecheros: baja la producción, obliga
@@ -66,7 +69,7 @@ suele haber señales sutiles: sube un poco la temperatura, baja la leche y la va
 | `backend/` | API REST de sincronización y gestión (Java 21, Spring Boot 3, PostgreSQL). |
 | `mobile/`  | Aplicación Android (Flutter).                                             |
 | `docs/`    | Documentación del proyecto, guía de contribución y [gestión del proyecto](docs/gestion/README.md). |
-| `scripts/` | Utilidades del repositorio (etiquetas e issues en GitHub).                |
+| `scripts/` | Utilidades del repositorio (etiquetas e issues en GitHub, resúmenes del CI). |
 
 Cada módulo tiene su propio README con instrucciones detalladas.
 

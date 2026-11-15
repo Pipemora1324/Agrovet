@@ -85,6 +85,11 @@ Evitar mensajes como `cambios`, `arreglos` o `wip`.
 
 ## Estilo de código
 
-- **Python**: PEP 8, revisado con `flake8`.
+- **Python**: PEP 8, revisado con `ruff` y tipos con `mypy` (configuración en `ml/pyproject.toml`).
 - **Java**: convenciones de Spring; controller → service → repository; DTOs separados de entidades.
-- **Dart**: `flutter analyze` sin advertencias; arquitectura por capas (presentation, domain, data).
+  `Checkstyle` y `SpotBugs` corren en `./mvnw verify` (configuración en `backend/config/`).
+- **Dart**: `flutter analyze --fatal-infos` en modo estricto, sin advertencias; arquitectura por capas
+  (presentation, domain, data).
+
+Los criterios de calidad (cobertura, mutación, análisis de seguridad) y cómo correr cada herramienta
+están en [gestion/pruebas/calidad.md](gestion/pruebas/calidad.md).

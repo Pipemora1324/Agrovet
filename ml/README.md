@@ -25,9 +25,13 @@ python src/generate_dataset.py      # data/daily_records.csv (no se versiona)
 python src/train_lstm.py            # models/lstm.keras + reports/metrics.json y gráficas
 python src/export_tflite.py         # models/mastitis_lstm.tflite + models/model_config.json
 python src/export_test_vectors.py   # models/test_vectors.json
-pytest                              # pruebas
-flake8 src tests                    # estilo
+pytest --cov                        # pruebas con cobertura
+ruff check src tests                # estilo
+mypy                                # tipos
 ```
+
+Las pruebas de mutación (`mutmut`) solo corren en Linux o WSL; ver
+[docs/gestion/pruebas/calidad.md](../docs/gestion/pruebas/calidad.md).
 
 | Archivo | Qué hace |
 |---|---|

@@ -8,9 +8,10 @@ Cierra #
 
 ## Cómo se probó
 
-- [ ] `./mvnw verify` (backend)
-- [ ] `flutter analyze` y `flutter test` (mobile)
-- [ ] `pytest` y `flake8` (ml)
+- [ ] `./mvnw verify` (backend: pruebas, JaCoCo, Checkstyle y SpotBugs)
+- [ ] `flutter analyze --fatal-infos` y `flutter test --coverage` (mobile)
+- [ ] `pytest --cov`, `ruff check` y `mypy` (ml)
+- [ ] Pruebas de mutación si cambió `auth`, `sync` o la lógica de `ml/` (ver `docs/gestion/pruebas/calidad.md`)
 - [ ] Prueba manual o en emulador (describir abajo)
 - [ ] No aplica: solo documentación
 
