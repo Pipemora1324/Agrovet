@@ -3,10 +3,10 @@ name: backend
 on:
   push:
     branches: [main, develop]
-    paths: ["backend/**", ".github/workflows/backend.yml"]
+    paths: ["backend/**", "scripts/ci/**", ".github/workflows/backend.yml"]
   pull_request:
     branches: [main, develop]
-    paths: ["backend/**", ".github/workflows/backend.yml"]
+    paths: ["backend/**", "scripts/ci/**", ".github/workflows/backend.yml"]
 
 permissions:
   contents: read
@@ -19,6 +19,8 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         if: hashFiles('backend/pom.xml') != ''
@@ -27,12 +29,29 @@ jobs:
           java-version: "21"
           cache: maven
 
-      # Testcontainers usa el Docker que ya trae el runner de Ubuntu
-      - name: Compilar y probar
+      # verify corre las pruebas (Testcontainers usa el Docker del runner), el informe de JaCoCo,
+      # Checkstyle y SpotBugs con FindSecBugs; cualquier hallazgo rompe el build
+      - name: Compilar, probar y analizar
         if: hashFiles('backend/pom.xml') != ''
         run: |
           chmod +x mvnw
           ./mvnw -B verify
+
+      - name: Resumen de cobertura
+        if: always() && hashFiles('backend/target/site/jacoco/jacoco.csv') != ''
+        working-directory: .
+        run: python3 scripts/ci/coverage_summary.py --jacoco backend/target/site/jacoco/jacoco.csv >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar informes
+        if: always() && hashFiles('backend/target/site/jacoco/jacoco.xml') != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: backend-informes
+          path: |
+            backend/target/site/jacoco/
+            backend/target/checkstyle-result.xml
+            backend/target/spotbugsXml.xml
+          retention-days: 14
 
       - name: Sin código aún
         if: hashFiles('backend/pom.xml') == ''
