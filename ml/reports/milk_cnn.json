@@ -1,0 +1,833 @@
+{
+  "warning": "Evaluación, NO integrada en la app. Un solo dataset público, un tipo de celular y una paleta; etiquetas del autor del dataset, sin laboratorio. El aspecto anormal de la leche corresponde a mastitis clínica: la subclínica no cambia el aspecto y no se detecta así.",
+  "source": {
+    "name": "Mastitis dataset v3 (Roboflow Universe, usuario abdurrehman4198)",
+    "url": "https://universe.roboflow.com/abdurrehman4198-gmail-com/mastitis-dataset",
+    "license": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)"
+  },
+  "validation": "StratifiedGroupKFold 5x5; grupos por pHash/dHash y sesión PXL; umbral 0.5; split original de Roboflow descartado por fuga",
+  "input_size": 160,
+  "training": "Etapa 1: cabeza con la red congelada (lr 1e-3, parada temprana 10). Etapa 2: últimas 30 capas afinadas con aumento (giro, rotación ±15°, zoom, traslación, brillo, contraste), lr 1e-5, parada temprana 3. Pesos por clase balanceados.",
+  "dataset": {
+    "images": 453,
+    "wells": 640,
+    "normal": 189,
+    "abnormal": 451,
+    "wells_by_grade": {
+      "Blood tinged Milk": 184,
+      "Curd like Milk": 116,
+      "Normal Milk": 189,
+      "Watery Milk": 151
+    },
+    "wells_by_source": {
+      "PXL": 113,
+      "video": 527
+    },
+    "groups": 163,
+    "groups_spanning_roboflow_splits": 41,
+    "groups_with_single_class": 155,
+    "largest_group_wells": 75,
+    "label_conflicts_near_identical_frames": 0
+  },
+  "cv": {
+    "mobilenet_v2": {
+      "n_images": 640,
+      "n_groups": 163,
+      "threshold": 0.5,
+      "sensitivity": 0.9778270509977827,
+      "sensitivity_ci95": [
+        0.9596705555624494,
+        0.9879123695242173
+      ],
+      "specificity": 1.0,
+      "specificity_ci95": [
+        0.9800797046227183,
+        1.0
+      ],
+      "balanced_accuracy": 0.9889135254988913,
+      "auc": 0.9996480484285362,
+      "auc_ci95_group_bootstrap": [
+        0.9985923825243924,
+        1.0
+      ],
+      "confusion": {
+        "tn": 189,
+        "fp": 0,
+        "fn": 10,
+        "tp": 441
+      },
+      "sensitivity_ci95_group_bootstrap": [
+        0.9492583333740217,
+        0.9967560456784594
+      ],
+      "specificity_ci95_group_bootstrap": [
+        1.0,
+        1.0
+      ],
+      "ece": 0.02391669225958548,
+      "brier": 0.011181329990031654,
+      "auc_by_repeat": {
+        "mean": 0.9993172139513604,
+        "min": 0.9988033646570231,
+        "max": 0.9995893898332923
+      },
+      "auc_frozen_stage_by_repeat": {
+        "mean": 0.9993336383580285,
+        "min": 0.9988385598141696,
+        "max": 0.9996011215523412
+      },
+      "calibration_all_predictions": {
+        "ece": 0.019501802035005678,
+        "bins": [
+          {
+            "low": 0.0,
+            "high": 0.1,
+            "count": 897,
+            "mean_probability": 0.011146171264271944,
+            "fraction_abnormal": 0.006688963210702341
+          },
+          {
+            "low": 0.1,
+            "high": 0.2,
+            "count": 34,
+            "mean_probability": 0.14211881336043863,
+            "fraction_abnormal": 0.17647058823529413
+          },
+          {
+            "low": 0.2,
+            "high": 0.3,
+            "count": 23,
+            "mean_probability": 0.24661277428917264,
+            "fraction_abnormal": 0.34782608695652173
+          },
+          {
+            "low": 0.3,
+            "high": 0.4,
+            "count": 19,
+            "mean_probability": 0.346635302430705,
+            "fraction_abnormal": 0.7368421052631579
+          },
+          {
+            "low": 0.4,
+            "high": 0.5,
+            "count": 21,
+            "mean_probability": 0.43444005506379263,
+            "fraction_abnormal": 0.8571428571428571
+          },
+          {
+            "low": 0.5,
+            "high": 0.6,
+            "count": 21,
+            "mean_probability": 0.5574397728556678,
+            "fraction_abnormal": 1.0
+          },
+          {
+            "low": 0.6,
+            "high": 0.7,
+            "count": 21,
+            "mean_probability": 0.6573290995189122,
+            "fraction_abnormal": 0.9047619047619048
+          },
+          {
+            "low": 0.7,
+            "high": 0.8,
+            "count": 29,
+            "mean_probability": 0.7438160818198631,
+            "fraction_abnormal": 1.0
+          },
+          {
+            "low": 0.8,
+            "high": 0.9,
+            "count": 53,
+            "mean_probability": 0.8610175386914667,
+            "fraction_abnormal": 0.9811320754716981
+          },
+          {
+            "low": 0.9,
+            "high": 1.0,
+            "count": 2082,
+            "mean_probability": 0.995035620318595,
+            "fraction_abnormal": 1.0
+          }
+        ]
+      },
+      "confusion_by_grade": {
+        "Blood tinged Milk": {
+          "n": 184,
+          "predicted_normal": 0,
+          "predicted_abnormal": 184,
+          "fraction_abnormal": 1.0
+        },
+        "Curd like Milk": {
+          "n": 116,
+          "predicted_normal": 10,
+          "predicted_abnormal": 106,
+          "fraction_abnormal": 0.9137931034482759
+        },
+        "Normal Milk": {
+          "n": 189,
+          "predicted_normal": 189,
+          "predicted_abnormal": 0,
+          "fraction_abnormal": 0.0
+        },
+        "Watery Milk": {
+          "n": 151,
+          "predicted_normal": 0,
+          "predicted_abnormal": 151,
+          "fraction_abnormal": 1.0
+        }
+      },
+      "epochs_head_tune_mean": [
+        85.44,
+        6.8
+      ]
+    },
+    "mobilenet_v3_small": {
+      "n_images": 640,
+      "n_groups": 163,
+      "threshold": 0.5,
+      "sensitivity": 0.9866962305986696,
+      "sensitivity_ci95": [
+        0.97128258864549,
+        0.9938888826144793
+      ],
+      "specificity": 0.9841269841269841,
+      "specificity_ci95": [
+        0.954378753099871,
+        0.9945873101062531
+      ],
+      "balanced_accuracy": 0.9854116073628268,
+      "auc": 0.9995541946761459,
+      "auc_ci95_group_bootstrap": [
+        0.9985339105206079,
+        1.0
+      ],
+      "confusion": {
+        "tn": 186,
+        "fp": 3,
+        "fn": 6,
+        "tp": 445
+      },
+      "sensitivity_ci95_group_bootstrap": [
+        0.9688992557150452,
+        0.9980545691511465
+      ],
+      "specificity_ci95_group_bootstrap": [
+        0.9565217391304348,
+        1.0
+      ],
+      "ece": 0.02476163336656322,
+      "brier": 0.009954204311893184,
+      "auc_by_repeat": {
+        "mean": 0.999378218890414,
+        "min": 0.9991905113856333,
+        "max": 0.999495536080902
+      },
+      "auc_frozen_stage_by_repeat": {
+        "mean": 0.9993031358885016,
+        "min": 0.999096657633243,
+        "max": 0.9994720726428044
+      },
+      "calibration_all_predictions": {
+        "ece": 0.019297635523819263,
+        "bins": [
+          {
+            "low": 0.0,
+            "high": 0.1,
+            "count": 886,
+            "mean_probability": 0.013310929592094727,
+            "fraction_abnormal": 0.003386004514672686
+          },
+          {
+            "low": 0.1,
+            "high": 0.2,
+            "count": 29,
+            "mean_probability": 0.148281160099753,
+            "fraction_abnormal": 0.10344827586206896
+          },
+          {
+            "low": 0.2,
+            "high": 0.3,
+            "count": 11,
+            "mean_probability": 0.24452801861546256,
+            "fraction_abnormal": 0.36363636363636365
+          },
+          {
+            "low": 0.3,
+            "high": 0.4,
+            "count": 22,
+            "mean_probability": 0.3502566042271527,
+            "fraction_abnormal": 0.5454545454545454
+          },
+          {
+            "low": 0.4,
+            "high": 0.5,
+            "count": 14,
+            "mean_probability": 0.454621074455125,
+            "fraction_abnormal": 0.7857142857142857
+          },
+          {
+            "low": 0.5,
+            "high": 0.6,
+            "count": 26,
+            "mean_probability": 0.5523448242590978,
+            "fraction_abnormal": 0.6923076923076923
+          },
+          {
+            "low": 0.6,
+            "high": 0.7,
+            "count": 26,
+            "mean_probability": 0.65494727400633,
+            "fraction_abnormal": 0.7692307692307693
+          },
+          {
+            "low": 0.7,
+            "high": 0.8,
+            "count": 45,
+            "mean_probability": 0.7503492673238118,
+            "fraction_abnormal": 0.9555555555555556
+          },
+          {
+            "low": 0.8,
+            "high": 0.9,
+            "count": 65,
+            "mean_probability": 0.8550355810385484,
+            "fraction_abnormal": 1.0
+          },
+          {
+            "low": 0.9,
+            "high": 1.0,
+            "count": 2076,
+            "mean_probability": 0.9922198606421723,
+            "fraction_abnormal": 1.0
+          }
+        ]
+      },
+      "confusion_by_grade": {
+        "Blood tinged Milk": {
+          "n": 184,
+          "predicted_normal": 0,
+          "predicted_abnormal": 184,
+          "fraction_abnormal": 1.0
+        },
+        "Curd like Milk": {
+          "n": 116,
+          "predicted_normal": 6,
+          "predicted_abnormal": 110,
+          "fraction_abnormal": 0.9482758620689655
+        },
+        "Normal Milk": {
+          "n": 189,
+          "predicted_normal": 186,
+          "predicted_abnormal": 3,
+          "fraction_abnormal": 0.015873015873015872
+        },
+        "Watery Milk": {
+          "n": 151,
+          "predicted_normal": 0,
+          "predicted_abnormal": 151,
+          "fraction_abnormal": 1.0
+        }
+      },
+      "epochs_head_tune_mean": [
+        93.2,
+        11.16
+      ]
+    }
+  },
+  "comparison_auc_difference": {
+    "a": "mobilenet_v2",
+    "b": "mobilenet_v3_small",
+    "difference": 9.38537523902383e-05,
+    "low": -0.0009334766740026063,
+    "high": 0.0011007622024861619
+  },
+  "context_only_control": {
+    "n_images": 640,
+    "n_groups": 163,
+    "threshold": 0.5,
+    "sensitivity": 0.9312638580931264,
+    "sensitivity_ci95": [
+      0.9040866830648268,
+      0.9511563746120025
+    ],
+    "specificity": 0.6825396825396826,
+    "specificity_ci95": [
+      0.6131042191511972,
+      0.7447026571396366
+    ],
+    "balanced_accuracy": 0.8069017703164045,
+    "auc": 0.9122702049531317,
+    "auc_ci95_group_bootstrap": [
+      0.8523814309560769,
+      0.9584649594521387
+    ],
+    "confusion": {
+      "tn": 129,
+      "fp": 60,
+      "fn": 31,
+      "tp": 420
+    },
+    "sensitivity_ci95_group_bootstrap": [
+      0.8928549162807268,
+      0.963235649675731
+    ],
+    "specificity_ci95_group_bootstrap": [
+      0.5837009803921569,
+      0.8375560897435894
+    ],
+    "ece": 0.05077843228776143,
+    "brier": 0.10596595038514915,
+    "auc_by_repeat": {
+      "mean": 0.8935158788817326,
+      "min": 0.8724058236253358,
+      "max": 0.9238376799352409
+    },
+    "auc_frozen_stage_by_repeat": {
+      "mean": 0.8958716080667299,
+      "min": 0.8739896056969227,
+      "max": 0.9226410445922641
+    },
+    "calibration_all_predictions": {
+      "ece": 0.03509197544611192,
+      "bins": [
+        {
+          "low": 0.0,
+          "high": 0.1,
+          "count": 325,
+          "mean_probability": 0.04720641818622915,
+          "fraction_abnormal": 0.08615384615384615
+        },
+        {
+          "low": 0.1,
+          "high": 0.2,
+          "count": 149,
+          "mean_probability": 0.15194290221337503,
+          "fraction_abnormal": 0.2080536912751678
+        },
+        {
+          "low": 0.2,
+          "high": 0.3,
+          "count": 114,
+          "mean_probability": 0.24630879519278542,
+          "fraction_abnormal": 0.32456140350877194
+        },
+        {
+          "low": 0.3,
+          "high": 0.4,
+          "count": 133,
+          "mean_probability": 0.3526427566557002,
+          "fraction_abnormal": 0.43609022556390975
+        },
+        {
+          "low": 0.4,
+          "high": 0.5,
+          "count": 158,
+          "mean_probability": 0.4504919421823719,
+          "fraction_abnormal": 0.5126582278481012
+        },
+        {
+          "low": 0.5,
+          "high": 0.6,
+          "count": 145,
+          "mean_probability": 0.5463610414800972,
+          "fraction_abnormal": 0.6206896551724138
+        },
+        {
+          "low": 0.6,
+          "high": 0.7,
+          "count": 167,
+          "mean_probability": 0.6528605711674262,
+          "fraction_abnormal": 0.7005988023952096
+        },
+        {
+          "low": 0.7,
+          "high": 0.8,
+          "count": 233,
+          "mean_probability": 0.746696620028418,
+          "fraction_abnormal": 0.7167381974248928
+        },
+        {
+          "low": 0.8,
+          "high": 0.9,
+          "count": 393,
+          "mean_probability": 0.8523832021172113,
+          "fraction_abnormal": 0.806615776081425
+        },
+        {
+          "low": 0.9,
+          "high": 1.0,
+          "count": 1383,
+          "mean_probability": 0.973765344483561,
+          "fraction_abnormal": 0.9609544468546638
+        }
+      ]
+    },
+    "confusion_by_grade": {
+      "Blood tinged Milk": {
+        "n": 184,
+        "predicted_normal": 0,
+        "predicted_abnormal": 184,
+        "fraction_abnormal": 1.0
+      },
+      "Curd like Milk": {
+        "n": 116,
+        "predicted_normal": 8,
+        "predicted_abnormal": 108,
+        "fraction_abnormal": 0.9310344827586207
+      },
+      "Normal Milk": {
+        "n": 189,
+        "predicted_normal": 129,
+        "predicted_abnormal": 60,
+        "fraction_abnormal": 0.31746031746031744
+      },
+      "Watery Milk": {
+        "n": 151,
+        "predicted_normal": 23,
+        "predicted_abnormal": 128,
+        "fraction_abnormal": 0.847682119205298
+      }
+    },
+    "epochs_head_tune_mean": [
+      41.44,
+      5.6
+    ]
+  },
+  "leave_pxl_session_out": {
+    "train_wells": 527,
+    "test_wells": 113,
+    "n_images": 113,
+    "n_groups": 2,
+    "threshold": 0.5,
+    "sensitivity": 1.0,
+    "sensitivity_ci95": [
+      0.8620237953250198,
+      1.0
+    ],
+    "specificity": 1.0,
+    "specificity_ci95": [
+      0.9586234547637477,
+      1.0
+    ],
+    "balanced_accuracy": 1.0,
+    "auc": 1.0,
+    "auc_ci95_group_bootstrap": [
+      1.0,
+      1.0
+    ],
+    "confusion": {
+      "tn": 89,
+      "fp": 0,
+      "fn": 0,
+      "tp": 24
+    },
+    "sensitivity_ci95_group_bootstrap": [
+      1.0,
+      1.0
+    ],
+    "specificity_ci95_group_bootstrap": [
+      1.0,
+      1.0
+    ],
+    "ece": 0.010038400383057223,
+    "brier": 0.00038063410189387314
+  },
+  "gradcam": {
+    "mobilenet_v2": {
+      "counts_rep0": {
+        "verdaderos_positivos": 441,
+        "verdaderos_negativos": 188,
+        "falsos_positivos": 1,
+        "falsos_negativos": 10
+      },
+      "figures": {
+        "verdaderos_positivos": "informes/gradcam_mobilenet_v2_verdaderos_positivos.png",
+        "verdaderos_negativos": "informes/gradcam_mobilenet_v2_verdaderos_negativos.png",
+        "falsos_positivos": "informes/gradcam_mobilenet_v2_falsos_positivos.png",
+        "falsos_negativos": "informes/gradcam_mobilenet_v2_falsos_negativos.png"
+      }
+    },
+    "mobilenet_v3_small": {
+      "counts_rep0": {
+        "verdaderos_positivos": 443,
+        "verdaderos_negativos": 186,
+        "falsos_positivos": 3,
+        "falsos_negativos": 8
+      },
+      "figures": {
+        "verdaderos_positivos": "informes/gradcam_mobilenet_v3_small_verdaderos_positivos.png",
+        "verdaderos_negativos": "informes/gradcam_mobilenet_v3_small_verdaderos_negativos.png",
+        "falsos_positivos": "informes/gradcam_mobilenet_v3_small_falsos_positivos.png",
+        "falsos_negativos": "informes/gradcam_mobilenet_v3_small_falsos_negativos.png"
+      }
+    }
+  },
+  "robustness_rep0": {
+    "mobilenet_v2": [
+      {
+        "degradation": "ninguna",
+        "level": null,
+        "auc": 0.9995541946761459,
+        "sensitivity": 0.9778270509977827,
+        "specificity": 0.9947089947089947,
+        "delta_auc": 0.0
+      },
+      {
+        "degradation": "luz",
+        "level": 0.5,
+        "auc": 0.9983927544903155,
+        "sensitivity": 0.9800443458980045,
+        "specificity": 0.9841269841269841,
+        "delta_auc": -0.0011614401858304202
+      },
+      {
+        "degradation": "luz",
+        "level": 0.7,
+        "auc": 0.9993312920142188,
+        "sensitivity": 0.9822616407982262,
+        "specificity": 0.9947089947089947,
+        "delta_auc": -0.00022290266192714903
+      },
+      {
+        "degradation": "luz",
+        "level": 1.3,
+        "auc": 0.998357559333169,
+        "sensitivity": 0.9556541019955654,
+        "specificity": 1.0,
+        "delta_auc": -0.0011966353429768706
+      },
+      {
+        "degradation": "luz",
+        "level": 1.6,
+        "auc": 0.9951196048757024,
+        "sensitivity": 0.9711751662971175,
+        "specificity": 0.9576719576719577,
+        "delta_auc": -0.004434589800443534
+      },
+      {
+        "degradation": "desenfoque",
+        "level": 1.0,
+        "auc": 0.9979352174474125,
+        "sensitivity": 0.9844789356984479,
+        "specificity": 0.9470899470899471,
+        "delta_auc": -0.001618977228733387
+      },
+      {
+        "degradation": "desenfoque",
+        "level": 2.0,
+        "auc": 0.98018512652659,
+        "sensitivity": 0.9889135254988913,
+        "specificity": 0.6190476190476191,
+        "delta_auc": -0.019369068149555968
+      },
+      {
+        "degradation": "desenfoque",
+        "level": 4.0,
+        "auc": 0.9232510939828014,
+        "sensitivity": 0.9889135254988913,
+        "specificity": 0.4021164021164021,
+        "delta_auc": -0.07630310069334456
+      },
+      {
+        "degradation": "rotacion",
+        "level": 15.0,
+        "auc": 0.9953425075376294,
+        "sensitivity": 0.9512195121951219,
+        "specificity": 0.9682539682539683,
+        "delta_auc": -0.0042116871385164956
+      },
+      {
+        "degradation": "rotacion",
+        "level": 45.0,
+        "auc": 0.9967385821044358,
+        "sensitivity": 0.9534368070953437,
+        "specificity": 0.9947089947089947,
+        "delta_auc": -0.0028156125717101466
+      },
+      {
+        "degradation": "rotacion",
+        "level": 90.0,
+        "auc": 0.9991318527903893,
+        "sensitivity": 0.9667405764966741,
+        "specificity": 0.9947089947089947,
+        "delta_auc": -0.00042234188575662746
+      },
+      {
+        "degradation": "rotacion",
+        "level": 180.0,
+        "auc": 0.9990849259141943,
+        "sensitivity": 0.9733924611973392,
+        "specificity": 0.9894179894179894,
+        "delta_auc": -0.0004692687619516356
+      },
+      {
+        "degradation": "jpeg",
+        "level": 60.0,
+        "auc": 0.9993195602951701,
+        "sensitivity": 0.9844789356984479,
+        "specificity": 0.9735449735449735,
+        "delta_auc": -0.0002346343809758178
+      },
+      {
+        "degradation": "jpeg",
+        "level": 30.0,
+        "auc": 0.9984866082427057,
+        "sensitivity": 0.9977827050997783,
+        "specificity": 0.8941798941798942,
+        "delta_auc": -0.001067586433440182
+      },
+      {
+        "degradation": "jpeg",
+        "level": 10.0,
+        "auc": 0.9774750994263189,
+        "sensitivity": 0.9955654101995566,
+        "specificity": 0.5079365079365079,
+        "delta_auc": -0.022079095249826985
+      }
+    ],
+    "mobilenet_v3_small": [
+      {
+        "degradation": "ninguna",
+        "level": null,
+        "auc": 0.9992609016999261,
+        "sensitivity": 0.9822616407982262,
+        "specificity": 0.9841269841269841,
+        "delta_auc": 0.0
+      },
+      {
+        "degradation": "luz",
+        "level": 0.5,
+        "auc": 0.998029071199803,
+        "sensitivity": 0.9822616407982262,
+        "specificity": 0.9470899470899471,
+        "delta_auc": -0.001231830500123099
+      },
+      {
+        "degradation": "luz",
+        "level": 0.7,
+        "auc": 0.9990145355999015,
+        "sensitivity": 0.9800443458980045,
+        "specificity": 0.9841269841269841,
+        "delta_auc": -0.0002463661000245976
+      },
+      {
+        "degradation": "luz",
+        "level": 1.3,
+        "auc": 0.9977357782235832,
+        "sensitivity": 0.9623059866962306,
+        "specificity": 0.9841269841269841,
+        "delta_auc": -0.0015251234763429267
+      },
+      {
+        "degradation": "luz",
+        "level": 1.6,
+        "auc": 0.9946386043947019,
+        "sensitivity": 0.9645232815964523,
+        "specificity": 0.9629629629629629,
+        "delta_auc": -0.004622297305224232
+      },
+      {
+        "degradation": "desenfoque",
+        "level": 1.0,
+        "auc": 0.9988268280951208,
+        "sensitivity": 0.9512195121951219,
+        "specificity": 1.0,
+        "delta_auc": -0.0004340736048052962
+      },
+      {
+        "degradation": "desenfoque",
+        "level": 2.0,
+        "auc": 0.9981581201093398,
+        "sensitivity": 0.9379157427937915,
+        "specificity": 1.0,
+        "delta_auc": -0.0011027815905862992
+      },
+      {
+        "degradation": "desenfoque",
+        "level": 4.0,
+        "auc": 0.9704595314351412,
+        "sensitivity": 0.8514412416851441,
+        "specificity": 0.9206349206349206,
+        "delta_auc": -0.02880137026478491
+      },
+      {
+        "degradation": "rotacion",
+        "level": 15.0,
+        "auc": 0.9982519738617299,
+        "sensitivity": 0.917960088691796,
+        "specificity": 1.0,
+        "delta_auc": -0.001008927838196172
+      },
+      {
+        "degradation": "rotacion",
+        "level": 45.0,
+        "auc": 0.9982285104236324,
+        "sensitivity": 0.9334811529933481,
+        "specificity": 1.0,
+        "delta_auc": -0.0010323912762937315
+      },
+      {
+        "degradation": "rotacion",
+        "level": 90.0,
+        "auc": 0.9997419021809265,
+        "sensitivity": 0.9711751662971175,
+        "specificity": 1.0,
+        "delta_auc": 0.00048100048100041537
+      },
+      {
+        "degradation": "rotacion",
+        "level": 180.0,
+        "auc": 0.9996245849904386,
+        "sensitivity": 0.991130820399113,
+        "specificity": 0.9947089947089947,
+        "delta_auc": 0.0003636832905125065
+      },
+      {
+        "degradation": "jpeg",
+        "level": 60.0,
+        "auc": 0.9986156571522425,
+        "sensitivity": 0.9844789356984479,
+        "specificity": 0.9682539682539683,
+        "delta_auc": -0.0006452445476835544
+      },
+      {
+        "degradation": "jpeg",
+        "level": 30.0,
+        "auc": 0.9986743157474864,
+        "sensitivity": 0.9977827050997783,
+        "specificity": 0.9153439153439153,
+        "delta_auc": -0.0005865859524396555
+      },
+      {
+        "degradation": "jpeg",
+        "level": 10.0,
+        "auc": 0.9813231032743228,
+        "sensitivity": 1.0,
+        "specificity": 0.26455026455026454,
+        "delta_auc": -0.01793779842560328
+      }
+    ]
+  },
+  "figures": {
+    "calibration": "informes/calibracion.png"
+  },
+  "export": {
+    "architecture": "mobilenet_v2",
+    "input": "160x160 RGB 0-255 float32",
+    "quantization": "float16",
+    "tflite_bytes": 877080,
+    "keras_params": 411489,
+    "latency_ms_median_pc_cpu": {
+      "1_thread": 3.3150500003102934,
+      "4_threads": 2.6131000013265293
+    },
+    "keras_vs_tflite": {
+      "max_abs_diff": 0.021072030067443848,
+      "mean_abs_diff": 0.000536598316978143,
+      "decisions_changed": 0,
+      "wells": 640
+    },
+    "note": "Latencia medida en el CPU del PC de desarrollo con el intérprete de TFLite, no en un celular."
+  }
+}
