@@ -99,7 +99,7 @@ jobs:
         working-directory: .
         run: |
           status=0
-          python3 scripts/ci/mutation_summary.py --mutmut ml/mutmut.txt --min 90 > mutmut.md || status=$?
+          python3 scripts/ci/mutation_summary.py --mutmut --min 90 < ml/mutmut.txt > mutmut.md || status=$?
           cat mutmut.md >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
 
