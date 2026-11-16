@@ -1,0 +1,2452 @@
+{
+  "note": "Datos SINTÉTICOS (generate_dataset.py). Sirven para conocer el comportamiento del pipeline; NO tienen validez clínica ni validan la hipótesis del proyecto (F1 >= 0,80).",
+  "model": {
+    "file": "models/mastitis_lstm.tflite",
+    "sha256": "50504707d2fd916223e311538443fd368fc31ebe08ecd0e0859bce2e34ea8b58",
+    "sha256_matches_config": true,
+    "threshold_red": 0.854394,
+    "threshold_yellow": 0.427197
+  },
+  "data": {
+    "params": "DatasetParams() por defecto (600 vacas, 60 días, semilla 42)",
+    "split": "70/15/15 por vaca, estratificada (train_lstm.split_cows)",
+    "train": {
+      "cows": 420,
+      "windows": 16634,
+      "positive_windows": 735
+    },
+    "val": {
+      "cows": 90,
+      "windows": 3478,
+      "positive_windows": 155
+    },
+    "test": {
+      "cows": 90,
+      "windows": 3514,
+      "positive_windows": 160
+    }
+  },
+  "baselines": {
+    "definitions": {
+      "umbral_temperatura": "°C del último día sobre la media de los primeros 7 días de la ventana",
+      "regresion_logistica": "42 valores normalizados (14 días x 3), estandarizados, pesos balanceados",
+      "random_forest": "42 valores normalizados, 300 árboles, hoja mínima 5, pesos balanceados",
+      "threshold_rule": "Máximo F1 en validación, la misma regla que eligió el umbral del LSTM",
+      "ci": "Bootstrap de vacas del test, 2000 remuestreos, percentiles 2,5 y 97,5"
+    },
+    "test": {
+      "lstm": {
+        "threshold": 0.854394,
+        "f1": 0.491694,
+        "precision": 0.524823,
+        "recall": 0.4625,
+        "specificity": 0.980024,
+        "auc": 0.890946,
+        "confusion": {
+          "tn": 3287,
+          "fp": 67,
+          "fn": 86,
+          "tp": 74
+        },
+        "f1_ci95": [
+          0.401349,
+          0.567476
+        ],
+        "auc_ci95": [
+          0.866618,
+          0.913972
+        ],
+        "recall_ci95": [
+          0.38,
+          0.545455
+        ],
+        "precision_ci95": [
+          0.398403,
+          0.638161
+        ],
+        "cow_level": {
+          "sick_cows": 32,
+          "sick_cows_detected_rate": 0.9375,
+          "healthy_cows": 58,
+          "healthy_cows_with_alert_rate": 0.534483
+        }
+      },
+      "umbral_temperatura": {
+        "threshold": 0.46,
+        "f1": 0.329545,
+        "precision": 0.302083,
+        "recall": 0.3625,
+        "specificity": 0.960048,
+        "auc": 0.82596,
+        "confusion": {
+          "tn": 3220,
+          "fp": 134,
+          "fn": 102,
+          "tp": 58
+        },
+        "f1_ci95": [
+          0.239729,
+          0.40426
+        ],
+        "auc_ci95": [
+          0.785649,
+          0.862655
+        ],
+        "recall_ci95": [
+          0.278552,
+          0.445725
+        ],
+        "precision_ci95": [
+          0.2,
+          0.399085
+        ],
+        "f1_minus_lstm_ci95": [
+          -0.233028,
+          -0.094282
+        ],
+        "auc_minus_lstm_ci95": [
+          -0.104466,
+          -0.031017
+        ],
+        "recall_minus_lstm_ci95": [
+          -0.181818,
+          -0.02608
+        ],
+        "cow_level": {
+          "sick_cows": 32,
+          "sick_cows_detected_rate": 0.8125,
+          "healthy_cows": 58,
+          "healthy_cows_with_alert_rate": 0.844828
+        }
+      },
+      "regresion_logistica": {
+        "threshold": 0.855273,
+        "f1": 0.428571,
+        "precision": 0.425926,
+        "recall": 0.43125,
+        "specificity": 0.972272,
+        "auc": 0.863203,
+        "confusion": {
+          "tn": 3261,
+          "fp": 93,
+          "fn": 91,
+          "tp": 69
+        },
+        "f1_ci95": [
+          0.339991,
+          0.5
+        ],
+        "auc_ci95": [
+          0.831532,
+          0.893031
+        ],
+        "recall_ci95": [
+          0.353324,
+          0.503226
+        ],
+        "precision_ci95": [
+          0.308642,
+          0.534172
+        ],
+        "f1_minus_lstm_ci95": [
+          -0.12198,
+          -0.009647
+        ],
+        "auc_minus_lstm_ci95": [
+          -0.052615,
+          -0.008093
+        ],
+        "recall_minus_lstm_ci95": [
+          -0.088904,
+          0.021433
+        ],
+        "cow_level": {
+          "sick_cows": 32,
+          "sick_cows_detected_rate": 0.90625,
+          "healthy_cows": 58,
+          "healthy_cows_with_alert_rate": 0.741379
+        }
+      },
+      "random_forest": {
+        "threshold": 0.411104,
+        "f1": 0.438017,
+        "precision": 0.646341,
+        "recall": 0.33125,
+        "specificity": 0.991354,
+        "auc": 0.868726,
+        "confusion": {
+          "tn": 3325,
+          "fp": 29,
+          "fn": 107,
+          "tp": 53
+        },
+        "f1_ci95": [
+          0.34399,
+          0.518286
+        ],
+        "auc_ci95": [
+          0.840318,
+          0.896155
+        ],
+        "recall_ci95": [
+          0.254533,
+          0.406255
+        ],
+        "precision_ci95": [
+          0.480974,
+          0.795181
+        ],
+        "f1_minus_lstm_ci95": [
+          -0.112265,
+          0.00714
+        ],
+        "auc_minus_lstm_ci95": [
+          -0.042164,
+          -0.005273
+        ],
+        "recall_minus_lstm_ci95": [
+          -0.187879,
+          -0.08
+        ],
+        "cow_level": {
+          "sick_cows": 32,
+          "sick_cows_detected_rate": 0.78125,
+          "healthy_cows": 58,
+          "healthy_cows_with_alert_rate": 0.310345
+        }
+      }
+    }
+  },
+  "robustness": {
+    "noise_units": {
+      "temperature_c": 0.15,
+      "milk_relative": 0.05,
+      "feed_relative": 0.06
+    },
+    "notes": "Degradaciones sobre las ventanas crudas del test, antes del preprocesamiento de la app. Ruido: nivel x unidades (ruido diario del generador). Las métricas son sobre las ventanas que el preprocesamiento acepta (>= 10 días válidos por variable); recall_all_windows cuenta como no detectadas las de riesgo que quedan sin evaluar.",
+    "table": [
+      {
+        "degradation": "sin_degradar",
+        "level": 0,
+        "draws": 1,
+        "coverage": 1.0,
+        "coverage_range": [
+          1.0,
+          1.0
+        ],
+        "f1": 0.491694,
+        "f1_range": [
+          0.491694,
+          0.491694
+        ],
+        "precision": 0.524823,
+        "precision_range": [
+          0.524823,
+          0.524823
+        ],
+        "recall": 0.4625,
+        "recall_range": [
+          0.4625,
+          0.4625
+        ],
+        "recall_all_windows": 0.4625,
+        "recall_all_windows_range": [
+          0.4625,
+          0.4625
+        ],
+        "specificity": 0.980024,
+        "specificity_range": [
+          0.980024,
+          0.980024
+        ],
+        "auc": 0.890946,
+        "auc_range": [
+          0.890946,
+          0.890946
+        ]
+      },
+      {
+        "degradation": "ruido_gaussiano",
+        "level": 0.5,
+        "draws": 5,
+        "coverage": 1.0,
+        "coverage_range": [
+          1.0,
+          1.0
+        ],
+        "f1": 0.462411,
+        "f1_range": [
+          0.449367,
+          0.484472
+        ],
+        "precision": 0.458864,
+        "precision_range": [
+          0.440476,
+          0.481481
+        ],
+        "recall": 0.46625,
+        "recall_range": [
+          0.44375,
+          0.4875
+        ],
+        "recall_all_windows": 0.46625,
+        "recall_all_windows_range": [
+          0.44375,
+          0.4875
+        ],
+        "specificity": 0.973763,
+        "specificity_range": [
+          0.971974,
+          0.974955
+        ],
+        "auc": 0.88246,
+        "auc_range": [
+          0.880982,
+          0.884455
+        ]
+      },
+      {
+        "degradation": "ruido_gaussiano",
+        "level": 1.0,
+        "draws": 5,
+        "coverage": 1.0,
+        "coverage_range": [
+          1.0,
+          1.0
+        ],
+        "f1": 0.387974,
+        "f1_range": [
+          0.368831,
+          0.417582
+        ],
+        "precision": 0.33202,
+        "precision_range": [
+          0.31405,
+          0.372549
+        ],
+        "recall": 0.4675,
+        "recall_range": [
+          0.44375,
+          0.475
+        ],
+        "recall_all_windows": 0.4675,
+        "recall_all_windows_range": [
+          0.44375,
+          0.475
+        ],
+        "specificity": 0.954919,
+        "specificity_range": [
+          0.950507,
+          0.961837
+        ],
+        "auc": 0.844916,
+        "auc_range": [
+          0.832245,
+          0.861937
+        ]
+      },
+      {
+        "degradation": "ruido_gaussiano",
+        "level": 2.0,
+        "draws": 5,
+        "coverage": 1.0,
+        "coverage_range": [
+          1.0,
+          1.0
+        ],
+        "f1": 0.261904,
+        "f1_range": [
+          0.248276,
+          0.279793
+        ],
+        "precision": 0.18192,
+        "precision_range": [
+          0.171429,
+          0.193317
+        ],
+        "recall": 0.4675,
+        "recall_range": [
+          0.44375,
+          0.50625
+        ],
+        "recall_all_windows": 0.4675,
+        "recall_all_windows_range": [
+          0.44375,
+          0.50625
+        ],
+        "specificity": 0.899702,
+        "specificity_range": [
+          0.896243,
+          0.902206
+        ],
+        "auc": 0.782873,
+        "auc_range": [
+          0.756066,
+          0.800676
+        ]
+      },
+      {
+        "degradation": "ruido_gaussiano",
+        "level": 3.0,
+        "draws": 5,
+        "coverage": 1.0,
+        "coverage_range": [
+          1.0,
+          1.0
+        ],
+        "f1": 0.197494,
+        "f1_range": [
+          0.163205,
+          0.216691
+        ],
+        "precision": 0.129341,
+        "precision_range": [
+          0.107004,
+          0.141491
+        ],
+        "recall": 0.4175,
+        "recall_range": [
+          0.34375,
+          0.4625
+        ],
+        "recall_all_windows": 0.4175,
+        "recall_all_windows_range": [
+          0.34375,
+          0.4625
+        ],
+        "specificity": 0.865951,
+        "specificity_range": [
+          0.863148,
+          0.869708
+        ],
+        "auc": 0.732029,
+        "auc_range": [
+          0.699963,
+          0.745231
+        ]
+      },
+      {
+        "degradation": "faltantes_celdas",
+        "level": 0.1,
+        "draws": 5,
+        "coverage": 0.9642,
+        "coverage_range": [
+          0.962436,
+          0.967274
+        ],
+        "f1": 0.451163,
+        "f1_range": [
+          0.430976,
+          0.467354
+        ],
+        "precision": 0.468668,
+        "precision_range": [
+          0.444444,
+          0.49635
+        ],
+        "recall": 0.435062,
+        "recall_range": [
+          0.418301,
+          0.449664
+        ],
+        "recall_all_windows": 0.41375,
+        "recall_all_windows_range": [
+          0.4,
+          0.425
+        ],
+        "specificity": 0.976762,
+        "specificity_range": [
+          0.974954,
+          0.978638
+        ],
+        "auc": 0.878321,
+        "auc_range": [
+          0.869511,
+          0.886153
+        ]
+      },
+      {
+        "degradation": "faltantes_celdas",
+        "level": 0.2,
+        "draws": 5,
+        "coverage": 0.627433,
+        "coverage_range": [
+          0.617245,
+          0.636881
+        ],
+        "f1": 0.430252,
+        "f1_range": [
+          0.37037,
+          0.465116
+        ],
+        "precision": 0.433774,
+        "precision_range": [
+          0.376344,
+          0.47619
+        ],
+        "recall": 0.427114,
+        "recall_range": [
+          0.364583,
+          0.454545
+        ],
+        "recall_all_windows": 0.2675,
+        "recall_all_windows_range": [
+          0.21875,
+          0.3125
+        ],
+        "specificity": 0.973587,
+        "specificity_range": [
+          0.972287,
+          0.975621
+        ],
+        "auc": 0.857147,
+        "auc_range": [
+          0.843887,
+          0.883091
+        ]
+      },
+      {
+        "degradation": "faltantes_celdas",
+        "level": 0.3,
+        "draws": 5,
+        "coverage": 0.180706,
+        "coverage_range": [
+          0.175868,
+          0.190097
+        ],
+        "f1": 0.446091,
+        "f1_range": [
+          0.333333,
+          0.551724
+        ],
+        "precision": 0.462418,
+        "precision_range": [
+          0.322581,
+          0.551724
+        ],
+        "recall": 0.433703,
+        "recall_range": [
+          0.344828,
+          0.551724
+        ],
+        "recall_all_windows": 0.09,
+        "recall_all_windows_range": [
+          0.0625,
+          0.10625
+        ],
+        "specificity": 0.972111,
+        "specificity_range": [
+          0.964824,
+          0.977929
+        ],
+        "auc": 0.854119,
+        "auc_range": [
+          0.810952,
+          0.886365
+        ]
+      },
+      {
+        "degradation": "faltantes_dias_completos",
+        "level": 0.1,
+        "draws": 5,
+        "coverage": 0.983665,
+        "coverage_range": [
+          0.980933,
+          0.985771
+        ],
+        "f1": 0.465577,
+        "f1_range": [
+          0.448845,
+          0.480263
+        ],
+        "precision": 0.496054,
+        "precision_range": [
+          0.468966,
+          0.510949
+        ],
+        "recall": 0.438974,
+        "recall_range": [
+          0.424051,
+          0.464968
+        ],
+        "recall_all_windows": 0.43125,
+        "recall_all_windows_range": [
+          0.41875,
+          0.45625
+        ],
+        "specificity": 0.978723,
+        "specificity_range": [
+          0.976688,
+          0.980036
+        ],
+        "auc": 0.8755,
+        "auc_range": [
+          0.862579,
+          0.883018
+        ]
+      },
+      {
+        "degradation": "faltantes_dias_completos",
+        "level": 0.2,
+        "draws": 5,
+        "coverage": 0.833409,
+        "coverage_range": [
+          0.826409,
+          0.839499
+        ],
+        "f1": 0.414973,
+        "f1_range": [
+          0.357414,
+          0.450382
+        ],
+        "precision": 0.411425,
+        "precision_range": [
+          0.348148,
+          0.450382
+        ],
+        "recall": 0.41876,
+        "recall_range": [
+          0.367188,
+          0.456693
+        ],
+        "recall_all_windows": 0.34125,
+        "recall_all_windows_range": [
+          0.29375,
+          0.36875
+        ],
+        "specificity": 0.972053,
+        "specificity_range": [
+          0.968425,
+          0.974035
+        ],
+        "auc": 0.861721,
+        "auc_range": [
+          0.851119,
+          0.869274
+        ]
+      },
+      {
+        "degradation": "faltantes_dias_completos",
+        "level": 0.3,
+        "draws": 5,
+        "coverage": 0.536881,
+        "coverage_range": [
+          0.529596,
+          0.542971
+        ],
+        "f1": 0.409318,
+        "f1_range": [
+          0.382716,
+          0.435754
+        ],
+        "precision": 0.41109,
+        "precision_range": [
+          0.364583,
+          0.452055
+        ],
+        "recall": 0.410067,
+        "recall_range": [
+          0.383721,
+          0.4375
+        ],
+        "recall_all_windows": 0.22,
+        "recall_all_windows_range": [
+          0.19375,
+          0.24375
+        ],
+        "specificity": 0.971806,
+        "specificity_range": [
+          0.96663,
+          0.977753
+        ],
+        "auc": 0.851696,
+        "auc_range": [
+          0.843586,
+          0.858678
+        ]
+      },
+      {
+        "degradation": "faltan_primeros_dias",
+        "level": 1,
+        "draws": 1,
+        "coverage": 1.0,
+        "coverage_range": [
+          1.0,
+          1.0
+        ],
+        "f1": 0.481848,
+        "f1_range": [
+          0.481848,
+          0.481848
+        ],
+        "precision": 0.51049,
+        "precision_range": [
+          0.51049,
+          0.51049
+        ],
+        "recall": 0.45625,
+        "recall_range": [
+          0.45625,
+          0.45625
+        ],
+        "recall_all_windows": 0.45625,
+        "recall_all_windows_range": [
+          0.45625,
+          0.45625
+        ],
+        "specificity": 0.979129,
+        "specificity_range": [
+          0.979129,
+          0.979129
+        ],
+        "auc": 0.88826,
+        "auc_range": [
+          0.88826,
+          0.88826
+        ]
+      },
+      {
+        "degradation": "faltan_primeros_dias",
+        "level": 2,
+        "draws": 1,
+        "coverage": 1.0,
+        "coverage_range": [
+          1.0,
+          1.0
+        ],
+        "f1": 0.47138,
+        "f1_range": [
+          0.47138,
+          0.47138
+        ],
+        "precision": 0.510949,
+        "precision_range": [
+          0.510949,
+          0.510949
+        ],
+        "recall": 0.4375,
+        "recall_range": [
+          0.4375,
+          0.4375
+        ],
+        "recall_all_windows": 0.4375,
+        "recall_all_windows_range": [
+          0.4375,
+          0.4375
+        ],
+        "specificity": 0.980024,
+        "specificity_range": [
+          0.980024,
+          0.980024
+        ],
+        "auc": 0.888044,
+        "auc_range": [
+          0.888044,
+          0.888044
+        ]
+      },
+      {
+        "degradation": "faltan_primeros_dias",
+        "level": 3,
+        "draws": 1,
+        "coverage": 0.992032,
+        "coverage_range": [
+          0.992032,
+          0.992032
+        ],
+        "f1": 0.438163,
+        "f1_range": [
+          0.438163,
+          0.438163
+        ],
+        "precision": 0.504065,
+        "precision_range": [
+          0.504065,
+          0.504065
+        ],
+        "recall": 0.3875,
+        "recall_range": [
+          0.3875,
+          0.3875
+        ],
+        "recall_all_windows": 0.3875,
+        "recall_all_windows_range": [
+          0.3875,
+          0.3875
+        ],
+        "specificity": 0.98166,
+        "specificity_range": [
+          0.98166,
+          0.98166
+        ],
+        "auc": 0.882548,
+        "auc_range": [
+          0.882548,
+          0.882548
+        ]
+      },
+      {
+        "degradation": "faltan_primeros_dias",
+        "level": 4,
+        "draws": 1,
+        "coverage": 0.796528,
+        "coverage_range": [
+          0.796528,
+          0.796528
+        ],
+        "f1": 0.435556,
+        "f1_range": [
+          0.435556,
+          0.435556
+        ],
+        "precision": 0.510417,
+        "precision_range": [
+          0.510417,
+          0.510417
+        ],
+        "recall": 0.379845,
+        "recall_range": [
+          0.379845,
+          0.379845
+        ],
+        "recall_all_windows": 0.30625,
+        "recall_all_windows_range": [
+          0.30625,
+          0.30625
+        ],
+        "specificity": 0.982397,
+        "specificity_range": [
+          0.982397,
+          0.982397
+        ],
+        "auc": 0.872023,
+        "auc_range": [
+          0.872023,
+          0.872023
+        ]
+      },
+      {
+        "degradation": "faltan_ultimos_dias",
+        "level": 1,
+        "draws": 1,
+        "coverage": 1.0,
+        "coverage_range": [
+          1.0,
+          1.0
+        ],
+        "f1": 0.297619,
+        "f1_range": [
+          0.297619,
+          0.297619
+        ],
+        "precision": 0.284091,
+        "precision_range": [
+          0.284091,
+          0.284091
+        ],
+        "recall": 0.3125,
+        "recall_range": [
+          0.3125,
+          0.3125
+        ],
+        "recall_all_windows": 0.3125,
+        "recall_all_windows_range": [
+          0.3125,
+          0.3125
+        ],
+        "specificity": 0.962433,
+        "specificity_range": [
+          0.962433,
+          0.962433
+        ],
+        "auc": 0.786352,
+        "auc_range": [
+          0.786352,
+          0.786352
+        ]
+      },
+      {
+        "degradation": "faltan_ultimos_dias",
+        "level": 2,
+        "draws": 1,
+        "coverage": 1.0,
+        "coverage_range": [
+          1.0,
+          1.0
+        ],
+        "f1": 0.158824,
+        "f1_range": [
+          0.158824,
+          0.158824
+        ],
+        "precision": 0.15,
+        "precision_range": [
+          0.15,
+          0.15
+        ],
+        "recall": 0.16875,
+        "recall_range": [
+          0.16875,
+          0.16875
+        ],
+        "recall_all_windows": 0.16875,
+        "recall_all_windows_range": [
+          0.16875,
+          0.16875
+        ],
+        "specificity": 0.954383,
+        "specificity_range": [
+          0.954383,
+          0.954383
+        ],
+        "auc": 0.681358,
+        "auc_range": [
+          0.681358,
+          0.681358
+        ]
+      },
+      {
+        "degradation": "faltan_ultimos_dias",
+        "level": 3,
+        "draws": 1,
+        "coverage": 0.992032,
+        "coverage_range": [
+          0.992032,
+          0.992032
+        ],
+        "f1": 0.065934,
+        "f1_range": [
+          0.065934,
+          0.065934
+        ],
+        "precision": 0.058824,
+        "precision_range": [
+          0.058824,
+          0.058824
+        ],
+        "recall": 0.075,
+        "recall_range": [
+          0.075,
+          0.075
+        ],
+        "recall_all_windows": 0.075,
+        "recall_all_windows_range": [
+          0.075,
+          0.075
+        ],
+        "specificity": 0.942273,
+        "specificity_range": [
+          0.942273,
+          0.942273
+        ],
+        "auc": 0.582629,
+        "auc_range": [
+          0.582629,
+          0.582629
+        ]
+      },
+      {
+        "degradation": "faltan_ultimos_dias",
+        "level": 4,
+        "draws": 1,
+        "coverage": 0.792829,
+        "coverage_range": [
+          0.792829,
+          0.792829
+        ],
+        "f1": 0.046512,
+        "f1_range": [
+          0.046512,
+          0.046512
+        ],
+        "precision": 0.038043,
+        "precision_range": [
+          0.038043,
+          0.038043
+        ],
+        "recall": 0.059829,
+        "recall_range": [
+          0.059829,
+          0.059829
+        ],
+        "recall_all_windows": 0.04375,
+        "recall_all_windows_range": [
+          0.04375,
+          0.04375
+        ],
+        "specificity": 0.933683,
+        "specificity_range": [
+          0.933683,
+          0.933683
+        ],
+        "auc": 0.51967,
+        "auc_range": [
+          0.51967,
+          0.51967
+        ]
+      }
+    ]
+  },
+  "farm_shift": {
+    "misma_finca_otras_vacas": {
+      "changes": {},
+      "windows": 23560,
+      "positive_windows": 1050,
+      "prevalence": 0.044567,
+      "models": {
+        "lstm": {
+          "threshold": 0.854394,
+          "f1": 0.510779,
+          "precision": 0.608696,
+          "recall": 0.44,
+          "specificity": 0.986806,
+          "auc": 0.886235,
+          "confusion": {
+            "tn": 22213,
+            "fp": 297,
+            "fn": 588,
+            "tp": 462
+          },
+          "f1_ci95": [
+            0.476458,
+            0.541536
+          ],
+          "auc_ci95": [
+            0.873948,
+            0.897601
+          ],
+          "recall_ci95": [
+            0.408036,
+            0.470427
+          ],
+          "precision_ci95": [
+            0.554247,
+            0.656629
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.92381,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.438462
+          }
+        },
+        "umbral_temperatura": {
+          "threshold": 0.46,
+          "f1": 0.364841,
+          "precision": 0.340198,
+          "recall": 0.393333,
+          "specificity": 0.964416,
+          "auc": 0.84639,
+          "confusion": {
+            "tn": 21709,
+            "fp": 801,
+            "fn": 637,
+            "tp": 413
+          },
+          "f1_ci95": [
+            0.332038,
+            0.39579
+          ],
+          "auc_ci95": [
+            0.831933,
+            0.860395
+          ],
+          "recall_ci95": [
+            0.363362,
+            0.423321
+          ],
+          "precision_ci95": [
+            0.297853,
+            0.378948
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.176119,
+            -0.116737
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.05331,
+            -0.026404
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.078829,
+            -0.015737
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.904762,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.784615
+          }
+        },
+        "regresion_logistica": {
+          "threshold": 0.855273,
+          "f1": 0.425023,
+          "precision": 0.411032,
+          "recall": 0.44,
+          "specificity": 0.970591,
+          "auc": 0.876204,
+          "confusion": {
+            "tn": 21848,
+            "fp": 662,
+            "fn": 588,
+            "tp": 462
+          },
+          "f1_ci95": [
+            0.391735,
+            0.456632
+          ],
+          "auc_ci95": [
+            0.865026,
+            0.88746
+          ],
+          "recall_ci95": [
+            0.409821,
+            0.469036
+          ],
+          "precision_ci95": [
+            0.364758,
+            0.455396
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.112204,
+            -0.05923
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.018013,
+            -0.002398
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.027559,
+            0.027327
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.942857,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.712821
+          }
+        },
+        "random_forest": {
+          "threshold": 0.411104,
+          "f1": 0.468882,
+          "precision": 0.641322,
+          "recall": 0.369524,
+          "specificity": 0.99036,
+          "auc": 0.884618,
+          "confusion": {
+            "tn": 22293,
+            "fp": 217,
+            "fn": 662,
+            "tp": 388
+          },
+          "f1_ci95": [
+            0.435596,
+            0.500289
+          ],
+          "auc_ci95": [
+            0.871839,
+            0.896469
+          ],
+          "recall_ci95": [
+            0.338161,
+            0.399071
+          ],
+          "precision_ci95": [
+            0.585783,
+            0.691212
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.068722,
+            -0.015097
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.008992,
+            0.006269
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.097873,
+            -0.042568
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.871429,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.35641
+          }
+        }
+      }
+    },
+    "alta_produccion": {
+      "changes": {
+        "base_milk_mean": 24.0,
+        "base_milk_sd": 5.0,
+        "base_feed_mean": 17.0,
+        "base_feed_sd": 3.0
+      },
+      "windows": 23680,
+      "positive_windows": 1050,
+      "prevalence": 0.044341,
+      "models": {
+        "lstm": {
+          "threshold": 0.854394,
+          "f1": 0.520577,
+          "precision": 0.593179,
+          "recall": 0.46381,
+          "specificity": 0.985241,
+          "auc": 0.891977,
+          "confusion": {
+            "tn": 22296,
+            "fp": 334,
+            "fn": 563,
+            "tp": 487
+          },
+          "f1_ci95": [
+            0.486848,
+            0.550189
+          ],
+          "auc_ci95": [
+            0.878701,
+            0.904503
+          ],
+          "recall_ci95": [
+            0.431721,
+            0.49479
+          ],
+          "precision_ci95": [
+            0.542252,
+            0.639023
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.928571,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.441026
+          }
+        },
+        "umbral_temperatura": {
+          "threshold": 0.46,
+          "f1": 0.382688,
+          "precision": 0.366812,
+          "recall": 0.4,
+          "specificity": 0.967963,
+          "auc": 0.857336,
+          "confusion": {
+            "tn": 21905,
+            "fp": 725,
+            "fn": 630,
+            "tp": 420
+          },
+          "f1_ci95": [
+            0.34872,
+            0.41536
+          ],
+          "auc_ci95": [
+            0.842408,
+            0.871956
+          ],
+          "recall_ci95": [
+            0.366181,
+            0.433199
+          ],
+          "precision_ci95": [
+            0.32506,
+            0.409576
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.165695,
+            -0.109622
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.047118,
+            -0.022669
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.094237,
+            -0.032848
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.885714,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.782051
+          }
+        },
+        "regresion_logistica": {
+          "threshold": 0.855273,
+          "f1": 0.433746,
+          "precision": 0.43416,
+          "recall": 0.433333,
+          "specificity": 0.973796,
+          "auc": 0.885039,
+          "confusion": {
+            "tn": 22037,
+            "fp": 593,
+            "fn": 595,
+            "tp": 455
+          },
+          "f1_ci95": [
+            0.399811,
+            0.465994
+          ],
+          "auc_ci95": [
+            0.871972,
+            0.897474
+          ],
+          "recall_ci95": [
+            0.400952,
+            0.465385
+          ],
+          "precision_ci95": [
+            0.387449,
+            0.478835
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.114383,
+            -0.060411
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.015153,
+            0.001658
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.061388,
+            0.000944
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.904762,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.702564
+          }
+        },
+        "random_forest": {
+          "threshold": 0.411104,
+          "f1": 0.475959,
+          "precision": 0.659359,
+          "recall": 0.372381,
+          "specificity": 0.991074,
+          "auc": 0.884,
+          "confusion": {
+            "tn": 22428,
+            "fp": 202,
+            "fn": 659,
+            "tp": 391
+          },
+          "f1_ci95": [
+            0.438479,
+            0.50961
+          ],
+          "auc_ci95": [
+            0.869645,
+            0.897309
+          ],
+          "recall_ci95": [
+            0.338773,
+            0.405219
+          ],
+          "precision_ci95": [
+            0.601094,
+            0.70994
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.073945,
+            -0.015006
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.016509,
+            0.000492
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.120793,
+            -0.063828
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.838095,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.302564
+          }
+        }
+      }
+    },
+    "clima_calido": {
+      "changes": {
+        "heat_stress_scale": 2.0
+      },
+      "windows": 23532,
+      "positive_windows": 1050,
+      "prevalence": 0.04462,
+      "models": {
+        "lstm": {
+          "threshold": 0.854394,
+          "f1": 0.3584,
+          "precision": 0.26988,
+          "recall": 0.533333,
+          "specificity": 0.932613,
+          "auc": 0.866848,
+          "confusion": {
+            "tn": 20967,
+            "fp": 1515,
+            "fn": 490,
+            "tp": 560
+          },
+          "f1_ci95": [
+            0.324199,
+            0.389242
+          ],
+          "auc_ci95": [
+            0.853681,
+            0.879008
+          ],
+          "recall_ci95": [
+            0.501447,
+            0.566674
+          ],
+          "precision_ci95": [
+            0.236158,
+            0.30315
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.961905,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.902564
+          }
+        },
+        "umbral_temperatura": {
+          "threshold": 0.46,
+          "f1": 0.210437,
+          "precision": 0.135216,
+          "recall": 0.474286,
+          "specificity": 0.858331,
+          "auc": 0.793744,
+          "confusion": {
+            "tn": 19297,
+            "fp": 3185,
+            "fn": 552,
+            "tp": 498
+          },
+          "f1_ci95": [
+            0.183149,
+            0.237316
+          ],
+          "auc_ci95": [
+            0.775039,
+            0.810908
+          ],
+          "recall_ci95": [
+            0.433333,
+            0.51735
+          ],
+          "precision_ci95": [
+            0.114834,
+            0.15579
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.166821,
+            -0.128691
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.089206,
+            -0.05627
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.094553,
+            -0.022319
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.880952,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.997436
+          }
+        },
+        "regresion_logistica": {
+          "threshold": 0.855273,
+          "f1": 0.23149,
+          "precision": 0.153511,
+          "recall": 0.470476,
+          "specificity": 0.878836,
+          "auc": 0.827642,
+          "confusion": {
+            "tn": 19758,
+            "fp": 2724,
+            "fn": 556,
+            "tp": 494
+          },
+          "f1_ci95": [
+            0.204444,
+            0.257123
+          ],
+          "auc_ci95": [
+            0.813719,
+            0.840204
+          ],
+          "recall_ci95": [
+            0.434227,
+            0.504767
+          ],
+          "precision_ci95": [
+            0.13256,
+            0.174963
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.144426,
+            -0.109995
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.049625,
+            -0.029119
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.093461,
+            -0.03299
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.919048,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.992308
+          }
+        },
+        "random_forest": {
+          "threshold": 0.411104,
+          "f1": 0.285899,
+          "precision": 0.216203,
+          "recall": 0.421905,
+          "specificity": 0.928565,
+          "auc": 0.827665,
+          "confusion": {
+            "tn": 20876,
+            "fp": 1606,
+            "fn": 607,
+            "tp": 443
+          },
+          "f1_ci95": [
+            0.253156,
+            0.318879
+          ],
+          "auc_ci95": [
+            0.812231,
+            0.842201
+          ],
+          "recall_ci95": [
+            0.384072,
+            0.462087
+          ],
+          "precision_ci95": [
+            0.185658,
+            0.248915
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.091209,
+            -0.053288
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.049893,
+            -0.028256
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.142863,
+            -0.081056
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.82381,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.902564
+          }
+        }
+      }
+    },
+    "registros_ruidosos": {
+      "changes": {
+        "noise_scale": 2.0,
+        "error_fraction": 0.06
+      },
+      "windows": 23252,
+      "positive_windows": 1050,
+      "prevalence": 0.045157,
+      "models": {
+        "lstm": {
+          "threshold": 0.854394,
+          "f1": 0.280924,
+          "precision": 0.19745,
+          "recall": 0.486667,
+          "specificity": 0.90645,
+          "auc": 0.791793,
+          "confusion": {
+            "tn": 20125,
+            "fp": 2077,
+            "fn": 539,
+            "tp": 511
+          },
+          "f1_ci95": [
+            0.251606,
+            0.311775
+          ],
+          "auc_ci95": [
+            0.76993,
+            0.812458
+          ],
+          "recall_ci95": [
+            0.448512,
+            0.524496
+          ],
+          "precision_ci95": [
+            0.172641,
+            0.225483
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.914286,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.95641
+          }
+        },
+        "umbral_temperatura": {
+          "threshold": 0.46,
+          "f1": 0.244689,
+          "precision": 0.164532,
+          "recall": 0.477143,
+          "specificity": 0.885416,
+          "auc": 0.762023,
+          "confusion": {
+            "tn": 19658,
+            "fp": 2544,
+            "fn": 549,
+            "tp": 501
+          },
+          "f1_ci95": [
+            0.217853,
+            0.271416
+          ],
+          "auc_ci95": [
+            0.740374,
+            0.782301
+          ],
+          "recall_ci95": [
+            0.44072,
+            0.511882
+          ],
+          "precision_ci95": [
+            0.143041,
+            0.186965
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.057201,
+            -0.015822
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.050726,
+            -0.009561
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.048009,
+            0.027553
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.914286,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 1.0
+          }
+        },
+        "regresion_logistica": {
+          "threshold": 0.855273,
+          "f1": 0.298359,
+          "precision": 0.215495,
+          "recall": 0.484762,
+          "specificity": 0.916539,
+          "auc": 0.799471,
+          "confusion": {
+            "tn": 20349,
+            "fp": 1853,
+            "fn": 541,
+            "tp": 509
+          },
+          "f1_ci95": [
+            0.268582,
+            0.328226
+          ],
+          "auc_ci95": [
+            0.780895,
+            0.816647
+          ],
+          "recall_ci95": [
+            0.448826,
+            0.520384
+          ],
+          "precision_ci95": [
+            0.189685,
+            0.243149
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.001186,
+            0.035834
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.006005,
+            0.022342
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.034484,
+            0.031776
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.914286,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.979487
+          }
+        },
+        "random_forest": {
+          "threshold": 0.411104,
+          "f1": 0.291607,
+          "precision": 0.575843,
+          "recall": 0.195238,
+          "specificity": 0.993199,
+          "auc": 0.793764,
+          "confusion": {
+            "tn": 22051,
+            "fp": 151,
+            "fn": 845,
+            "tp": 205
+          },
+          "f1_ci95": [
+            0.252755,
+            0.33029
+          ],
+          "auc_ci95": [
+            0.772569,
+            0.812142
+          ],
+          "recall_ci95": [
+            0.165546,
+            0.224776
+          ],
+          "precision_ci95": [
+            0.50666,
+            0.641512
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.026592,
+            0.045875
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.012143,
+            0.015721
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.325107,
+            -0.257819
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.547619,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.238462
+          }
+        }
+      }
+    },
+    "subclinica_corta_y_leve": {
+      "changes": {
+        "subclinical_min_days": 3,
+        "subclinical_max_days": 5,
+        "severity_min": 0.3,
+        "severity_max": 0.9
+      },
+      "windows": 23354,
+      "positive_windows": 1050,
+      "prevalence": 0.04496,
+      "models": {
+        "lstm": {
+          "threshold": 0.854394,
+          "f1": 0.232143,
+          "precision": 0.416256,
+          "recall": 0.160952,
+          "specificity": 0.989374,
+          "auc": 0.729929,
+          "confusion": {
+            "tn": 22067,
+            "fp": 237,
+            "fn": 881,
+            "tp": 169
+          },
+          "f1_ci95": [
+            0.202108,
+            0.263226
+          ],
+          "auc_ci95": [
+            0.710714,
+            0.747948
+          ],
+          "recall_ci95": [
+            0.138854,
+            0.184102
+          ],
+          "precision_ci95": [
+            0.35824,
+            0.475709
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.566667,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.271795
+          }
+        },
+        "umbral_temperatura": {
+          "threshold": 0.46,
+          "f1": 0.150437,
+          "precision": 0.193985,
+          "recall": 0.122857,
+          "specificity": 0.975968,
+          "auc": 0.700113,
+          "confusion": {
+            "tn": 21768,
+            "fp": 536,
+            "fn": 921,
+            "tp": 129
+          },
+          "f1_ci95": [
+            0.126983,
+            0.174902
+          ],
+          "auc_ci95": [
+            0.681213,
+            0.718064
+          ],
+          "recall_ci95": [
+            0.103414,
+            0.1435
+          ],
+          "precision_ci95": [
+            0.159679,
+            0.231229
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.110358,
+            -0.053371
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.05046,
+            -0.008893
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.060751,
+            -0.015918
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.466667,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.625641
+          }
+        },
+        "regresion_logistica": {
+          "threshold": 0.855273,
+          "f1": 0.196517,
+          "precision": 0.283154,
+          "recall": 0.150476,
+          "specificity": 0.982066,
+          "auc": 0.733134,
+          "confusion": {
+            "tn": 21904,
+            "fp": 400,
+            "fn": 892,
+            "tp": 158
+          },
+          "f1_ci95": [
+            0.170059,
+            0.221456
+          ],
+          "auc_ci95": [
+            0.716686,
+            0.749616
+          ],
+          "recall_ci95": [
+            0.129464,
+            0.171022
+          ],
+          "precision_ci95": [
+            0.238762,
+            0.327624
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.062123,
+            -0.009288
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.011439,
+            0.016982
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.031221,
+            0.010329
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.557143,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.510256
+          }
+        },
+        "random_forest": {
+          "threshold": 0.411104,
+          "f1": 0.150316,
+          "precision": 0.443925,
+          "recall": 0.090476,
+          "specificity": 0.994665,
+          "auc": 0.729613,
+          "confusion": {
+            "tn": 22185,
+            "fp": 119,
+            "fn": 955,
+            "tp": 95
+          },
+          "f1_ci95": [
+            0.123654,
+            0.178146
+          ],
+          "auc_ci95": [
+            0.712076,
+            0.746984
+          ],
+          "recall_ci95": [
+            0.073333,
+            0.108908
+          ],
+          "precision_ci95": [
+            0.374346,
+            0.518018
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.108945,
+            -0.053316
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.013188,
+            0.012874
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.090552,
+            -0.049289
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.361905,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.151282
+          }
+        }
+      }
+    },
+    "otra_finca_combinada": {
+      "changes": {
+        "base_milk_mean": 24.0,
+        "base_milk_sd": 5.0,
+        "base_feed_mean": 17.0,
+        "base_feed_sd": 3.0,
+        "heat_stress_scale": 2.0,
+        "noise_scale": 2.0,
+        "error_fraction": 0.06,
+        "subclinical_min_days": 3,
+        "subclinical_max_days": 5,
+        "severity_min": 0.3,
+        "severity_max": 0.9,
+        "base_temp_mean": 38.8
+      },
+      "windows": 23602,
+      "positive_windows": 1050,
+      "prevalence": 0.044488,
+      "models": {
+        "lstm": {
+          "threshold": 0.854394,
+          "f1": 0.12669,
+          "precision": 0.087771,
+          "recall": 0.227619,
+          "specificity": 0.889855,
+          "auc": 0.629627,
+          "confusion": {
+            "tn": 20068,
+            "fp": 2484,
+            "fn": 811,
+            "tp": 239
+          },
+          "f1_ci95": [
+            0.105994,
+            0.147673
+          ],
+          "auc_ci95": [
+            0.604296,
+            0.65477
+          ],
+          "recall_ci95": [
+            0.195215,
+            0.261932
+          ],
+          "precision_ci95": [
+            0.072012,
+            0.104532
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.6,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.994872
+          }
+        },
+        "umbral_temperatura": {
+          "threshold": 0.46,
+          "f1": 0.098336,
+          "precision": 0.066872,
+          "recall": 0.185714,
+          "specificity": 0.879346,
+          "auc": 0.58489,
+          "confusion": {
+            "tn": 19831,
+            "fp": 2721,
+            "fn": 855,
+            "tp": 195
+          },
+          "f1_ci95": [
+            0.080738,
+            0.116036
+          ],
+          "auc_ci95": [
+            0.558601,
+            0.610089
+          ],
+          "recall_ci95": [
+            0.156163,
+            0.21585
+          ],
+          "precision_ci95": [
+            0.053813,
+            0.080351
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.044256,
+            -0.012595
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.067635,
+            -0.022188
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.07247,
+            -0.01188
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.542857,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.997436
+          }
+        },
+        "regresion_logistica": {
+          "threshold": 0.855273,
+          "f1": 0.133372,
+          "precision": 0.095873,
+          "recall": 0.219048,
+          "specificity": 0.903822,
+          "auc": 0.629941,
+          "confusion": {
+            "tn": 20383,
+            "fp": 2169,
+            "fn": 820,
+            "tp": 230
+          },
+          "f1_ci95": [
+            0.112249,
+            0.156101
+          ],
+          "auc_ci95": [
+            0.607915,
+            0.652235
+          ],
+          "recall_ci95": [
+            0.18834,
+            0.251856
+          ],
+          "precision_ci95": [
+            0.079109,
+            0.113806
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.008648,
+            0.021759
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.018081,
+            0.019701
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.034882,
+            0.017926
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.619048,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.994872
+          }
+        },
+        "random_forest": {
+          "threshold": 0.411104,
+          "f1": 0.067361,
+          "precision": 0.09434,
+          "recall": 0.052381,
+          "specificity": 0.976587,
+          "auc": 0.60882,
+          "confusion": {
+            "tn": 22024,
+            "fp": 528,
+            "fn": 995,
+            "tp": 55
+          },
+          "f1_ci95": [
+            0.045061,
+            0.090859
+          ],
+          "auc_ci95": [
+            0.583976,
+            0.634105
+          ],
+          "recall_ci95": [
+            0.035022,
+            0.071225
+          ],
+          "precision_ci95": [
+            0.062701,
+            0.128921
+          ],
+          "f1_minus_lstm_ci95": [
+            -0.080314,
+            -0.037285
+          ],
+          "auc_minus_lstm_ci95": [
+            -0.049072,
+            0.009215
+          ],
+          "recall_minus_lstm_ci95": [
+            -0.203836,
+            -0.146909
+          ],
+          "cow_level": {
+            "sick_cows": 210,
+            "sick_cows_detected_rate": 0.171429,
+            "healthy_cows": 390,
+            "healthy_cows_with_alert_rate": 0.541026
+          }
+        }
+      }
+    }
+  },
+  "calibration": {
+    "ece_10_bins": 0.244941,
+    "brier": 0.124123,
+    "mean_probability": 0.290473,
+    "positive_rate": 0.045532,
+    "bins": [
+      {
+        "low": 0.0,
+        "high": 0.1,
+        "count": 855,
+        "mean_probability": 0.063188,
+        "fraction_abnormal": 0.002339
+      },
+      {
+        "low": 0.1,
+        "high": 0.2,
+        "count": 906,
+        "mean_probability": 0.14546,
+        "fraction_abnormal": 0.004415
+      },
+      {
+        "low": 0.2,
+        "high": 0.3,
+        "count": 505,
+        "mean_probability": 0.24455,
+        "fraction_abnormal": 0.021782
+      },
+      {
+        "low": 0.3,
+        "high": 0.4,
+        "count": 322,
+        "mean_probability": 0.35074,
+        "fraction_abnormal": 0.037267
+      },
+      {
+        "low": 0.4,
+        "high": 0.5,
+        "count": 234,
+        "mean_probability": 0.450185,
+        "fraction_abnormal": 0.055556
+      },
+      {
+        "low": 0.5,
+        "high": 0.6,
+        "count": 189,
+        "mean_probability": 0.55103,
+        "fraction_abnormal": 0.037037
+      },
+      {
+        "low": 0.6,
+        "high": 0.7,
+        "count": 176,
+        "mean_probability": 0.647267,
+        "fraction_abnormal": 0.068182
+      },
+      {
+        "low": 0.7,
+        "high": 0.8,
+        "count": 131,
+        "mean_probability": 0.74812,
+        "fraction_abnormal": 0.10687
+      },
+      {
+        "low": 0.8,
+        "high": 0.9,
+        "count": 96,
+        "mean_probability": 0.848152,
+        "fraction_abnormal": 0.21875
+      },
+      {
+        "low": 0.9,
+        "high": 1.0,
+        "count": 100,
+        "mean_probability": 0.956404,
+        "fraction_abnormal": 0.64
+      }
+    ]
+  },
+  "thresholds": {
+    "red": [
+      {
+        "threshold": 0.75,
+        "f1": 0.439141,
+        "precision": 0.355212,
+        "recall": 0.575,
+        "specificity": 0.950209,
+        "confusion": {
+          "tn": 3187,
+          "fp": 167,
+          "fn": 68,
+          "tp": 92
+        },
+        "sick_cows": 32,
+        "sick_cows_detected_rate": 0.96875,
+        "healthy_cows": 58,
+        "healthy_cows_with_alert_rate": 0.87931
+      },
+      {
+        "threshold": 0.8,
+        "f1": 0.477528,
+        "precision": 0.433673,
+        "recall": 0.53125,
+        "specificity": 0.966905,
+        "confusion": {
+          "tn": 3243,
+          "fp": 111,
+          "fn": 75,
+          "tp": 85
+        },
+        "sick_cows": 32,
+        "sick_cows_detected_rate": 0.9375,
+        "healthy_cows": 58,
+        "healthy_cows_with_alert_rate": 0.741379
+      },
+      {
+        "threshold": 0.83,
+        "f1": 0.489164,
+        "precision": 0.484663,
+        "recall": 0.49375,
+        "specificity": 0.974955,
+        "confusion": {
+          "tn": 3270,
+          "fp": 84,
+          "fn": 81,
+          "tp": 79
+        },
+        "sick_cows": 32,
+        "sick_cows_detected_rate": 0.9375,
+        "healthy_cows": 58,
+        "healthy_cows_with_alert_rate": 0.62069
+      },
+      {
+        "threshold": 0.854394,
+        "f1": 0.491694,
+        "precision": 0.524823,
+        "recall": 0.4625,
+        "specificity": 0.980024,
+        "confusion": {
+          "tn": 3287,
+          "fp": 67,
+          "fn": 86,
+          "tp": 74
+        },
+        "sick_cows": 32,
+        "sick_cows_detected_rate": 0.9375,
+        "healthy_cows": 58,
+        "healthy_cows_with_alert_rate": 0.534483
+      },
+      {
+        "threshold": 0.88,
+        "f1": 0.510791,
+        "precision": 0.601695,
+        "recall": 0.44375,
+        "specificity": 0.985987,
+        "confusion": {
+          "tn": 3307,
+          "fp": 47,
+          "fn": 89,
+          "tp": 71
+        },
+        "sick_cows": 32,
+        "sick_cows_detected_rate": 0.9375,
+        "healthy_cows": 58,
+        "healthy_cows_with_alert_rate": 0.448276
+      },
+      {
+        "threshold": 0.9,
+        "f1": 0.492308,
+        "precision": 0.64,
+        "recall": 0.4,
+        "specificity": 0.989267,
+        "confusion": {
+          "tn": 3318,
+          "fp": 36,
+          "fn": 96,
+          "tp": 64
+        },
+        "sick_cows": 32,
+        "sick_cows_detected_rate": 0.875,
+        "healthy_cows": 58,
+        "healthy_cows_with_alert_rate": 0.327586
+      },
+      {
+        "threshold": 0.93,
+        "f1": 0.474576,
+        "precision": 0.736842,
+        "recall": 0.35,
+        "specificity": 0.994037,
+        "confusion": {
+          "tn": 3334,
+          "fp": 20,
+          "fn": 104,
+          "tp": 56
+        },
+        "sick_cows": 32,
+        "sick_cows_detected_rate": 0.875,
+        "healthy_cows": 58,
+        "healthy_cows_with_alert_rate": 0.206897
+      }
+    ],
+    "yellow": [
+      {
+        "yellow_threshold": 0.3,
+        "risk_windows_yellow_or_red": 0.89375,
+        "healthy_windows_yellow": 0.309481,
+        "healthy_windows_yellow_or_red": 0.329457
+      },
+      {
+        "yellow_threshold": 0.35,
+        "risk_windows_yellow_or_red": 0.8625,
+        "healthy_windows_yellow": 0.262373,
+        "healthy_windows_yellow_or_red": 0.282349
+      },
+      {
+        "yellow_threshold": 0.4,
+        "risk_windows_yellow_or_red": 0.81875,
+        "healthy_windows_yellow": 0.217054,
+        "healthy_windows_yellow_or_red": 0.23703
+      },
+      {
+        "yellow_threshold": 0.427197,
+        "risk_windows_yellow_or_red": 0.7875,
+        "healthy_windows_yellow": 0.199165,
+        "healthy_windows_yellow_or_red": 0.219141
+      },
+      {
+        "yellow_threshold": 0.45,
+        "risk_windows_yellow_or_red": 0.78125,
+        "healthy_windows_yellow": 0.186643,
+        "healthy_windows_yellow_or_red": 0.206619
+      },
+      {
+        "yellow_threshold": 0.5,
+        "risk_windows_yellow_or_red": 0.7375,
+        "healthy_windows_yellow": 0.151163,
+        "healthy_windows_yellow_or_red": 0.171139
+      },
+      {
+        "yellow_threshold": 0.6,
+        "risk_windows_yellow_or_red": 0.69375,
+        "healthy_windows_yellow": 0.096899,
+        "healthy_windows_yellow_or_red": 0.116875
+      }
+    ],
+    "best_f1_on_test": {
+      "threshold": 0.88,
+      "f1": 0.510791,
+      "note": "Solo de referencia: elegir el umbral en test es optimista."
+    }
+  },
+  "permutation_importance": {
+    "method": "Se baraja entre ventanas la serie de 14 días de una variable; 30 repeticiones; caída del AUC y del F1 (umbral del rojo) en test",
+    "features": {
+      "temperature_c": {
+        "auc_drop_mean": 0.119162,
+        "auc_drop_sd": 0.010844,
+        "auc_drop_ci95": [
+          0.097918,
+          0.138264
+        ],
+        "f1_drop_mean": 0.232909,
+        "f1_drop_sd": 0.02673,
+        "f1_drop_ci95": [
+          0.191432,
+          0.283451
+        ]
+      },
+      "milk_l": {
+        "auc_drop_mean": 0.079773,
+        "auc_drop_sd": 0.010926,
+        "auc_drop_ci95": [
+          0.063231,
+          0.104083
+        ],
+        "f1_drop_mean": 0.33228,
+        "f1_drop_sd": 0.031573,
+        "f1_drop_ci95": [
+          0.275961,
+          0.391618
+        ]
+      },
+      "feed_kg": {
+        "auc_drop_mean": 0.037556,
+        "auc_drop_sd": 0.005965,
+        "auc_drop_ci95": [
+          0.028513,
+          0.046529
+        ],
+        "f1_drop_mean": 0.048479,
+        "f1_drop_sd": 0.013064,
+        "f1_drop_ci95": [
+          0.025631,
+          0.071402
+        ]
+      }
+    }
+  },
+  "settings": {
+    "n_boot": 2000,
+    "repeats": 5,
+    "perm_repeats": 30,
+    "farm_cows": 600,
+    "seed": 42
+  }
+}
