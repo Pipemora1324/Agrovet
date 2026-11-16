@@ -40,6 +40,8 @@ Las pruebas de mutación (`mutmut`) solo corren en Linux o WSL; ver
 | `src/train_lstm.py` | Partición por vaca, entrenamiento, umbral y métricas. |
 | `src/export_tflite.py` | Conversión a TFLite, comparación con Keras y `model_config.json`. |
 | `src/export_test_vectors.py` | Casos de prueba para verificar la app contra Python. |
+| `src/lstm_evaluation.py` | Líneas base, degradaciones, métricas con IC por vaca, umbrales e importancia de variables (sin TensorFlow). |
+| `src/evaluate_lstm.py` | Evalúa el TFLite desplegado con todo lo anterior (datos sintéticos). |
 
 ## Dataset sintético
 
@@ -114,6 +116,202 @@ amarillo o rojo, a cambio de que el 21,5 % de las ventanas sanas quede en amaril
 temprano se prefiere que el amarillo sea sensible y reservar el rojo para el umbral de F1. En test,
 las ventanas sanas quedan 77,7 % verde, 20,3 % amarillo y 2,0 % rojo; las que terminan 1–5 días
 antes del inicio, 21,3 % verde, 32,5 % amarillo y 46,3 % rojo.
+
+## Evaluación del LSTM desplegado (datos sintéticos)
+
+> **Todo lo de esta sección sale de datos SINTÉTICOS.** Muestra cómo se comporta el modelo y dónde
+> falla dentro del simulador; **no tiene validez clínica** y no valida la hipótesis F1 ≥ 0,80.
+
+```bash
+python src/evaluate_lstm.py   # reports/lstm_evaluation.json, lstm_calibracion.png y lstm_umbrales.png (~15 min)
+```
+
+- **Se evalúa el modelo de la app, sin cambiarlo.** Se usan `models/mastitis_lstm.tflite` (su SHA-256
+  coincide con `model_config.json`) y sus umbrales 0,854394 y 0,427197. No se reentrena. Sobre el
+  test reproduce exactamente las cifras de `reports/metrics.json` (F1 0,492, AUC 0,891).
+- **Datos:** el dataset por defecto de `generate_dataset.py` y la misma partición 70/15/15 por vaca
+  de `train_lstm.py`. Test: 90 vacas, 3514 ventanas, 160 de riesgo.
+- **Intervalos de confianza:** IC 95 % por bootstrap de **vacas** (2000 remuestreos). Las ventanas de
+  una vaca no son independientes. Las diferencias contra el LSTM son pareadas, sobre las mismas
+  muestras.
+- **Generador:** `generate_dataset.py` ganó parámetros de finca (medias de producción, escala del
+  ruido, del estrés calórico y de la severidad). Con los valores por defecto da exactamente los
+  mismos datos que antes (`test_default_farm_parameters_reproduce_the_training_data`).
+
+### 1. Líneas base (test, mismo umbral por máximo F1 en validación)
+
+| Modelo | F1 (IC 95 %) | AUC (IC 95 %) | Sensibilidad (IC 95 %) | Precisión | Vacas enfermas avisadas 1–5 d | Vacas sanas con alguna alerta |
+|---|---|---|---|---|---|---|
+| **LSTM desplegado** | **0,49 (0,40–0,57)** | **0,89 (0,87–0,91)** | 0,46 (0,38–0,55) | 0,53 | 30/32 | 31/58 |
+| Umbral de temperatura (°C sobre la base) | 0,33 (0,24–0,40) | 0,83 (0,79–0,86) | 0,36 (0,28–0,45) | 0,30 | 26/32 | 49/58 |
+| Regresión logística (42 valores) | 0,43 (0,34–0,50) | 0,86 (0,83–0,89) | 0,43 (0,35–0,50) | 0,43 | 29/32 | 43/58 |
+| Random forest (42 valores) | 0,44 (0,34–0,52) | 0,87 (0,84–0,90) | 0,33 (0,25–0,41) | 0,65 | 25/32 | 18/58 |
+
+Diferencia pareada con el LSTM (IC 95 %):
+
+| Modelo | ΔF1 | ΔAUC | ΔSensibilidad |
+|---|---|---|---|
+| Umbral de temperatura | −0,23 a −0,09 | −0,10 a −0,03 | −0,18 a −0,03 |
+| Regresión logística | −0,12 a −0,01 | −0,05 a −0,01 | −0,09 a +0,02 |
+| Random forest | −0,11 a +0,01 | −0,04 a −0,01 | −0,19 a −0,08 |
+
+**Lectura:**
+- El LSTM supera con claridad al umbral de temperatura: la leche y el alimento aportan información.
+- Frente a la regresión logística y al random forest la ventaja es chica. En AUC es significativa
+  (unos 0,02–0,03). En F1, contra el random forest, no lo es.
+- El random forest con su umbral alerta a menos vacas sanas (18/58), pero avisa a tiempo a menos
+  enfermas (25/32).
+- Las líneas base usan hiperparámetros fijos, sin búsqueda.
+
+### 2. Robustez del LSTM (tabla de degradación)
+
+Las degradaciones se aplican a las ventanas **crudas** del test, antes del preprocesamiento que
+replica la app. El ruido se mide en múltiplos del ruido diario del generador: 0,15 °C, 5 % de la
+leche y 6 % del alimento.
+
+Las degradaciones al azar son la media de 5 repeticiones. **Cobertura** es la fracción de ventanas
+que el preprocesamiento acepta: hacen falta ≥ 10 días válidos por variable, y si no, la app no da
+color. **Sens. total** cuenta como no detectadas las ventanas de riesgo sin evaluar.
+
+| Degradación | Nivel | Cobertura | F1 | Sensibilidad | Sens. total | Especificidad | AUC |
+|---|---|---|---|---|---|---|---|
+| Sin degradar | — | 1,00 | 0,49 | 0,46 | 0,46 | 0,980 | 0,89 |
+| Ruido gaussiano | × 0,5 | 1,00 | 0,46 | 0,47 | 0,47 | 0,974 | 0,88 |
+| | × 1 | 1,00 | 0,39 | 0,47 | 0,47 | 0,955 | 0,85 |
+| | × 2 | 1,00 | 0,26 | 0,47 | 0,47 | 0,900 | 0,78 |
+| | × 3 | 1,00 | 0,20 | 0,42 | 0,42 | 0,866 | 0,73 |
+| Datos faltantes (celdas al azar) | 10 % | 0,96 | 0,45 | 0,44 | 0,41 | 0,977 | 0,88 |
+| | 20 % | 0,63 | 0,43 | 0,43 | 0,27 | 0,974 | 0,86 |
+| | 30 % | **0,18** | 0,45 | 0,43 | **0,09** | 0,972 | 0,85 |
+| Días completos sin registro | 10 % | 0,98 | 0,47 | 0,44 | 0,43 | 0,979 | 0,88 |
+| | 20 % | 0,83 | 0,42 | 0,42 | 0,34 | 0,972 | 0,86 |
+| | 30 % | 0,54 | 0,41 | 0,41 | 0,22 | 0,972 | 0,85 |
+| Faltan los primeros días (historia corta) | 1 d | 1,00 | 0,48 | 0,46 | 0,46 | 0,979 | 0,89 |
+| | 2 d | 1,00 | 0,47 | 0,44 | 0,44 | 0,980 | 0,89 |
+| | 4 d | 0,80 | 0,44 | 0,38 | 0,31 | 0,982 | 0,87 |
+| **Faltan los últimos días** | 1 d | 1,00 | 0,30 | 0,31 | 0,31 | 0,962 | 0,79 |
+| | 2 d | 1,00 | **0,16** | 0,17 | 0,17 | 0,954 | 0,68 |
+| | 4 d | 0,79 | **0,05** | 0,06 | 0,04 | 0,934 | 0,52 |
+
+La tabla completa, con 3 días y los rangos entre repeticiones, está en `reports/lstm_evaluation.json`.
+
+**Lectura:**
+- **El punto más débil son los días recientes sin registrar.** El preprocesamiento rellena con el
+  último valor válido y borra justo la subida de temperatura y la caída de leche que anuncian la
+  mastitis.
+  - Con 2 días sin registro el F1 baja de 0,49 a 0,16; con 4 días el AUC queda en 0,52, como el azar.
+  - Esas ventanas se siguen aceptando (cobertura 1,00 hasta 3 días), así que se les da un color
+    aunque falten los días recientes.
+- **Con datos faltantes al azar, la ventana se descarta antes de que el modelo se equivoque.**
+  - Con 30 % de celdas vacías solo se evalúa el 18 % de las ventanas.
+  - Las ventanas que se evalúan mantienen F1 y AUC casi iguales.
+- **El ruido de medición** baja sobre todo la precisión: la sensibilidad se mantiene y aparecen más
+  falsas alarmas. Con el doble del ruido normal el F1 cae a la mitad.
+
+### Desplazamiento de distribución: otras fincas simuladas
+
+Cada finca es un dataset nuevo de 600 vacas (otra semilla) que ningún modelo vio. Los umbrales son
+los del entrenamiento.
+
+| Finca | Cambio | F1 LSTM (IC 95 %) | AUC LSTM (IC 95 %) | Sens. | Vacas sanas con alerta | Mejor línea base (AUC) |
+|---|---|---|---|---|---|---|
+| Misma finca, otras vacas | ninguno (control) | 0,51 (0,48–0,54) | 0,89 (0,87–0,90) | 0,44 | 44 % | RF 0,89 |
+| Alta producción | leche 24 L, alimento 17 kg | 0,52 (0,49–0,55) | 0,89 (0,88–0,90) | 0,46 | 44 % | RL 0,89 |
+| Clima cálido | estrés calórico × 2 | 0,36 (0,32–0,39) | 0,87 (0,85–0,88) | 0,53 | **90 %** | RL/RF 0,83 |
+| Registros ruidosos | ruido × 2, 6 % de errores | 0,28 (0,25–0,31) | 0,79 (0,77–0,81) | 0,49 | **96 %** | RL 0,80 |
+| Subclínica corta y leve | 3–5 días, severidad 0,3–0,9 | 0,23 (0,20–0,26) | 0,73 (0,71–0,75) | 0,16 | 27 % | RL 0,73 |
+| Otra finca (todo junto, base 38,8 °C) | combinado | **0,13 (0,11–0,15)** | **0,63 (0,60–0,65)** | 0,23 | **99 %** | RL 0,63 |
+
+**Lectura:**
+- **Control:** con otras vacas de la misma finca simulada el resultado es el mismo que en test
+  (F1 0,51, AUC 0,89). El test no tuvo suerte.
+- **Escala de producción:** no afecta, porque la normalización es relativa a la base de cada vaca.
+- **Clima y registros ruidosos:** el AUC baja poco, pero con el umbral fijo casi todas las vacas
+  sanas reciben alguna alerta roja. **El umbral no se traslada de una finca a otra.**
+- **Enfermedad más corta o más leve:** la señal aparece tarde y el modelo avisa a pocas vacas.
+- **Todo junto:** el modelo queda cerca del azar.
+- Con registros ruidosos, enfermedad leve o todo combinado, la regresión logística iguala al LSTM
+  (el IC de la diferencia de AUC incluye 0). La ventaja de la red se sostiene solo cerca de la
+  distribución con la que se entrenó y en el clima cálido.
+
+### 3. Calibración y umbrales del semáforo
+
+![Curva de calibración](reports/lstm_calibracion.png)
+
+- **Calibración:** ECE 0,245 y Brier 0,124. La probabilidad media predicha es 0,29 y la tasa real
+  de ventanas de riesgo es 0,046.
+- **El modelo sobrestima el riesgo:**
+  - Con probabilidad entre 0,8 y 0,9 solo el 22 % de las ventanas son de riesgo; entre 0,9 y 1,0,
+    el 64 %.
+  - Es el efecto de los pesos de clase. La salida es un **puntaje**, no una probabilidad, y la app
+    no debe mostrarla como porcentaje.
+
+![Sensibilidad al umbral](reports/lstm_umbrales.png)
+
+Umbral del rojo (test; las columnas de vacas usan la misma definición que `metrics.json`):
+
+| Rojo | F1 | Precisión | Sensibilidad | Ventanas sanas en rojo | Vacas enfermas avisadas | Vacas sanas con alerta |
+|---|---|---|---|---|---|---|
+| 0,75 | 0,44 | 0,36 | 0,58 | 5,0 % | 31/32 | 51/58 |
+| 0,80 | 0,48 | 0,43 | 0,53 | 3,3 % | 30/32 | 43/58 |
+| 0,83 | 0,49 | 0,49 | 0,49 | 2,5 % | 30/32 | 36/58 |
+| **0,854** | **0,49** | 0,53 | 0,46 | 2,0 % | 30/32 | 31/58 |
+| 0,88 | 0,51 | 0,60 | 0,44 | 1,4 % | 30/32 | 26/58 |
+| 0,90 | 0,49 | 0,64 | 0,40 | 1,1 % | 28/32 | 19/58 |
+| 0,93 | 0,48 | 0,74 | 0,35 | 0,6 % | 28/32 | 12/58 |
+
+Umbral del amarillo (el rojo queda en 0,854):
+
+| Amarillo | Ventanas de riesgo en amarillo o rojo | Ventanas sanas en amarillo |
+|---|---|---|
+| 0,30 | 89 % | 31 % |
+| 0,40 | 82 % | 22 % |
+| **0,427** | **79 %** | **20 %** |
+| 0,50 | 74 % | 15 % |
+| 0,60 | 69 % | 10 % |
+
+**Lectura:**
+- **El F1 es estable alrededor de 0,854:** varía entre 0,47 y 0,51 desde 0,80 hasta 0,93. El mejor
+  F1 en test está en 0,88 (0,51), dentro del IC del F1 actual, así que no hay motivo para mover el
+  umbral.
+- **Lo que sí cambia es el reparto entre falsas alarmas y avisos:**
+  - Subir el rojo a 0,90 baja de 31 a 19 las vacas sanas con alguna alerta, a cambio de 2 vacas
+    enfermas menos avisadas.
+  - Más de la mitad de las vacas sanas recibe alguna alerta roja en 60 días. Es el costo principal
+    del umbral actual.
+- **El amarillo cambia de forma gradual:** cada 0,1 que se baja agrega entre 5 y 8 puntos de
+  ventanas de riesgo en amarillo o rojo, y entre 5 y 9 de ventanas sanas en amarillo.
+
+### 4. Importancia de variables por permutación
+
+Se baraja entre ventanas la serie completa de 14 días de una variable (30 repeticiones) y se mide
+cuánto caen el AUC y el F1 en test.
+
+| Variable | Caída del AUC (IC 95 %) | Caída del F1 (IC 95 %) |
+|---|---|---|
+| Temperatura | 0,119 (0,098–0,138) | 0,23 (0,19–0,28) |
+| Leche | 0,080 (0,063–0,104) | **0,33 (0,28–0,39)** |
+| Alimento | 0,038 (0,029–0,047) | 0,05 (0,03–0,07) |
+
+**Lectura:**
+- El modelo usa las tres variables.
+- La temperatura es la que más ordena las ventanas (AUC) y la leche la que más decide el rojo (F1).
+- El alimento aporta poco.
+- Esto describe cómo se armó el simulador (`generate_dataset.py`: temperatura +1,6 × severidad,
+  leche −40 %, alimento −30 %), **no** la fisiología real de la mastitis.
+
+### Límites de esta evaluación
+
+- **Todo es sintético.** El generador lo diseñó el mismo proyecto. Las líneas base, la robustez y la
+  importancia de variables miden el modelo frente a las reglas del simulador, no frente a vacas
+  reales. **No hay validez clínica.**
+- **Las fincas simuladas también salen del mismo generador.** Un cambio real (otra raza, otro
+  sistema de ordeño, otra forma de anotar) puede ser distinto y peor.
+- **Un solo test de 90 vacas.** Los IC por bootstrap de vacas lo reflejan, y el control con 600 vacas
+  nuevas da cifras parecidas.
+- **No cambia nada de la app ni del modelo.** Lo más urgente para cuando se use con datos reales es
+  avisar cuando faltan días recientes y recalibrar o ajustar el umbral por finca. Queda como
+  recomendación, no se implementó aquí.
 
 ## CNN de triaje visual de la ubre
 

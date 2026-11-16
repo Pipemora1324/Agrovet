@@ -20,6 +20,7 @@ ignore = [
 known-first-party = [
     "build_cnn_dataset", "cnn_evaluation", "export_test_vectors", "export_tflite", "generate_dataset",
     "milk_public_poc", "preprocess", "train_cnn", "train_lstm", "train_udder_public", "udder_public_data",
+    "milk_data", "milk_evaluation", "train_milk_cnn", "lstm_evaluation", "evaluate_lstm",
 ]
 
 [tool.mypy]
@@ -56,12 +57,14 @@ output = "coverage.xml"
 [tool.mutmut]
 source_paths = [
     "src/preprocess.py", "src/cnn_evaluation.py", "src/build_cnn_dataset.py", "src/milk_evaluation.py",
+    "src/lstm_evaluation.py",
 ]
 pytest_add_cli_args_test_selection = [
     "tests/test_preprocess.py", "tests/test_preprocess_limits.py",
     "tests/test_cnn_evaluation.py", "tests/test_cnn_evaluation_limits.py",
     "tests/test_build_cnn_dataset.py", "tests/test_build_cnn_dataset_limits.py",
     "tests/test_milk_evaluation.py", "tests/test_milk_evaluation_limits.py",
+    "tests/test_lstm_evaluation.py", "tests/test_lstm_evaluation_limits.py",
 ]
 also_copy = ["src", "pytest.ini"]
 pytest_add_cli_args = ["-p", "no:cacheprovider"]

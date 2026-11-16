@@ -35,6 +35,17 @@ class DatasetParams:
     max_onset_day: int = 56
     subclinical_min_days: int = 5
     subclinical_max_days: int = 7
+    # Parámetros de la finca. Los valores por defecto reproducen el dataset de entrenamiento;
+    # se cambian solo para simular otra finca en la evaluación de robustez.
+    base_temp_mean: float = 38.6
+    base_milk_mean: float = 13.0
+    base_milk_sd: float = 3.5
+    base_feed_mean: float = 11.0
+    base_feed_sd: float = 2.0
+    noise_scale: float = 1.0
+    heat_stress_scale: float = 1.0
+    severity_min: float = 0.6
+    severity_max: float = 1.4
 
 
 def _heat_stress_days(rng, n_days):
@@ -106,39 +117,43 @@ def generate(params=DatasetParams()):
     days = np.arange(params.n_days)
 
     frames = []
+    noise = params.noise_scale
     for cow in range(params.n_cows):
-        base_temp = np.clip(rng.normal(38.6, 0.15), 38.2, 39.0)
-        base_milk = np.clip(rng.normal(13.0, 3.5), 5.0, 25.0)
-        base_feed = np.clip(rng.normal(11.0, 2.0), 6.0, 17.0)
+        # Los recortes van alrededor de la media de la finca (con los valores por defecto: 38,2-39,0 °C,
+        # 5-25 L y 6-17 kg)
+        temp_mean, milk_mean, feed_mean = params.base_temp_mean, params.base_milk_mean, params.base_feed_mean
+        base_temp = np.clip(rng.normal(temp_mean, 0.15), temp_mean - 0.4, temp_mean + 0.4)
+        base_milk = np.clip(rng.normal(milk_mean, params.base_milk_sd), milk_mean - 8.0, milk_mean + 12.0)
+        base_feed = np.clip(rng.normal(feed_mean, params.base_feed_sd), feed_mean - 5.0, feed_mean + 6.0)
         lactation_slope = rng.uniform(-0.004, 0.0)  # leve caída diaria de la producción
         heat_sensitivity = rng.uniform(0.5, 1.5)
 
         estrus = _estrus_effect(rng, params.n_days, params.estrus_cycle_days)
-        stress = heat_stress * heat_sensitivity
+        stress = heat_stress * heat_sensitivity * params.heat_stress_scale
 
         sick = cow in sick_ids
         if sick:
             onset = int(rng.integers(params.min_onset_day, params.max_onset_day + 1))
             subclinical_days = int(rng.integers(params.subclinical_min_days,
                                                 params.subclinical_max_days + 1))
-            severity = float(rng.uniform(0.6, 1.4))
+            severity = float(rng.uniform(params.severity_min, params.severity_max))
             disease = _disease_profile(params.n_days, onset, subclinical_days, severity)
         else:
             onset, subclinical_days, severity = -1, 0, 0.0
             disease = np.zeros(params.n_days)
 
         temp = (base_temp
-                + rng.normal(0, 0.15, params.n_days)
+                + rng.normal(0, 0.15 * noise, params.n_days)
                 + 0.4 * estrus
                 + 0.4 * stress
                 + 1.6 * disease)
         milk_factor = (1 + lactation_slope * days
-                       + rng.normal(0, 0.05, params.n_days)
+                       + rng.normal(0, 0.05 * noise, params.n_days)
                        - 0.08 * estrus
                        - 0.06 * stress
                        - 0.40 * disease)
         feed_factor = (1
-                       + rng.normal(0, 0.06, params.n_days)
+                       + rng.normal(0, 0.06 * noise, params.n_days)
                        - 0.08 * estrus
                        - 0.09 * stress
                        - 0.30 * disease)

@@ -53,6 +53,7 @@ verifica.
 | backend `auth` y `sync` (PIT) | 21,9 % (68/310), 221 sin cobertura | **100 %** (313/313) | `SyncServiceTest` (25), `EmailCodeServiceTest` (9), `TokenServiceTest` (4) y 27 casos más en `AuthServiceTest`, `LoginRateLimiterTest` y `CodeRequestLimiterTest` |
 | ml (mutmut) | 73,5 % (454/618), 49 sin pruebas | **94,3 %** (583/618) | `test_preprocess_limits.py`, `test_cnn_evaluation_limits.py`, `test_build_cnn_dataset_limits.py` |
 | ml con `milk_evaluation.py` (clasificador de leche) | 91,7 % (818/892) | **94,6 %** (844/892) | `test_milk_evaluation.py`, `test_milk_evaluation_limits.py` |
+| ml con `lstm_evaluation.py` (evaluación del LSTM) | 91,2 % (1354/1484) | **95,0 %** (1419/1494) | `test_lstm_evaluation.py`, `test_lstm_evaluation_limits.py` |
 
 **Por qué el backend partía tan bajo.** `SyncService` y `EmailCodeService` solo tenían pruebas de
 integración (Spring + PostgreSQL). PIT usa solo pruebas unitarias: con las de integración levantaría

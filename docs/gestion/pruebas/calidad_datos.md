@@ -18,6 +18,28 @@ Issue: #84.
 > punta, pero **no validan** la hipótesis del proyecto (F1 ≥ 0,80). El generador no se ajustó para
 > subir las métricas. Validar la hipótesis requiere datos reales de finca (planificado en #96).
 
+### Evaluación del modelo desplegado (datos SINTÉTICOS, sin validez clínica)
+
+`ml/src/evaluate_lstm.py` evalúa `mastitis_lstm.tflite` (el archivo de la app, sin reentrenarlo) con
+la misma partición por vaca. Intervalos al 95 % por bootstrap de vacas. Detalle y tablas completas en
+`ml/README.md` y `ml/reports/lstm_evaluation.json`. Pruebas: `test_lstm_evaluation.py`,
+`test_lstm_evaluation_limits.py` y `test_evaluate_lstm_main.py`.
+
+| Pregunta | Resultado |
+|---|---|
+| ¿Supera a líneas base simples? | Sí al umbral de temperatura (F1 0,49 vs. 0,33; ΔAUC −0,10 a −0,03). Frente a la regresión logística (F1 0,43) y al random forest (F1 0,44) la ventaja es chica: en AUC es significativa (~0,02–0,03) y en F1 contra el random forest no |
+| ¿Aguanta ruido de medición? | Con el ruido diario normal duplicado el F1 baja de 0,49 a 0,26 (AUC 0,78) por falsas alarmas |
+| ¿Aguanta datos faltantes? | Con 30 % de celdas vacías solo el 18 % de las ventanas llega al modelo; las evaluadas mantienen el AUC (0,85) |
+| ¿Y si faltan los últimos días? | **Es el punto más débil.** El relleno con el último valor borra la señal: con 2 días sin registro F1 0,16, con 4 días AUC 0,52 |
+| ¿Funciona en otra finca? | Con otras vacas de la misma finca simulada, igual (F1 0,51). Con más estrés calórico o registros ruidosos el umbral fijo alerta al 90–96 % de las vacas sanas. Con todos los cambios juntos, AUC 0,63 y F1 0,13 |
+| ¿La salida es una probabilidad? | No. ECE 0,245: entre 0,8 y 0,9 solo el 22 % de las ventanas es de riesgo. Es un puntaje |
+| ¿Son estables los umbrales 0,427 / 0,854? | El F1 varía entre 0,47 y 0,51 con el rojo de 0,80 a 0,93; el costo es que 31 de 58 vacas sanas reciben alguna alerta roja (19 con 0,90) |
+| ¿Qué variables usa? | Las tres. Caída del AUC al permutar: temperatura 0,12, leche 0,08, alimento 0,04. Esto refleja el simulador, no la fisiología |
+
+> **Límite:** todo sale del mismo generador sintético, incluidas las "otras fincas". Sirve para
+> encontrar debilidades del pipeline (días recientes faltantes, umbral que no se traslada entre
+> fincas, salida no calibrada), no para afirmar validez clínica. No se cambió el modelo ni la app.
+
 ## 2. Datasets públicos revisados
 
 | Dataset | Uso | Decisión |
