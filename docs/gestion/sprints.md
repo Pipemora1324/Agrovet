@@ -10,12 +10,13 @@ Cada sprint es un milestone en GitHub y una iteración del campo «Sprint» en e
 |---|---|---|---|---|---|
 | Sprint 1 | 2026-10-13 a 2026-10-26 | Cerrado | [Sprint 1](https://github.com/Pipemora1324/Agrovet/milestone/1?closed=1) | 2 + 0 | 6 + 0 |
 | Sprint 2 | 2026-10-27 a 2026-11-09 | Cerrado | [Sprint 2](https://github.com/Pipemora1324/Agrovet/milestone/2?closed=1) | 47 + 0 | 171 + 0 |
-| Sprint 3 | 2026-11-10 a 2026-11-23 | En curso | [Sprint 3](https://github.com/Pipemora1324/Agrovet/milestone/3) | 8 + 4 | 20 + 13 |
+| Sprint 3 | 2026-11-10 a 2026-11-23 | En curso | [Sprint 3](https://github.com/Pipemora1324/Agrovet/milestone/3) | 14 + 4 | 51 + 13 |
 | Sprint 4 | 2026-11-24 a 2026-12-07 | Planificado | [Sprint 4](https://github.com/Pipemora1324/Agrovet/milestone/4) | 0 + 6 | 0 + 32 |
 | Sprint 5 | 2026-12-08 a 2026-12-21 | Planificado | [Sprint 5](https://github.com/Pipemora1324/Agrovet/milestone/5) | 0 + 4 | 0 + 32 |
 
-En el sprint 3, los 8 «hechos» son los issues de gestión y evidencias que cierra el pull request de
-esta entrega. Las épicas y las HU no llevan sprint, porque abarcan varios.
+En el sprint 3 los «hechos» son los 8 issues de gestión y evidencias (#80–#87) y los 6 de la entrega
+v0.2.0 (#106–#111). Las cifras salen de los campos Sprint y Estimación del Project, igual que la
+gráfica. Las épicas y las HU no llevan sprint, porque abarcan varios.
 
 ![Puntos e issues por sprint](velocidad.png)
 
@@ -99,8 +100,54 @@ despliegue con HTTPS y la protección de ramas.
 - Datos del responsable en el aviso de privacidad (#90).
 - Protección de ramas con checks obligatorios (#22).
 
-**Avance al 2026-11-10:** primer pull request del repositorio, con las plantillas, el backlog y las
-evidencias; lo demás está en «Listo».
+**Qué se hizo (al 2026-11-16):** 9 pull requests integrados en `develop` con `--no-ff` y el CI en
+verde (#99–#105, #112 y #113), y la versión **v0.2.0** en `main`.
+
+- **10 y 11-nov:** gestión del proyecto, plantillas y evidencias de pruebas (#99, #100; issues #80–#87).
+- **15-nov, calidad del CI (#101 → issue #106):**
+  - cobertura con umbral en los tres módulos;
+  - mutación con PIT y mutmut (umbral de 90 %);
+  - Checkstyle, SpotBugs, ruff y mypy;
+  - SonarCloud con Quality Gate;
+  - CodeQL, gitleaks, Trivy y OpenSSF Scorecard.
+- **15 y 16-nov, evaluaciones sin cambiar la app:**
+  - **Clasificador de leche** (#102 → #107): AUC 0,9996, pero el contexto sin leche ya da 0,91. No se integra.
+  - **Robustez del LSTM desplegado** (#103 → #108): con datos sintéticos; el punto débil son los días recientes sin registrar.
+  - **Asistente** (#104 → #109): con la API real, 30 preguntas y 10 ataques; seguridad 2,00 y 30/30 ataques resistidos; prompt mejorado.
+- **16-nov, entrega v0.2.0:**
+  - **APK de demostración** (#105 → #110): `DEMO_MODE`, funciona sin servidor.
+  - **Correcciones de seguridad del CI** (#112, #113): hashes en las dependencias de Python, `--enforce-lockfile`, HTTPS obligatorio, ruta validada; dejaron el Quality Gate de `develop` en verde.
+  - **Publicación** (#111): `develop` → `main` (`dcad510`) y etiqueta `v0.2.0`, con los 9 workflows en verde.
+  - **APK release arm64 de demostración** compilado desde la etiqueta: 13,0 MiB (13 664 539 bytes).
+
+**Estado de la entrega v0.2.0 (CI de `main`):**
+
+| Módulo | Pruebas | Cobertura de líneas | Cobertura de ramas | Mutación |
+|---|---|---|---|---|
+| backend | 195 (193 pasan, 2 omitidas: llamadas reales a Gemini) | 93,9 % | 85,2 % | PIT en `auth` y `sync`: 100 % (313/313) |
+| mobile | 193 | 74,9 % | — | — |
+| ml | 195 | 78,8 % | 74,4 % | mutmut: 94,9 % (1422/1499) |
+
+**Pendiente del sprint (sigue abierto hasta el 23-nov):**
+- Desplegar el backend con HTTPS (#88): sin él, el APK no permite crear cuentas.
+- Dependabot #33 y #34 (#89): ahora también hay que regenerar los `.lock`.
+- Datos del responsable en el aviso de privacidad (#90).
+- Protección de ramas con checks obligatorios (#22): `main` no tiene reglas.
+
+**Revisión:**
+- *Qué salió bien:*
+  - Todo entró por pull request con la plantilla y el CI en verde, como se propuso en la revisión del sprint 2.
+  - Cada evaluación declaró sus límites: datos sintéticos, sesgo de contexto, una sola corrida del asistente.
+- *Qué salió mal:*
+  - SonarCloud dejó de respetar `sonar.tests`. Las pruebas de Java y de Dart contaban como código sin cubrir; se excluyeron del análisis (#104, #105).
+  - El Quality Gate de `develop` estuvo en ERROR desde el 15-nov sin que se notara, porque cada PR solo mira su propio código nuevo. Se corrigió en #112 y #113.
+  - Un YAML inválido (`:all: --`) dejó tres workflows sin arrancar. Se detectó porque faltaban checks en el PR.
+  - La primera compilación del APK salió con `versionName` 0.1.0, porque `pubspec.yaml` no se había subido de versión. Se recompiló desde la etiqueta con `--build-name=0.2.0`.
+- *Qué cambiar:*
+  - Revisar el Quality Gate de la rama, no solo el del PR.
+  - Subir la versión en `pubspec.yaml` y en `pom.xml` antes de etiquetar.
+  - Activar la protección de ramas (#22).
+  - En `main`, SonarCloud todavía no calcula el Quality Gate (primer análisis). Quedan 9 hallazgos anteriores a v0.2.0 (3 bugs y 6 vulnerabilidades, del 27-oct al 8-nov) por revisar.
 
 ## Sprint 4 · 2026-11-24 a 2026-12-07 (planificado)
 
