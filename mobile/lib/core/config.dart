@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// Configuración de compilación.
 ///
 /// La dirección del servidor sale **solo** de `--dart-define=API_BASE_URL=...`; no hay una dirección
@@ -16,14 +14,33 @@ class AppConfig {
   /// compilando con `--dart-define=UDDER_TRIAGE=true`, y aun así el resultado es orientativo.
   static const udderTriageEnabled = bool.fromEnvironment('UDDER_TRIAGE');
 
+  /// Compilación de demostración: `--dart-define=DEMO_MODE=true`. APAGADA por defecto. Permite la
+  /// opción "Entrar a la demostración" también en release (6 vacas de ejemplo en una base aparte que
+  /// nunca se sincroniza) y deja arrancar la app sin servidor; en ese caso crear cuenta e ingresar no
+  /// funcionan. El APK que se publique para uso real se compila sin esta bandera.
+  static const demoBuild = bool.fromEnvironment('DEMO_MODE');
+
+  /// Tipo de compilación, igual que kReleaseMode y kDebugMode de Flutter (que se definen así), sin
+  /// depender de ellos.
+  static const isReleaseBuild = bool.fromEnvironment('dart.vm.product');
+  static const isDebugBuild = !isReleaseBuild && !bool.fromEnvironment('dart.vm.profile');
+
+  /// La demostración existe en debug y en las compilaciones de demostración.
+  static const demoAvailable = isDebugBuild || demoBuild;
+
+  /// Compilación de demostración sin dirección del servidor: funciona solo la demostración.
+  static bool get withoutServer => demoBuild && apiBaseUrl.isEmpty;
+
   /// Equipos de desarrollo a los que se permite HTTP en debug.
   static const developmentHosts = {'10.0.2.2', 'localhost', '127.0.0.1'};
 
   /// Por qué la dirección no sirve, o null si está bien.
-  static String? get problem => problemFor(apiBaseUrl, release: kReleaseMode);
+  static String? get problem => problemFor(apiBaseUrl, release: isReleaseBuild, demoBuild: demoBuild);
 
-  static String? problemFor(String url, {required bool release}) {
+  static String? problemFor(String url, {required bool release, bool demoBuild = false}) {
     if (url.isEmpty) {
+      // La demostración no necesita servidor
+      if (demoBuild) return null;
       return 'Falta la dirección del servidor. Compile la app con '
           '--dart-define=API_BASE_URL=https://su-servidor';
     }

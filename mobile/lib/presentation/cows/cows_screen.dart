@@ -39,7 +39,7 @@ class _CowsView extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const CowFormScreen()),
+          MaterialPageRoute<void>(builder: (_) => const CowFormScreen()),
         ),
         icon: const Icon(Icons.add, size: AppSizes.icon),
         label: const Text('Agregar vaca'),
@@ -293,7 +293,7 @@ class _CowCard extends StatelessWidget {
         child: InkWell(
           onTap: () => Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => CowDetailScreen(cowId: cow.id)),
+            MaterialPageRoute<void>(builder: (_) => CowDetailScreen(cowId: cow.id)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -371,7 +371,7 @@ class _CowCard extends StatelessWidget {
 
   void _openRecord(BuildContext context) => Navigator.push(
     context,
-    MaterialPageRoute(builder: (_) => DailyRecordScreen(cow: summary.cow)),
+    MaterialPageRoute<void>(builder: (_) => DailyRecordScreen(cow: summary.cow)),
   );
 }
 

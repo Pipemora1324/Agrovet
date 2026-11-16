@@ -8,6 +8,7 @@ import 'package:agrovet/presentation/photos/photo_view_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockPhotoRepository extends Mock implements PhotoRepository {}
@@ -22,7 +23,11 @@ void main() {
     createdAt: DateTime(2026, 11, 9),
   );
 
-  setUpAll(() => registerFallbackValue(photo));
+  setUpAll(() async {
+    registerFallbackValue(photo);
+    // La ficha muestra la fecha en español, igual que en main.dart
+    await initializeDateFormatting('es');
+  });
 
   Future<_MockPhotoRepository> open(WidgetTester tester) async {
     final repository = _MockPhotoRepository();

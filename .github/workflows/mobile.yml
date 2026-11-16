@@ -3,10 +3,10 @@ name: mobile
 on:
   push:
     branches: [main, develop]
-    paths: ["mobile/**", "ml/models/**", ".github/workflows/mobile.yml"]
+    paths: ["mobile/**", "ml/models/**", "scripts/ci/**", ".github/workflows/mobile.yml"]
   pull_request:
     branches: [main, develop]
-    paths: ["mobile/**", "ml/models/**", ".github/workflows/mobile.yml"]
+    paths: ["mobile/**", "ml/models/**", "scripts/ci/**", ".github/workflows/mobile.yml"]
 
 permissions:
   contents: read
@@ -19,6 +19,8 @@ jobs:
         working-directory: mobile
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         if: hashFiles('mobile/pubspec.yaml') != ''
@@ -29,20 +31,31 @@ jobs:
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         if: hashFiles('mobile/pubspec.yaml') != ''
         with:
+          # Versión fija, la misma del entorno de desarrollo: con "stable" sin versión el CI cambia
+          # solo cuando sale una nueva (3.50 depreca package:flutter/material.dart y --fatal-infos
+          # lo vuelve un fallo). Subir de versión es un cambio aparte, con su migración.
           channel: stable
+          flutter-version: 3.47.7
           cache: true
 
       - name: Dependencias
         if: hashFiles('mobile/pubspec.yaml') != ''
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
-      - name: Análisis estático
+      # Modo estricto (strict-casts, strict-inference, strict-raw-types) en analysis_options.yaml;
+      # con --fatal-infos hasta una sugerencia rompe el build
+      - name: Análisis estático estricto
         if: hashFiles('mobile/pubspec.yaml') != ''
-        run: flutter analyze
+        run: flutter analyze --fatal-infos --fatal-warnings
 
-      - name: Pruebas
+      - name: Pruebas con cobertura
         if: hashFiles('mobile/pubspec.yaml') != ''
-        run: flutter test
+        run: flutter test --coverage
+
+      - name: Resumen de cobertura
+        if: always() && hashFiles('mobile/coverage/lcov.info') != ''
+        working-directory: .
+        run: python3 scripts/ci/coverage_summary.py --lcov mobile/coverage/lcov.info >> "$GITHUB_STEP_SUMMARY"
 
       - name: APK por arquitectura
         if: hashFiles('mobile/pubspec.yaml') != ''

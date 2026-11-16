@@ -24,6 +24,7 @@ class FlywayMigrationIntegrationTest extends IntegrationTest {
     void expectedTablesExist() {
         List<String> tables = jdbc.queryForList(
                 "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'", String.class);
-        assertThat(tables).contains("users", "cows", "daily_records", "inferences", "alerts", "refresh_tokens", "email_codes");
+        assertThat(tables).contains("users", "cows", "daily_records", "inferences", "alerts", "refresh_tokens",
+                "email_codes");
     }
 }

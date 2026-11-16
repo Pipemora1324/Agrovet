@@ -4,9 +4,20 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from udder_public_data import (IMAGE_SIZE, MIN_CROP_SIDE, assign_groups, background_only, crop_box,
-                               load_dataset, load_records, pad_to_square, polygon_bbox, series_of,
-                               short_side, udder_crop)
+from udder_public_data import (
+    IMAGE_SIZE,
+    MIN_CROP_SIDE,
+    assign_groups,
+    background_only,
+    crop_box,
+    load_dataset,
+    load_records,
+    pad_to_square,
+    polygon_bbox,
+    series_of,
+    short_side,
+    udder_crop,
+)
 
 RED = (220, 30, 30)
 

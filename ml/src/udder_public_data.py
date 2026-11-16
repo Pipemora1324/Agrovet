@@ -96,7 +96,7 @@ def load_records(coco_dir):
     split_dir = coco_dir / "train" if (coco_dir / "train").exists() else coco_dir
     data = json.loads((split_dir / "_annotations.coco.json").read_text(encoding="utf-8"))
     categories = {c["id"]: c["name"] for c in data["categories"]}
-    by_image = {}
+    by_image: dict[int, list[dict]] = {}
     for ann in data["annotations"]:
         by_image.setdefault(ann["image_id"], []).append(ann)
     records = []
@@ -146,7 +146,7 @@ def udder_crop(image, bbox, size=IMAGE_SIZE, margin=CROP_MARGIN):
     left, top = int(np.floor(box[0])), int(np.floor(box[1]))
     right, bottom = int(np.ceil(box[2])), int(np.ceil(box[3]))
     crop = image.convert("RGB").crop((left, top, right, bottom))
-    square = pad_to_square(crop).resize((size, size), Image.BILINEAR)
+    square = pad_to_square(crop).resize((size, size), Image.Resampling.BILINEAR)
     return np.asarray(square, dtype=np.uint8)
 
 
@@ -159,7 +159,7 @@ def background_only(image, bbox, size=IMAGE_SIZE, margin=CROP_MARGIN):
     left, top = int(np.floor(box[0])), int(np.floor(box[1]))
     right, bottom = int(np.ceil(box[2])), int(np.ceil(box[3]))
     pixels[top:bottom, left:right] = PAD_VALUE
-    square = pad_to_square(Image.fromarray(pixels)).resize((size, size), Image.BILINEAR)
+    square = pad_to_square(Image.fromarray(pixels)).resize((size, size), Image.Resampling.BILINEAR)
     return np.asarray(square, dtype=np.uint8)
 
 
@@ -178,7 +178,7 @@ _DCT32 = _dct_matrix(32)
 
 def phash(image):
     """pHash de 64 bits (DCT 32x32, bloque 8x8 de baja frecuencia) como vector booleano."""
-    gray = np.asarray(image.convert("L").resize((32, 32), Image.LANCZOS), dtype=float)
+    gray = np.asarray(image.convert("L").resize((32, 32), Image.Resampling.LANCZOS), dtype=np.float64)
     coeffs = (_DCT32 @ gray @ _DCT32.T)[:8, :8].ravel()
     return coeffs > np.median(coeffs[1:])
 
@@ -224,7 +224,7 @@ def assign_groups(records, images, manual=MANUAL_SAME_ANIMAL):
     crops = []
     for rec, img in zip(records, images):
         crop = Image.fromarray(udder_crop(img, rec.bbox))
-        crops.append((phash(crop), phash(crop.transpose(Image.FLIP_LEFT_RIGHT))))
+        crops.append((phash(crop), phash(crop.transpose(Image.Transpose.FLIP_LEFT_RIGHT))))
     hists = [color_histogram(img) for img in images]
     uf = _UnionFind(n)
     reasons = []
@@ -246,7 +246,7 @@ def assign_groups(records, images, manual=MANUAL_SAME_ANIMAL):
         if a in index and b in index:
             uf.union(index[a], index[b])
             reasons.append((a, b, "manual"))
-    roots = {}
+    roots: dict[int, int] = {}
     for i, rec in enumerate(records):
         rec.group = roots.setdefault(uf.find(i), len(roots))
     return reasons

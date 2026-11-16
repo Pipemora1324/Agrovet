@@ -76,7 +76,7 @@ def build_windows(df):
     """
     import pandas as pd
 
-    xs, ys, meta = [], [], []
+    xs, ys, rows = [], [], []
     for cow_id, cow in df.sort_values(["cow_id", "day"]).groupby("cow_id", sort=True):
         values = cow[list(FEATURES)].to_numpy(dtype=np.float64)
         days = cow["day"].to_numpy()
@@ -93,11 +93,11 @@ def build_windows(df):
             label = int(sick and HORIZON_MIN_DAYS <= days_to_onset <= HORIZON_MAX_DAYS)
             xs.append(window)
             ys.append(label)
-            meta.append((cow_id, end_day, days_to_onset, sick))
+            rows.append((cow_id, end_day, days_to_onset, sick))
 
     X = np.stack(xs).astype(np.float32)
     y = np.array(ys, dtype=np.int32)
-    meta = pd.DataFrame(meta, columns=["cow_id", "end_day", "days_to_onset", "sick"])
+    meta = pd.DataFrame(rows, columns=["cow_id", "end_day", "days_to_onset", "sick"])
     return X, y, meta
 
 

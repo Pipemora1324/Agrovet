@@ -40,7 +40,8 @@ public class PhotoController {
     @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Sube el archivo de una foto (JPEG o PNG); se guarda como JPEG sin metadatos",
-            description = "Los datos de la foto deben haber llegado antes por /api/sync. Repetir la subida la reemplaza.")
+            description = "Los datos de la foto deben haber llegado antes por /api/sync. "
+                    + "Repetir la subida la reemplaza.")
     public void upload(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID cowId, @PathVariable UUID photoId,
             @RequestPart("file") MultipartFile file) {
         try {

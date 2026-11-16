@@ -2,8 +2,15 @@ import numpy as np
 import pytest
 
 from generate_dataset import DatasetParams, generate
-from preprocess import (BASE_DAYS, WINDOW_DAYS, build_windows, clean_window, normalize_window,
-                        preprocess_window, traffic_light)
+from preprocess import (
+    BASE_DAYS,
+    WINDOW_DAYS,
+    build_windows,
+    clean_window,
+    normalize_window,
+    preprocess_window,
+    traffic_light,
+)
 
 
 def flat_window(temp=38.5, milk=12.0, feed=10.0):

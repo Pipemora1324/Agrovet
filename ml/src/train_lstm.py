@@ -15,14 +15,22 @@ import matplotlib
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.metrics import (auc, confusion_matrix, f1_score, precision_recall_curve,
-                             precision_score, recall_score, roc_auc_score, roc_curve)
+from sklearn.metrics import (
+    auc,
+    confusion_matrix,
+    f1_score,
+    precision_recall_curve,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+    roc_curve,
+)
 from sklearn.model_selection import train_test_split
 
 from preprocess import BASE_DAYS, FEATURES, WINDOW_DAYS, build_windows, traffic_light
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
 
 ML_DIR = Path(__file__).resolve().parents[1]
 DATA_PATH = ML_DIR / "data" / "daily_records.csv"
@@ -187,7 +195,7 @@ def main():
 
     df, parts = load_split_windows()
     X_train, y_train, _ = parts["train"]
-    X_val, y_val, meta_val = parts["val"]
+    X_val, y_val, _meta_val = parts["val"]
     X_test, y_test, meta_test = parts["test"]
 
     positives = y_train.sum()

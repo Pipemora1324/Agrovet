@@ -23,7 +23,17 @@ La dirección del servidor sale **solo** de `--dart-define=API_BASE_URL`; sin el
 
 En la pantalla de ingreso de una compilación **debug** aparece la opción **"Entrar a la demostración"**:
 abre una sesión local con 6 vacas de ejemplo (prefijo `DEMO`) y el rótulo "Modo de prueba". Esos datos
-viven en una base aparte, nunca se sincronizan y la opción no existe en las compilaciones release.
+viven en una base aparte y nunca se sincronizan.
+
+En release la demostración solo existe si se compila con `--dart-define=DEMO_MODE=true` (apagada por
+defecto). Así se arma el APK de demostración mientras el backend no está publicado:
+
+```bash
+flutter build apk --release --split-per-abi --target-platform android-arm64 --dart-define=DEMO_MODE=true
+```
+
+Sin `API_BASE_URL` ese APK arranca igual, funciona sin internet y muestra en el ingreso que crear una
+cuenta o ingresar no funcionan todavía. El APK para uso real se compila **sin** `DEMO_MODE`.
 
 Para ingresar con una cuenta real, el backend debe estar corriendo (`backend/`, `docker compose up`).
 Desde el emulador el equipo es `10.0.2.2`. Para un servidor publicado:

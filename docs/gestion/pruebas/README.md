@@ -9,6 +9,8 @@ Resultados reales de las pruebas de AgroVet en la versión **v0.1.0** (`main`, c
 | Matriz requisito → issue → commit → prueba → resultado | [trazabilidad.md](trazabilidad.md) | #85 |
 | 13 pruebas reales en emulador y los 10 problemas corregidos | [emulador.md](emulador.md) | #83 |
 | Calidad de los datos públicos, CNN y límites del LSTM | [calidad_datos.md](calidad_datos.md) | #84 |
+| Cobertura, mutación, linters y análisis de seguridad (posterior a v0.1.0) | [calidad.md](calidad.md) | — |
+| Evaluación del asistente: 30 preguntas, 10 ataques y mejoras del prompt (posterior a v0.1.0) | [asistente.md](asistente.md) | — |
 
 ## Corridas de GitHub Actions en `main` (v0.1.0)
 

@@ -163,7 +163,8 @@ class CowIntegrationTest extends IntegrationTest {
         LocalDate today = LocalDate.now();
         for (int i = 0; i < 3; i++) {
             jdbc.update("INSERT INTO daily_records (id, cow_id, record_date, temperature_c, milk_l, feed_kg, "
-                            + "abnormal_milk, created_at, updated_at) VALUES (?, ?, ?, 38.6, 12.5, 10.0, ?, now(), now())",
+                            + "abnormal_milk, created_at, updated_at) "
+                            + "VALUES (?, ?, ?, 38.6, 12.5, 10.0, ?, now(), now())",
                     UUID.randomUUID(), cow, today.minusDays(i), i == 0);
         }
 

@@ -9,11 +9,15 @@ import 'package:agrovet/presentation/photos/udder_triage_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockPhotoRepository extends Mock implements PhotoRepository {}
 
 void main() {
+  // La ficha de la foto muestra la fecha en español, igual que en main.dart
+  setUpAll(() => initializeDateFormatting('es'));
+
   testWidgets('la lectura siempre dice que es orientativa y no es diagnóstico', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(

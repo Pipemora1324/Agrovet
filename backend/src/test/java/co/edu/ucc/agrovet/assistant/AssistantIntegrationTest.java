@@ -109,7 +109,8 @@ class AssistantIntegrationTest extends IntegrationTest {
     void providerFailureIsReportedAsUnavailable() throws Exception {
         llm.failing = true;
         ask(ana, "{\"question\":\"Hola\"}").andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.detail").value("El asistente no está disponible en este momento. Intente más tarde."));
+                .andExpect(jsonPath("$.detail")
+                        .value("El asistente no está disponible en este momento. Intente más tarde."));
     }
 
     @Test

@@ -48,6 +48,11 @@ public class LoginRateLimiter {
         windows.remove(pairKey(ip, email));
     }
 
+    /** Contadores guardados en memoria; las pruebas lo usan para comprobar que la limpieza funciona. */
+    int trackedKeys() {
+        return windows.size();
+    }
+
     private Window hit(String key, Instant now) {
         return windows.compute(key, (k, current) -> {
             Window window = current == null || current.isOver(now, properties.window()) ? new Window(now) : current;

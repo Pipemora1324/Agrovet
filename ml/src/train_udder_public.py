@@ -26,10 +26,24 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 
-from cnn_evaluation import (balanced_class_weight, inner_validation_split, repeated_group_folds,
-                            summarize, wilson_interval)
-from train_cnn import (ALPHA, FINE_TUNE_LAYERS, IMAGE_SIZE, array_dataset, build_cnn, export_tflite,
-                       fit_two_phase, make_augmenter, tflite_predict)
+from cnn_evaluation import (
+    balanced_class_weight,
+    inner_validation_split,
+    repeated_group_folds,
+    summarize,
+    wilson_interval,
+)
+from train_cnn import (
+    ALPHA,
+    FINE_TUNE_LAYERS,
+    IMAGE_SIZE,
+    array_dataset,
+    build_cnn,
+    export_tflite,
+    fit_two_phase,
+    make_augmenter,
+    tflite_predict,
+)
 from udder_public_data import CROP_MARGIN, MIN_CROP_SIDE, load_dataset
 
 ML_DIR = Path(__file__).resolve().parents[1]
@@ -241,7 +255,7 @@ def main():
     }
     log(f"[datos] {json.dumps(dataset, ensure_ascii=False)}")
 
-    report = {
+    report: dict = {
         "warning": "Etiquetas del autor del dataset público, sin confirmación veterinaria. Las métricas "
                    "miden concordancia con esas etiquetas, no capacidad diagnóstica.",
         "source": SOURCE,

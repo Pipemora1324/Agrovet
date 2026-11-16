@@ -106,7 +106,8 @@ class ProfileIntegrationTest extends IntegrationTest {
                 .andExpect(jsonPath("$.municipality").value("Pasto"))
                 .andExpect(jsonPath("$.phone").value("300 123 4567"));
 
-        send(put("/api/auth/me"), ana, "{\"name\":\"Ana María\",\"farmName\":\"\",\"municipality\":\"Pasto\",\"phone\":\"\"}")
+        send(put("/api/auth/me"), ana,
+                "{\"name\":\"Ana María\",\"farmName\":\"\",\"municipality\":\"Pasto\",\"phone\":\"\"}")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.farmName").doesNotExist())
                 .andExpect(jsonPath("$.phone").doesNotExist());

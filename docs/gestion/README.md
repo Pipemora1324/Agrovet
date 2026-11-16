@@ -59,6 +59,7 @@ Es un **Scrum adaptado a un equipo de una persona**, con flujo **Kanban** en el 
 | [pruebas/trazabilidad.md](pruebas/trazabilidad.md) | Requisito → HU → issue → commit → prueba → resultado |
 | [pruebas/emulador.md](pruebas/emulador.md) | 13 pruebas reales en teléfono y tableta, 10 problemas corregidos, capturas |
 | [pruebas/calidad_datos.md](pruebas/calidad_datos.md) | Datos sintéticos, datasets públicos, CNN y sus límites |
+| [pruebas/calidad.md](pruebas/calidad.md) | Cobertura, pruebas de mutación, linters, SonarCloud y análisis de seguridad del CI |
 | [../REQUISITOS.md](../REQUISITOS.md) | RF-01..18, RNF-01..08 y HU-01..09 con su estado |
 
 ## GitHub Project

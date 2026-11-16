@@ -40,7 +40,8 @@ public class AccountMailer {
                 "Hola, " + name + ".\n\n"
                         + "Su código para verificar el correo en AgroVet es:\n\n"
                         + "    " + code + "\n\n"
-                        + "Vence en " + ttl.toMinutes() + " minutos. Si usted no creó una cuenta, ignore este mensaje.\n");
+                        + "Vence en " + ttl.toMinutes() + " minutos. "
+                        + "Si usted no creó una cuenta, ignore este mensaje.\n");
     }
 
     public void sendPasswordResetCode(String to, String name, String code, Duration ttl) {
@@ -66,7 +67,8 @@ public class AccountMailer {
                 sender.send(to, subject, body);
             } catch (RuntimeException e) {
                 // Sin el texto del error: el servidor SMTP suele repetir en él la dirección completa
-                log.warn("No se pudo enviar el correo \"{}\" a {}: {}", subject, mask(to), e.getClass().getSimpleName());
+                log.warn("No se pudo enviar el correo \"{}\" a {}: {}", subject, mask(to),
+                        e.getClass().getSimpleName());
             }
         };
         if (TransactionSynchronizationManager.isSynchronizationActive()) {

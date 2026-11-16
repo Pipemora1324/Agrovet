@@ -35,15 +35,18 @@ public class AssistantService {
     public ChatResponse chat(UUID userId, ChatRequest request) {
         byte[] jpeg = decodePhoto(request.photoBase64());
         limiter.acquire(userId);
+        String answer = llm.generate(AssistantPrompt.SYSTEM, conversation(request), jpeg);
+        return new ChatResponse(answer.length() > MAX_ANSWER ? answer.substring(0, MAX_ANSWER) + "…" : answer);
+    }
 
+    /** Turnos que recibe el proveedor: contexto de la vaca, mensajes anteriores y la pregunta. */
+    static List<LlmClient.Turn> conversation(ChatRequest request) {
         List<LlmClient.Turn> turns = new ArrayList<>();
         turns.add(new LlmClient.Turn(true, AssistantPrompt.context(request.context())));
         turns.add(new LlmClient.Turn(false, "Entendido. ¿En qué le puedo ayudar?"));
         request.history().forEach(turn -> turns.add(new LlmClient.Turn(turn.fromUser(), turn.text().trim())));
         turns.add(new LlmClient.Turn(true, request.question().trim()));
-
-        String answer = llm.generate(AssistantPrompt.SYSTEM, turns, jpeg);
-        return new ChatResponse(answer.length() > MAX_ANSWER ? answer.substring(0, MAX_ANSWER) + "…" : answer);
+        return turns;
     }
 
     private byte[] decodePhoto(String base64) {

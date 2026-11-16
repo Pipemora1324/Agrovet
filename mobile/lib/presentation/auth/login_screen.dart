@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/config.dart';
 import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../core/validators.dart';
@@ -15,7 +15,11 @@ import 'forgot_password_screen.dart';
 import 'password_field.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  /// [showServerNotice]: aviso de que no hay servidor (compilación de demostración sin
+  /// API_BASE_URL). Por defecto sale de [AppConfig.withoutServer]; las pruebas lo fijan.
+  const LoginScreen({super.key, this.showServerNotice});
+
+  final bool? showServerNotice;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -206,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ? null
                   : () => Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      MaterialPageRoute<void>(
                         builder: (_) => ForgotPasswordScreen(
                           api: context.read<AuthCubit>().api,
                           initialEmail: _email.text,
@@ -226,17 +230,45 @@ class _LoginScreenState extends State<LoginScreen> {
                   : 'No tengo cuenta: crear una',
             ),
           ),
-          if (kDebugMode && context.read<AuthCubit>().allowDemo) ...[
-            const Divider(height: 32),
-            BigButton(
-              icon: Icons.science_outlined,
-              label: 'Entrar a la demostración',
-              outlined: true,
-              onPressed: busy ? null : context.read<AuthCubit>().enterDemo,
+          if (AppConfig.demoAvailable && context.read<AuthCubit>().allowDemo)
+            _DemoEntry(
+              busy: busy,
+              showServerNotice: widget.showServerNotice ?? AppConfig.withoutServer,
             ),
-          ],
         ],
       ),
+    );
+  }
+}
+
+/// Entrada a la demostración y, si la app se compiló sin servidor, el aviso de que no se puede
+/// crear una cuenta ni ingresar.
+class _DemoEntry extends StatelessWidget {
+  const _DemoEntry({required this.busy, required this.showServerNotice});
+
+  final bool busy;
+  final bool showServerNotice;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Divider(height: 32),
+        if (showServerNotice) ...[
+          const NoticeBox.info(
+            'Versión de demostración: el servidor todavía no está publicado, así que crear '
+            'una cuenta o ingresar no funcionan. Use "Entrar a la demostración" para probar la app.',
+          ),
+          const SizedBox(height: 12),
+        ],
+        BigButton(
+          icon: Icons.science_outlined,
+          label: 'Entrar a la demostración',
+          outlined: true,
+          onPressed: busy ? null : context.read<AuthCubit>().enterDemo,
+        ),
+      ],
     );
   }
 }
@@ -274,7 +306,7 @@ class _PrivacyConsent extends StatelessWidget {
           child: TextButton.icon(
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const PrivacyNoticeScreen()),
+              MaterialPageRoute<void>(builder: (_) => const PrivacyNoticeScreen()),
             ),
             icon: const Icon(Icons.privacy_tip),
             label: const Text('Leer el aviso de privacidad'),

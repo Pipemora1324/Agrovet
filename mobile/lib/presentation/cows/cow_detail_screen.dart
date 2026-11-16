@@ -51,7 +51,7 @@ class _CowDetailScreenState extends State<CowDetailScreen> {
 
   /// Abre otra pantalla y, al volver, recarga los registros (pudo haber uno nuevo).
   Future<void> _open(Widget screen) async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+    await Navigator.push(context, MaterialPageRoute<void>(builder: (_) => screen));
     if (!mounted) return;
     final records = _loadRecords();
     setState(() {

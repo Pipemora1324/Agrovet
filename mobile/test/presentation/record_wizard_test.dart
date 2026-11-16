@@ -33,7 +33,7 @@ void main() {
           builder: (context) => Scaffold(
             body: Center(
               child: TextButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DailyRecordScreen(cow: cow))),
+                onPressed: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => DailyRecordScreen(cow: cow))),
                 child: const Text('abrir'),
               ),
             ),
