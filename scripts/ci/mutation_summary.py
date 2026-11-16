@@ -1,9 +1,9 @@
 """Resumen de las pruebas de mutación (PIT en el backend, mutmut en ml) en Markdown.
 
     python scripts/ci/mutation_summary.py --pit backend/target/pit-reports/mutations.xml
-    mutmut results --all true > mutmut.txt
-    python scripts/ci/mutation_summary.py --mutmut mutmut.txt --min 90
+    mutmut results --all true | python scripts/ci/mutation_summary.py --mutmut --min 90
 
+Los resultados de mutmut se leen de la entrada estándar: así ningún argumento se usa como ruta.
 Con --min el script termina con código 1 si el porcentaje de mutantes eliminados queda por debajo.
 """
 
@@ -14,6 +14,7 @@ import io
 import sys
 import xml.etree.ElementTree as ET
 from collections import Counter
+from collections.abc import Iterable
 from pathlib import Path
 
 # Estados que cuentan como mutante eliminado
@@ -34,10 +35,11 @@ def pit(path: Path) -> tuple[Counter[str], Counter[str]]:
     return statuses, per_class
 
 
-def mutmut(path: Path) -> tuple[Counter[str], Counter[str]]:
+def mutmut(lines: Iterable[str]) -> tuple[Counter[str], Counter[str]]:
+    """Líneas de `mutmut results --all true`: "nombre.del.mutante: estado"."""
     per_module: Counter[str] = Counter()
     statuses: Counter[str] = Counter()
-    for raw in path.read_text(encoding="utf-8").splitlines():
+    for raw in lines:
         name, sep, status = raw.strip().rpartition(": ")
         if not sep or status in MUTMUT_IGNORED:
             continue
@@ -78,7 +80,8 @@ def report_path(value: str) -> Path:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--pit", type=report_path)
-    parser.add_argument("--mutmut", type=report_path)
+    parser.add_argument("--mutmut", action="store_true",
+                        help="lee de la entrada estándar la salida de `mutmut results --all true`")
     parser.add_argument("--min", type=float, default=0.0, help="porcentaje mínimo de mutantes eliminados")
     args = parser.parse_args()
 
@@ -89,7 +92,9 @@ def main() -> None:
         parts.append(text)
         scores.append(pct)
     if args.mutmut:
-        statuses, alive = mutmut(args.mutmut)
+        if isinstance(sys.stdin, io.TextIOWrapper):
+            sys.stdin.reconfigure(encoding="utf-8")
+        statuses, alive = mutmut(sys.stdin)
         text, pct = section("ml: mutmut (módulos en [tool.mutmut] de ml/pyproject.toml)", statuses,
                             MUTMUT_KILLED, alive)
         parts.append(text)
