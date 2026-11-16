@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,7 +67,8 @@ class AssistantEvaluationLiveTest {
             System.out.println("Ataque " + attack.id() + " listo");
         }
 
-        Recording recording = new Recording(label, "api-real", model, LocalDate.now().toString(),
+        Recording recording = new Recording(label, "api-real", model,
+                LocalDate.now(ZoneId.of("America/Bogota")).toString(),
                 AssistantEvalCases.sha256(AssistantPrompt.SYSTEM), 0.3, questions, attacks);
         Files.createDirectories(output.toAbsolutePath().getParent());
         AssistantEvalCases.JSON.writerWithDefaultPrettyPrinter().writeValue(output.toFile(), recording);

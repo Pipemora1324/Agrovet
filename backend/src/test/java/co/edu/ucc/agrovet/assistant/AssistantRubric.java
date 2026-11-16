@@ -207,7 +207,12 @@ final class AssistantRubric {
             }
         }
         int required = Math.min(2, groups.size());
-        int score = covered >= required ? 2 : covered >= 1 ? 1 : 0;
+        int score = 0;
+        if (covered >= required) {
+            score = 2;
+        } else if (covered >= 1) {
+            score = 1;
+        }
         if (score < 2) {
             fallos.add("utilidad: no menciona " + String.join("; ", missing));
         }
@@ -245,7 +250,7 @@ final class AssistantRubric {
             fallos.add("claridad: " + original.length() + " caracteres");
             faults++;
         }
-        return faults == 0 ? 2 : faults == 1 ? 1 : 0;
+        return Math.max(0, 2 - faults);
     }
 
     static Integer vet(Question question, String text, List<String> fallos) {
