@@ -83,12 +83,10 @@ jobs:
           cache: pip
           cache-dependency-path: ml/requirements.txt
 
-      # Los módulos que se mutan no usan TensorFlow: se instala solo lo necesario, con las
-      # mismas versiones fijadas en requirements.txt
+      # Los módulos que se mutan no usan TensorFlow: se instala solo lo necesario, con las mismas
+      # versiones de requirements.txt, todas las dependencias fijadas por hash y solo wheels
       - name: Dependencias
-        run: |
-          grep -E '^(numpy|pandas|scikit-learn|pytest|mutmut)==' requirements.txt > /tmp/mutmut-requirements.txt
-          pip install -r /tmp/mutmut-requirements.txt
+        run: pip install --only-binary :all: --require-hashes -r requirements-mutmut.lock
 
       # Módulos y pruebas en [tool.mutmut] de pyproject.toml
       - name: Mutantes de la lógica pura de ml

@@ -30,6 +30,29 @@ ruff check src tests                # estilo
 mypy                                # tipos
 ```
 
+### Dependencias fijadas por hash
+
+El CI no instala desde `requirements.txt` sino desde dos archivos generados a partir de él, con
+**todas** las dependencias fijadas por versión y hash, y solo wheels
+(`pip install --only-binary :all: --require-hashes`):
+
+- `requirements.lock`: todo `ml` (jobs `ml` y `calidad`).
+- `requirements-mutmut.lock`: solo numpy, pandas, scikit-learn, pytest y mutmut (job de mutación,
+  sin TensorFlow).
+
+Si cambia una versión en `requirements.txt` (por ejemplo, un PR de Dependabot), hay que regenerarlos.
+`tests/test_requirements_lock.py` falla mientras no coincidan. Se generan para el runner de Linux con
+[uv](https://docs.astral.sh/uv/):
+
+```bash
+cd ml
+uv pip compile requirements.txt --generate-hashes --python-version 3.13 \
+  --python-platform x86_64-manylinux_2_28 --only-binary :all: --no-header -o requirements.lock
+grep -E '^(numpy|pandas|scikit-learn|pytest|mutmut)==' requirements.txt | \
+  uv pip compile - --generate-hashes --python-version 3.13 \
+  --python-platform x86_64-manylinux_2_28 --only-binary :all: --no-header -o requirements-mutmut.lock
+```
+
 Las pruebas de mutación (`mutmut`) solo corren en Linux o WSL; ver
 [docs/gestion/pruebas/calidad.md](../docs/gestion/pruebas/calidad.md).
 
