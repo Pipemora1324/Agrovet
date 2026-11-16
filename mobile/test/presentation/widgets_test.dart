@@ -73,6 +73,26 @@ void main() {
     },
   );
 
+  testWidgets(
+    'la compilación de demostración sin servidor avisa que no se puede crear cuenta ni ingresar',
+    (tester) async {
+      final cubit = authCubit()..emit(const Unauthenticated());
+      await tester.pumpWidget(
+        BlocProvider.value(value: cubit, child: app(const LoginScreen(showServerNotice: true))),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('el servidor todavía no está publicado'), findsOneWidget);
+      expect(find.text('Entrar a la demostración'), findsOneWidget);
+
+      await tester.pumpWidget(
+        BlocProvider.value(value: cubit, child: app(const LoginScreen(showServerNotice: false))),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('el servidor todavía no está publicado'), findsNothing);
+      expect(find.text('Entrar a la demostración'), findsOneWidget);
+    },
+  );
+
   group('lista de vacas', () {
     final repo = _FixedCows([
       for (var i = 1; i <= 4; i++)

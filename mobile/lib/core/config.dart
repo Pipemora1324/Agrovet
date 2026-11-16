@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// Configuración de compilación.
 ///
 /// La dirección del servidor sale **solo** de `--dart-define=API_BASE_URL=...`; no hay una dirección
@@ -22,8 +20,13 @@ class AppConfig {
   /// funcionan. El APK que se publique para uso real se compila sin esta bandera.
   static const demoBuild = bool.fromEnvironment('DEMO_MODE');
 
+  /// Tipo de compilación, igual que kReleaseMode y kDebugMode de Flutter (que se definen así), sin
+  /// depender de ellos.
+  static const isReleaseBuild = bool.fromEnvironment('dart.vm.product');
+  static const isDebugBuild = !isReleaseBuild && !bool.fromEnvironment('dart.vm.profile');
+
   /// La demostración existe en debug y en las compilaciones de demostración.
-  static const demoAvailable = kDebugMode || demoBuild;
+  static const demoAvailable = isDebugBuild || demoBuild;
 
   /// Compilación de demostración sin dirección del servidor: funciona solo la demostración.
   static bool get withoutServer => demoBuild && apiBaseUrl.isEmpty;
@@ -32,7 +35,7 @@ class AppConfig {
   static const developmentHosts = {'10.0.2.2', 'localhost', '127.0.0.1'};
 
   /// Por qué la dirección no sirve, o null si está bien.
-  static String? get problem => problemFor(apiBaseUrl, release: kReleaseMode, demoBuild: demoBuild);
+  static String? get problem => problemFor(apiBaseUrl, release: isReleaseBuild, demoBuild: demoBuild);
 
   static String? problemFor(String url, {required bool release, bool demoBuild = false}) {
     if (url.isEmpty) {
