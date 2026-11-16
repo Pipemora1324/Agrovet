@@ -78,7 +78,7 @@ def main() -> None:
         scores.append(pct)
     if args.mutmut:
         statuses, alive = mutmut(args.mutmut)
-        text, pct = section("ml: mutmut (preprocess, cnn_evaluation, build_cnn_dataset)", statuses,
+        text, pct = section("ml: mutmut (módulos en [tool.mutmut] de ml/pyproject.toml)", statuses,
                             MUTMUT_KILLED, alive)
         parts.append(text)
         scores.append(pct)

@@ -209,27 +209,114 @@ imágenes de ruido y corre el pipeline completo (entrenamiento, ajuste fino y ex
 sin descargar pesos. **Solo comprueba que el código funciona**: sus números no significan nada y no
 se guardan en `reports/`.
 
-## Prueba de concepto: pocillos de leche (no se usa en la app)
+## Clasificador de leche normal o anormal (evaluación, no se usa en la app)
 
-`src/milk_public_poc.py` clasifica cada pocillo de la paleta como leche normal o anormal con la
-misma CNN, usando el dataset público de leche de Roboflow (CC BY 4.0, ver
-[docs/datasets_publicos.md](../docs/datasets_publicos.md)). Se ignoran los splits de Roboflow (40
-grupos de frames casi idénticos estaban repartidos entre train, valid y test) y se agrupa por pHash:
-640 pocillos (189 normales, 451 anormales) en 200 grupos. Validación `StratifiedGroupKFold` 5 × 1 (una
-sola repetición, por tiempo) y una prueba extra: entrenar sin la sesión de fotos de teléfono (PXL) y
-evaluar solo en ella. Detalle en `reports/milk_poc_public.json`.
+Clasifica cada pozo de la paleta de prueba como leche **normal** o **anormal** (con sangre, con grumos
+o aguada). **No está integrado en la app** y el `.tflite` no se versiona.
 
-| Evaluación (umbral 0,5) | Pocillos | Sensibilidad (IC 95 %) | Especificidad (IC 95 %) | AUC (IC 95 %) |
+**Dataset.** abdurrehman4198, *Mastitis dataset* v3, Roboflow Universe, 2026
+(https://universe.roboflow.com/abdurrehman4198-gmail-com/mastitis-dataset), licencia
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Son 453 imágenes de 640 × 360 (402 frames
+de video y 51 fotos de un teléfono Pixel, `PXL_*`) con 640 pozos anotados: 189 normales, 184 con
+sangre, 151 aguados y 116 con grumos. Las imágenes quedan fuera del repositorio.
+
+```bash
+python src/train_milk_cnn.py --coco "C:/.../Data/roboflow_leche/Mastitis dataset.v3i.coco" \
+                             --work-dir "C:/.../Data/agrovet_work/milk_cnn"   # ~1,5 h en CPU
+```
+
+| Archivo | Qué hace |
+|---|---|
+| `src/milk_data.py` | Lectura del COCO, sesiones PXL, grupos sin fuga, recortes, imagen sin leche y degradaciones |
+| `src/milk_evaluation.py` | Calibración (ECE, curva, Brier), confusión por grado, IC por bootstrap agrupado y diferencia pareada de AUC |
+| `src/train_milk_cnn.py` | Entrenamiento por etapas, validación 5 × 5 reanudable, control de contexto, Grad-CAM, robustez y TFLite |
+| `reports/milk_cnn.json` | Todos los números |
+| `informes/` | Curva de calibración y ejemplos de Grad-CAM, con la atribución del dataset |
+
+**Cómo se evaluó.**
+
+- **Sin el split de Roboflow.** 41 grupos de frames casi idénticos estaban repartidos entre train,
+  valid y test.
+- **Grupos.** Se unen las imágenes casi idénticas (pHash ≤ 8 y dHash ≤ 12) y las fotos PXL de la
+  misma sesión (tomas a menos de 10 min): quedan 163 grupos. Cada grupo va completo a un fold.
+- **Validación.** `StratifiedGroupKFold` 5 × 5 con umbral 0,5. Las métricas usan la probabilidad
+  media de las 5 repeticiones.
+- **Intervalos.** Para sensibilidad y especificidad, Wilson y además bootstrap por grupos (Wilson
+  supone pozos independientes y no lo son). Para el AUC, bootstrap por grupos.
+- **Entrada.** Recorte de la caja más 10 %, cuadrado, a **160 px**: los pozos miden 212 px de mediana
+  y el tamaño de 224 px triplicaba el tiempo en CPU.
+- **Entrenamiento por etapas.** Primero la cabeza con la red congelada (sobre características
+  precalculadas) y después se afinan las últimas 30 capas con aumento de datos y lr 1e-5.
+- **Dos redes con ImageNet:** MobileNetV2 (alpha 0,35) y MobileNetV3-Small (alpha 0,75).
+
+**Resultados** (640 pozos, umbral 0,5):
+
+| Modelo | Sensibilidad (Wilson · bootstrap) | Especificidad (Wilson · bootstrap) | AUC (bootstrap) | ECE | Brier |
+|---|---|---|---|---|---|
+| MobileNetV2 | 0,978 (0,960–0,988 · 0,949–0,997) | 1,000 (0,980–1,000 · 1,000–1,000) | 0,9996 (0,9986–1,0000) | 0,024 | 0,011 |
+| MobileNetV3-Small | 0,987 (0,971–0,994 · 0,969–0,998) | 0,984 (0,954–0,995 · 0,957–1,000) | 0,9996 (0,9985–1,0000) | 0,025 | 0,010 |
+| **Solo contexto** (MobileNetV2, todos los pozos tapados) | 0,931 (0,904–0,951 · 0,893–0,963) | 0,683 (0,613–0,745 · 0,584–0,838) | **0,912 (0,852–0,959)** | 0,051 | 0,106 |
+| Sin la sesión PXL, evaluada solo en ella (113 pozos) | 1,000 (0,862–1,000) | 1,000 (0,959–1,000) | 1,000 | 0,010 | 0,000 |
+
+- **Las dos redes son equivalentes:** la diferencia de AUC es 0,0001, con IC 95 % pareado de −0,0009
+  a 0,0011. La etapa congelada ya da lo mismo que la afinada (AUC medio 0,9993 en ambas).
+- **Por grado** (MobileNetV2): detecta 184/184 con sangre, 151/151 aguados y **106/116 con grumos**,
+  y marca 0/189 normales. Los 10 que se le escapan son grumos casi lisos, que a simple vista parecen
+  leche normal (ver `informes/gradcam_mobilenet_v2_falsos_negativos.png`).
+- **Calibración:** ECE de 0,020 con las 3200 predicciones fuera de muestra. Casi todas las
+  probabilidades están cerca de 0 o de 1; en la zona media hay pocos pozos y ahí el modelo se queda
+  corto (predice menos riesgo del real).
+
+**Control de sesgo: el contexto solo da AUC 0,91.** Una red que no ve ninguna leche (todos los pozos
+tapados: solo quedan la paleta, el suelo, la mano y la luz) separa normal de anormal con AUC 0,91. En
+este dataset cada video o sesión suele mostrar un solo tipo de leche (155 de 163 grupos tienen una sola
+clase), así que el contexto delata la etiqueta. La validación por grupos evita que se memorice una
+escena concreta, pero no evita que se aprendan rasgos de escena que se repiten (luz, fondo, encuadre).
+**El AUC de 0,9996 no se puede atribuir solo al color de la leche.** Grad-CAM muestra la atención sobre
+la leche en la mayoría de los aciertos, pero en algunos (aguada, grumos) se va al borde de la paleta o
+al suelo.
+
+**Robustez** (repetición 0: cada pozo degradado y evaluado por el modelo que no lo vio):
+
+| Degradación | AUC V2 | Sens. / Esp. V2 | AUC V3-S | Sens. / Esp. V3-S |
 |---|---|---|---|---|
-| Validación cruzada por grupos | 640 | 0,96 (0,94–0,97) | 1,00 (0,98–1,00) | 0,999 (0,996–1,000) |
-| Sin la sesión PXL, evaluada solo en ella | 113 | 1,00 (0,86–1,00) | 1,00 (0,96–1,00) | 1,00 |
+| Ninguna | 1,000 | 0,978 / 0,995 | 0,999 | 0,982 / 0,984 |
+| Luz × 0,5 / × 1,6 | 0,998 / 0,995 | 0,980 / 0,984 · 0,971 / 0,958 | 0,998 / 0,995 | 0,982 / 0,947 · 0,965 / 0,963 |
+| Desenfoque radio 2 | 0,980 | 0,989 / **0,619** | 0,998 | 0,938 / 1,000 |
+| Desenfoque radio 4 | 0,923 | 0,989 / **0,402** | 0,970 | 0,851 / 0,921 |
+| Rotación 15° / 90° | 0,995 / 0,999 | 0,951 / 0,968 · 0,967 / 0,995 | 0,998 / 1,000 | 0,918 / 1,000 · 0,971 / 1,000 |
+| JPEG calidad 30 | 0,998 | 0,998 / 0,894 | 0,999 | 0,998 / 0,915 |
+| JPEG calidad 10 | 0,977 | 0,996 / **0,508** | 0,981 | 1,000 / **0,265** |
 
-No cae al sacar la sesión PXL, así que no parece haber aprendido la sesión. Los 18 pocillos anormales
-que no detecta son casi todos "Curd like" (17 de 116). **Advertencia**: la tarea es fácil en estas
-condiciones (sangre roja, grumos o líquido oscuro frente a leche blanca, misma paleta, mismo suelo y
-misma luz). No hay casos sutiles, las etiquetas son del autor sin laboratorio y la prueba PXL es
-pequeña (24 anormales). No dice nada de cómo funcionaría con otra paleta, otra luz u otra cámara, ni
-sobre la mastitis subclínica, que no cambia el aspecto de la leche.
+La luz y la rotación casi no la afectan. **El desenfoque y la compresión fuerte sí:** el AUC cambia
+poco, pero con el umbral fijo de 0,5 la red empieza a marcar como anormal la leche normal (con
+MobileNetV2 y desenfoque de radio 4, la especificidad cae de 0,995 a 0,40). Una foto movida o enviada
+muy comprimida por mensajería daría falsas alarmas. La tabla completa está en
+`reports/milk_cnn.json`.
+
+**Exportación** (modelo final MobileNetV2 con todos los pozos, TFLite float16, 160 × 160):
+
+- Tamaño: 857 KB (877 080 bytes); 411 489 parámetros.
+- Latencia mediana: 3,3 ms con 1 hilo y 2,6 ms con 4, medida en el CPU del PC de desarrollo con el
+  intérprete de TFLite. **No se midió en un celular.**
+- Frente a Keras, en los 640 pozos: diferencia máxima 0,021 y media 0,0005; no cambia ninguna decisión.
+
+**Límites.**
+
+- Un solo dataset público, una sola paleta y un solo tipo de celular (las fotos PXL vienen de un
+  Pixel, y los videos probablemente también), con el mismo suelo y la misma luz.
+- Las etiquetas son del autor del dataset, sin laboratorio ni veterinario.
+- El aspecto anormal de la leche corresponde a **mastitis clínica**. La subclínica no cambia el
+  aspecto, así que esto no detecta infección en general ni sustituye un CMT o un recuento de células
+  somáticas.
+- El contexto solo ya alcanza un AUC de 0,91.
+- La sesión PXL fuera (113 pozos, 24 anormales) es pequeña y comparte paleta y lugar con el resto.
+
+Validarlo de verdad exige fotos de otras fincas, paletas, celulares y luces, con diagnóstico
+confirmado. Hasta entonces no debe integrarse en la app.
+
+La prueba de concepto anterior (`src/milk_public_poc.py`, `reports/milk_poc_public.json`: 5 × 1, solo
+pHash, sin control de contexto) queda como antecedente; esta evaluación la reemplaza.
 
 ## Artefactos que usa la app
 
