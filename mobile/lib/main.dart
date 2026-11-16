@@ -23,7 +23,7 @@ Future<void> main() async {
     return;
   }
 
-  if (Platform.isAndroid) {
+  if (Platform.isAndroid && !AppConfig.withoutServer) {
     // Si no se puede programar, la app sincroniza igual en primer plano
     unawaited(BackgroundSync.schedule().catchError((Object _) {}));
   }

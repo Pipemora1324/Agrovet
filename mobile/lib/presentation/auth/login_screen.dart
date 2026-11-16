@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/config.dart';
 import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../core/validators.dart';
@@ -226,8 +226,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   : 'No tengo cuenta: crear una',
             ),
           ),
-          if (kDebugMode && context.read<AuthCubit>().allowDemo) ...[
+          if (AppConfig.demoAvailable && context.read<AuthCubit>().allowDemo) ...[
             const Divider(height: 32),
+            if (AppConfig.withoutServer) ...[
+              const NoticeBox.info(
+                'Versión de demostración: el servidor todavía no está publicado, así que crear '
+                'una cuenta o ingresar no funcionan. Use "Entrar a la demostración" para probar la app.',
+              ),
+              const SizedBox(height: 12),
+            ],
             BigButton(
               icon: Icons.science_outlined,
               label: 'Entrar a la demostración',

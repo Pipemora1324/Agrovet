@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../core/config.dart';
 import '../data/demo/demo_seed.dart';
 import '../data/local/app_database.dart';
 import '../data/local/database_opener.dart';
@@ -87,7 +87,7 @@ class _SessionScopeState extends State<SessionScope> {
           );
     _db = db;
     final repository = LocalRepository(db, isDemo: session.isDemo);
-    if (session.isDemo && kDebugMode) {
+    if (session.isDemo && AppConfig.demoAvailable) {
       await DemoSeed(repository).seedIfEmpty();
     }
     final photos = await PhotoStore.forUser(

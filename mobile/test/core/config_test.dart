@@ -7,6 +7,19 @@ void main() {
     expect(AppConfig.problemFor('', release: true), isNotNull);
   });
 
+  test('la compilación de demostración arranca sin servidor, pero no acepta una dirección insegura', () {
+    expect(AppConfig.problemFor('', release: true, demoBuild: true), isNull);
+    expect(AppConfig.problemFor('http://agrovet.example.co', release: true, demoBuild: true), contains('HTTPS'));
+    expect(AppConfig.problemFor('https://agrovet.example.co', release: true, demoBuild: true), isNull);
+  });
+
+  test('la demostración está apagada por defecto fuera de debug', () {
+    // Las pruebas corren en debug: la demostración existe por kDebugMode, no por la bandera
+    expect(AppConfig.demoBuild, isFalse);
+    expect(AppConfig.withoutServer, isFalse);
+    expect(AppConfig.demoAvailable, isTrue);
+  });
+
   test('en release solo HTTPS', () {
     expect(AppConfig.problemFor('https://agrovet.example.co', release: true), isNull);
     expect(AppConfig.problemFor('http://agrovet.example.co', release: true), contains('HTTPS'));
