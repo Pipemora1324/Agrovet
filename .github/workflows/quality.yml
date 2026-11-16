@@ -68,7 +68,9 @@ jobs:
           cache: pip
           cache-dependency-path: ml/requirements.txt
 
-      - run: pip install -r requirements.txt
+      # requirements.lock: requirements.txt con todas las dependencias fijadas por hash (ml/README.md)
+      - run: |
+          pip install --only-binary :all: --require-hashes -r requirements.lock
 
       - name: Pruebas con pytest-cov
         run: pytest -q --cov --cov-report=xml
@@ -97,7 +99,8 @@ jobs:
           flutter-version: 3.47.7
           cache: true
 
-      - run: flutter pub get
+      # Exactamente las versiones de pubspec.lock
+      - run: flutter pub get --enforce-lockfile
 
       - name: Pruebas con cobertura
         run: flutter test --coverage

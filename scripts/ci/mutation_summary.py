@@ -63,10 +63,22 @@ def section(title: str, statuses: Counter[str], killed: set[str], alive: Counter
     return "\n".join(lines) + "\n", pct
 
 
+def report_path(value: str) -> Path:
+    """Ruta de un informe: tiene que ser un archivo dentro del directorio de trabajo (el repositorio en
+    el CI). Evita leer archivos de otra parte del sistema con una ruta como ../../etc/passwd."""
+    base = Path.cwd().resolve()
+    path = (base / value).resolve()
+    if not path.is_relative_to(base):
+        raise argparse.ArgumentTypeError(f"el informe tiene que estar dentro de {base}: {value}")
+    if not path.is_file():
+        raise argparse.ArgumentTypeError(f"no existe el informe: {value}")
+    return path
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--pit", type=Path)
-    parser.add_argument("--mutmut", type=Path)
+    parser.add_argument("--pit", type=report_path)
+    parser.add_argument("--mutmut", type=report_path)
     parser.add_argument("--min", type=float, default=0.0, help="porcentaje mínimo de mutantes eliminados")
     args = parser.parse_args()
 
