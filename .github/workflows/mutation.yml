@@ -86,7 +86,8 @@ jobs:
       # Los módulos que se mutan no usan TensorFlow: se instala solo lo necesario, con las mismas
       # versiones de requirements.txt, todas las dependencias fijadas por hash y solo wheels
       - name: Dependencias
-        run: pip install --only-binary :all: --require-hashes -r requirements-mutmut.lock
+        run: |
+          pip install --only-binary :all: --require-hashes -r requirements-mutmut.lock
 
       # Módulos y pruebas en [tool.mutmut] de pyproject.toml
       - name: Mutantes de la lógica pura de ml

@@ -69,7 +69,8 @@ jobs:
           cache-dependency-path: ml/requirements.txt
 
       # requirements.lock: requirements.txt con todas las dependencias fijadas por hash (ml/README.md)
-      - run: pip install --only-binary :all: --require-hashes -r requirements.lock
+      - run: |
+          pip install --only-binary :all: --require-hashes -r requirements.lock
 
       - name: Pruebas con pytest-cov
         run: pytest -q --cov --cov-report=xml

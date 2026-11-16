@@ -32,7 +32,8 @@ jobs:
       # requirements.lock: requirements.txt con todas las dependencias fijadas por hash (ml/README.md)
       - name: Instalar dependencias
         if: hashFiles('ml/requirements.txt') != ''
-        run: pip install --only-binary :all: --require-hashes -r requirements.lock
+        run: |
+          pip install --only-binary :all: --require-hashes -r requirements.lock
 
       # Reglas de ruff y mypy en pyproject.toml
       - name: Estilo (ruff)
