@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/config.dart';
 import '../../data/remote/api_client.dart';
 import '../../data/remote/auth_api.dart';
 import '../../data/security/secure_store.dart';
@@ -81,7 +81,7 @@ class AuthCubit extends Cubit<AuthState> {
   AuthCubit({
     required this.store,
     required this.api,
-    this.allowDemo = kDebugMode,
+    this.allowDemo = AppConfig.demoAvailable,
     DateTime Function()? clock,
   })  : _now = clock ?? DateTime.now,
         super(const AuthChecking());
