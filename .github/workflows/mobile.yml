@@ -40,7 +40,7 @@ jobs:
 
       - name: Dependencias
         if: hashFiles('mobile/pubspec.yaml') != ''
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       # Modo estricto (strict-casts, strict-inference, strict-raw-types) en analysis_options.yaml;
       # con --fatal-infos hasta una sugerencia rompe el build
