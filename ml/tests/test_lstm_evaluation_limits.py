@@ -102,6 +102,8 @@ def test_baseline_hyperparameters_are_the_declared_ones():
     forest = models["random_forest"].get_params()
     assert forest["n_estimators"] == 300
     assert forest["min_samples_leaf"] == 5
+    assert forest["max_features"] == "sqrt"
+    assert models["regresion_logistica"].memory is None
     assert forest["class_weight"] == "balanced_subsample"
     assert forest["n_jobs"] == -1
     assert forest["random_state"] == 9

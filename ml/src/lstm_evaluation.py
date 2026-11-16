@@ -149,8 +149,9 @@ def baseline_estimators(seed=42):
     """Líneas base entrenables, con hiperparámetros fijos (sin búsqueda)."""
     return {
         "regresion_logistica": make_pipeline(StandardScaler(),
-                                             LogisticRegression(class_weight="balanced", max_iter=2000)),
-        "random_forest": RandomForestClassifier(n_estimators=300, min_samples_leaf=5,
+                                             LogisticRegression(class_weight="balanced", max_iter=2000),
+                                             memory=None),
+        "random_forest": RandomForestClassifier(n_estimators=300, min_samples_leaf=5, max_features="sqrt",
                                                 class_weight="balanced_subsample", n_jobs=-1,
                                                 random_state=seed),
     }

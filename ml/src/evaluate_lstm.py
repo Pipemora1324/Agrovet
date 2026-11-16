@@ -142,9 +142,11 @@ def _cut(raw, rng, n_days, where):
     return missing_days(raw, n_days, where)
 
 
-def robustness(predict, raw, labels, threshold, repeats, seed):
-    """Tabla de degradación del LSTM. Las degradaciones al azar se repiten `repeats` veces y se
-    reporta la media y el rango de cada métrica."""
+ROBUSTNESS_METRICS = ("coverage", "f1", "precision", "recall", "recall_all_windows", "specificity", "auc")
+
+
+def degradation_scenarios():
+    """(tipo, nivel, función de degradación, si es al azar) de cada fila de la tabla."""
     scenarios: list[tuple[str, float, Degrade | None, bool]] = [("sin_degradar", 0, None, False)]
     for level in NOISE_LEVELS:
         scenarios.append(("ruido_gaussiano", level, partial(_noise, level=level), True))
@@ -156,20 +158,29 @@ def robustness(predict, raw, labels, threshold, repeats, seed):
     for where, kind in (("start", "faltan_primeros_dias"), ("end", "faltan_ultimos_dias")):
         for days in MISSING_DAYS:
             scenarios.append((kind, days, partial(_cut, n_days=days, where=where), False))
+    return scenarios
 
+
+def evaluate_degraded(predict, raw, labels, threshold, degrade, rng):
+    """Degrada, preprocesa como la app y evalúa solo las ventanas que el preprocesamiento acepta."""
+    degraded = raw if degrade is None else degrade(raw, rng)
+    X, usable = preprocess_batch(degraded)
+    scores = np.zeros(len(X))
+    if usable.any():
+        scores[usable] = predict(X[usable])
+    return degradation_row(labels, scores, usable, threshold)
+
+
+def robustness(predict, raw, labels, threshold, repeats, seed):
+    """Tabla de degradación del LSTM. Las degradaciones al azar se repiten `repeats` veces y se
+    reporta la media y el rango de cada métrica."""
     rows = []
-    for index, (kind, level, degrade, random) in enumerate(scenarios):
-        draws = []
-        for rep in range(repeats if random else 1):
-            rng = np.random.default_rng(seed + 100 * index + rep)
-            degraded = raw if degrade is None else degrade(raw, rng)
-            X, usable = preprocess_batch(degraded)
-            scores = np.zeros(len(X))
-            if usable.any():
-                scores[usable] = predict(X[usable])
-            draws.append(degradation_row(labels, scores, usable, threshold))
+    for index, (kind, level, degrade, random) in enumerate(degradation_scenarios()):
+        draws = [evaluate_degraded(predict, raw, labels, threshold, degrade,
+                                   np.random.default_rng(seed + 100 * index + rep))
+                 for rep in range(repeats if random else 1)]
         row = {"degradation": kind, "level": level, "draws": len(draws)}
-        for key in ("coverage", "f1", "precision", "recall", "recall_all_windows", "specificity", "auc"):
+        for key in ROBUSTNESS_METRICS:
             values = np.array([d[key] for d in draws], dtype=float)
             row[key] = float(np.mean(values))
             row[f"{key}_range"] = (float(np.min(values)), float(np.max(values)))
