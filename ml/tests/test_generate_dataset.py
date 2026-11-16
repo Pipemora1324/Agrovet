@@ -1,3 +1,5 @@
+import hashlib
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -89,3 +91,53 @@ def test_estrus_and_heat_stress_are_present(df):
     assert df["in_estrus"].mean() > 0.01
     assert df["heat_stress"].any()
     assert df[~df["sick"]]["in_estrus"].any()
+
+
+# Huella del dataset antes de agregar los parámetros de finca: con los valores por defecto el
+# generador tiene que dar exactamente los mismos datos con los que se entrenó el modelo desplegado.
+DEFAULT_FINGERPRINT_40_COWS = "f50edb22fc11b3aac956b16055fa34f3e981772ff322737e3ff9454afaadc69a"
+
+
+def fingerprint(frame):
+    return hashlib.sha256(pd.util.hash_pandas_object(frame, index=True).to_numpy().tobytes()).hexdigest()
+
+
+def test_default_farm_parameters_reproduce_the_training_data():
+    assert fingerprint(generate(DatasetParams(n_cows=40))) == DEFAULT_FINGERPRINT_40_COWS
+
+
+def healthy_clean(frame):
+    return frame[~frame["sick"] & ~frame["is_erroneous"]]
+
+
+def test_farm_base_values_move_the_herd():
+    base = healthy_clean(generate(DatasetParams(n_cows=80)))
+    farm = healthy_clean(generate(DatasetParams(n_cows=80, base_milk_mean=24.0, base_feed_mean=17.0,
+                                                base_temp_mean=38.9)))
+    assert farm["milk_l"].mean() - base["milk_l"].mean() == pytest.approx(11.0, abs=1.5)
+    assert farm["feed_kg"].mean() - base["feed_kg"].mean() == pytest.approx(6.0, abs=1.0)
+    assert farm["temperature_c"].mean() - base["temperature_c"].mean() == pytest.approx(0.3, abs=0.05)
+    per_cow = generate(DatasetParams(n_cows=80, base_milk_sd=0.0, base_feed_sd=0.0))
+    first_day = healthy_clean(per_cow[per_cow["day"] == 0])
+    # Sin dispersión entre vacas solo queda el ruido diario (5 % de la leche, 6 % del alimento)
+    assert first_day["milk_l"].std() < 1.2
+    assert first_day["feed_kg"].std() < 1.2
+
+
+def test_noise_and_heat_stress_scales():
+    def daily_spread(frame):
+        return frame.groupby("cow_id")["temperature_c"].diff().std()
+
+    quiet = healthy_clean(generate(DatasetParams(n_cows=60, noise_scale=0.0, heat_stress_scale=0.0)))
+    base = healthy_clean(generate(DatasetParams(n_cows=60)))
+    noisy = healthy_clean(generate(DatasetParams(n_cows=60, noise_scale=3.0)))
+    assert daily_spread(quiet) < daily_spread(base) < daily_spread(noisy)
+    assert not quiet["heat_stress"].any()
+    hot = generate(DatasetParams(n_cows=60, heat_stress_scale=2.0))
+    assert hot["heat_stress"].any()
+    assert healthy_clean(hot)["temperature_c"].max() > base["temperature_c"].max()
+
+
+def test_severity_range_is_a_parameter():
+    cows = generate(DatasetParams(n_cows=80, severity_min=0.3, severity_max=0.5)).groupby("cow_id").first()
+    assert cows.loc[cows["sick"], "severity"].between(0.3, 0.5).all()
