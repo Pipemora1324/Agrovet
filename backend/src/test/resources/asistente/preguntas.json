@@ -1,0 +1,203 @@
+{
+  "descripcion": "30 preguntas de ganaderos de Nariño para evaluar el asistente. 'contexto' es lo que la app envía de la vaca (semáforo, causa, puntaje, probabilidad y síntomas). 'veterinario': SI si la respuesta debe recomendarlo, NO si no hace falta llamarlo con urgencia, OPCIONAL si no se califica. 'urgente': la recomendación debe pedir que sea pronto. 'debeMencionar': grupos de raíces de palabras; cada grupo se cumple si aparece cualquiera. 'contextoEsperado': raíces que muestran que la respuesta tuvo en cuenta los datos de la vaca.",
+  "preguntas": [
+    {
+      "id": "S01", "categoria": "sintomas",
+      "pregunta": "Mi vaca amaneció con la teta de atrás dura y caliente. ¿Eso qué será?",
+      "contexto": {"riskLevel": "RED", "cause": "SYMPTOMS", "symptomScore": 4, "symptoms": ["Ubre hinchada", "Ubre caliente"]},
+      "veterinario": "SI", "urgente": false,
+      "debeMencionar": [["leche", "chorro", "grumo"], ["fiebre", "temperatura", "termometro"], ["separ", "aparte", "ultim", "al final"]],
+      "contextoEsperado": ["rojo", "hinchad", "caliente", "dura"]
+    },
+    {
+      "id": "S02", "categoria": "sintomas",
+      "pregunta": "Al ordeñar le salen como unas natitas o grumitos en los primeros chorros, pero la vaca come normal.",
+      "veterinario": "SI", "urgente": false,
+      "debeMencionar": [["cuarto", "teta", "pezon"], ["separ", "aparte", "no mezcl", "no la vend", "no venda", "descart"], ["prueba", "paleta", "cmt", "primeros chorros", "fondo oscuro"]]
+    },
+    {
+      "id": "S03", "categoria": "sintomas",
+      "pregunta": "La leche de una teta sale aguadita, como amarillenta. ¿Es normal?",
+      "veterinario": "SI", "urgente": false,
+      "debeMencionar": [["no es normal", "senal", "cambio", "anormal"], ["separ", "descart", "no mezcl", "aparte"], ["prueba", "paleta", "cmt", "revis"]]
+    },
+    {
+      "id": "S04", "categoria": "sintomas",
+      "pregunta": "¿Cómo sé si mi vaca tiene fiebre si no tengo termómetro?",
+      "veterinario": "OPCIONAL", "urgente": false,
+      "debeMencionar": [["termometro"], ["oreja", "decaid", "no come", "triste", "respira", "caliente"], ["39", "grados"]]
+    },
+    {
+      "id": "S05", "categoria": "sintomas",
+      "pregunta": "Esta semana la Pintada bajó la leche como dos litros y no le veo nada raro en la ubre.",
+      "contexto": {"riskLevel": "YELLOW", "cause": "MODEL", "probability": 0.62, "symptoms": ["Dio menos leche de lo usual"]},
+      "veterinario": "OPCIONAL", "urgente": false,
+      "debeMencionar": [["comida", "pasto", "agua", "aliment", "celo", "calor", "estres"], ["revis", "observ", "vigil", "registr", "pendiente"], ["ubre", "leche", "prueba", "paleta"]],
+      "contextoEsperado": ["amarillo", "menos leche", "bajo", "modelo", "alerta"]
+    },
+    {
+      "id": "S06", "categoria": "sintomas",
+      "pregunta": "La vaca tiene la ubre roja, pero no está caliente ni dura.",
+      "contexto": {"riskLevel": "GREEN", "cause": "SYMPTOMS", "symptomScore": 1, "symptoms": ["Ubre enrojecida"]},
+      "veterinario": "OPCIONAL", "urgente": false,
+      "debeMencionar": [["revis", "observ", "vigil", "pendiente"], ["leche", "grumo", "chorro"], ["caliente", "dura", "hinch", "dolor"]],
+      "contextoEsperado": ["verde", "enrojecid", "roja", "rojez"]
+    },
+    {
+      "id": "S07", "categoria": "sintomas",
+      "pregunta": "Mi vaca está decaída, no quiere comer y la ubre se le está poniendo morada y fría.",
+      "contexto": {"riskLevel": "RED", "cause": "BOTH", "symptomScore": 3, "probability": 0.91, "symptoms": ["No comió normal", "Ubre hinchada"]},
+      "veterinario": "SI", "urgente": true,
+      "debeMencionar": [["grave", "seri", "peligr", "urgen"], ["morad", "fria", "decaid", "no come"]],
+      "contextoEsperado": ["rojo", "no com", "decaid", "morad", "hinchad"]
+    },
+    {
+      "id": "S08", "categoria": "sintomas",
+      "pregunta": "¿Qué es la mastitis y por qué les da a las vacas?",
+      "veterinario": "OPCIONAL", "urgente": false,
+      "debeMencionar": [["inflama", "infecc"], ["ubre"], ["bacteria", "microb", "germen", "sucied", "higien", "ordeno"]]
+    },
+    {
+      "id": "Q01", "categoria": "que_hacer",
+      "pregunta": "El semáforo me salió rojo para la Lucero. ¿Qué hago primero?",
+      "contexto": {"riskLevel": "RED", "cause": "MODEL", "probability": 0.93},
+      "veterinario": "SI", "urgente": false,
+      "debeMencionar": [["revis", "observ", "mire", "toque", "palpe"], ["leche", "ubre", "prueba", "paleta"], ["temperatura", "fiebre", "termometro"]],
+      "contextoEsperado": ["rojo", "alto riesgo"]
+    },
+    {
+      "id": "Q02", "categoria": "que_hacer",
+      "pregunta": "Me salió amarillo. ¿Tengo que llamar al veterinario ya?",
+      "contexto": {"riskLevel": "YELLOW", "cause": "MODEL", "probability": 0.55},
+      "veterinario": "NO", "urgente": false,
+      "debeMencionar": [["vigil", "observ", "revis", "pendiente"], ["registr", "manana", "repit", "anot", "siguiente"], ["empeor", "si aparece", "si nota", "si ve", "fiebre", "grumo"]],
+      "contextoEsperado": ["amarillo", "alerta temprana"]
+    },
+    {
+      "id": "Q03", "categoria": "que_hacer",
+      "pregunta": "¿Puedo vender la leche de la vaca que tiene grumos?",
+      "contexto": {"riskLevel": "YELLOW", "cause": "SYMPTOMS", "symptomScore": 3, "symptoms": ["Grumos o sangre en la leche"]},
+      "veterinario": "SI", "urgente": false,
+      "debeMencionar": [["no", "separ", "descart", "aparte"], ["vend", "venta", "consum", "mezcl", "tanque", "cantina"]],
+      "contextoEsperado": ["grumo"]
+    },
+    {
+      "id": "Q04", "categoria": "que_hacer",
+      "pregunta": "Creo que mi vaca tiene mastitis. ¿Le puedo dar algún remedio casero mientras llega el veterinario?",
+      "veterinario": "SI", "urgente": false,
+      "debeMencionar": [["orden", "sacar la leche", "vaci", "frecuen"], ["limpi", "higien", "cama", "seco"], ["no ", "evit", "cuidado"]]
+    },
+    {
+      "id": "Q05", "categoria": "que_hacer",
+      "pregunta": "¿Sirve ordeñar más seguido la teta enferma?",
+      "veterinario": "OPCIONAL", "urgente": false,
+      "debeMencionar": [["orden", "vaci", "sacar"], ["final", "ultim", "separ", "aparte", "guante", "lav", "mano"]]
+    },
+    {
+      "id": "Q06", "categoria": "que_hacer",
+      "pregunta": "Dejé que el ternero mamara de la vaca que tiene la ubre hinchada. ¿Hice mal?",
+      "contexto": {"riskLevel": "YELLOW", "cause": "SYMPTOMS", "symptomScore": 2, "symptoms": ["Ubre hinchada"]},
+      "veterinario": "SI", "urgente": false,
+      "debeMencionar": [["ternero", "becerro", "cria"], ["contag", "infect", "pasa", "enferm", "diarrea", "riesgo"]],
+      "contextoEsperado": ["hinchad", "amarillo"]
+    },
+    {
+      "id": "Q07", "categoria": "que_hacer",
+      "pregunta": "Una vaca recién parida tiene la ubre muy hinchada. ¿Es normal o es mastitis?",
+      "veterinario": "OPCIONAL", "urgente": false,
+      "debeMencionar": [["parto", "parida", "edema", "normal"], ["caliente", "dolor", "grumo", "fiebre", "leche"]]
+    },
+    {
+      "id": "Q08", "categoria": "que_hacer",
+      "pregunta": "¿Qué hago con la leche que ordeño de la vaca enferma?",
+      "veterinario": "OPCIONAL", "urgente": false,
+      "debeMencionar": [["no ", "descart", "bot", "separ", "aparte"], ["ternero", "consum", "vend", "mezcl", "tanque", "cantina"]]
+    },
+    {
+      "id": "H01", "categoria": "higiene",
+      "pregunta": "Ordeño en el potrero. ¿Cómo debo lavar la ubre antes de ordeñar?",
+      "veterinario": "NO", "urgente": false,
+      "debeMencionar": [["agua limpia", "limpi"], ["sec", "toalla", "papel"], ["mano", "pezon", "primeros chorros"]]
+    },
+    {
+      "id": "H02", "categoria": "higiene",
+      "pregunta": "¿Para qué sirve sellar los pezones después del ordeño?",
+      "veterinario": "NO", "urgente": false,
+      "debeMencionar": [["sell", "desinfect", "solucion"], ["pezon", "punta", "conducto", "entrada", "abierto"], ["bacteria", "microb", "germen", "infecc"]]
+    },
+    {
+      "id": "H03", "categoria": "higiene",
+      "pregunta": "Ordeño con las manos. ¿Cada cuánto me las tengo que lavar?",
+      "veterinario": "NO", "urgente": false,
+      "debeMencionar": [["cada vaca", "entre vaca", "antes", "despues"], ["jabon", "agua"]]
+    },
+    {
+      "id": "H04", "categoria": "higiene",
+      "pregunta": "¿En qué orden ordeño las vacas para no pasarles la mastitis a las sanas?",
+      "veterinario": "NO", "urgente": false,
+      "debeMencionar": [["sanas primero", "primero las sanas", "primero"], ["al final", "el final", "ultim", "de ultimo", "despues"]]
+    },
+    {
+      "id": "H05", "categoria": "higiene",
+      "pregunta": "¿Qué es la prueba de la paleta o CMT y cada cuánto la hago?",
+      "veterinario": "NO", "urgente": false,
+      "debeMencionar": [["paleta", "cmt", "reactivo"], ["gel", "espes", "mezcl", "cuarto", "grumo"], ["semana", "mes", "seguido", "frecuen", "quince"]]
+    },
+    {
+      "id": "H06", "categoria": "higiene",
+      "pregunta": "En invierno el corral se vuelve un barrizal. ¿Eso le afecta la ubre a las vacas?",
+      "veterinario": "NO", "urgente": false,
+      "debeMencionar": [["barro", "lodo", "humed", "sucied"], ["bacteria", "germen", "microb", "infecc", "mastitis"], ["cama", "seco", "limpi", "drenaj"]]
+    },
+    {
+      "id": "H07", "categoria": "higiene",
+      "pregunta": "¿Está bien usar el mismo trapo para limpiar la ubre de todas las vacas?",
+      "veterinario": "NO", "urgente": false,
+      "debeMencionar": [["no "], ["una por vaca", "cada vaca", "individual", "papel", "desechable"]]
+    },
+    {
+      "id": "V01", "categoria": "veterinario",
+      "pregunta": "¿Cuándo es necesario llamar al veterinario por mastitis?",
+      "veterinario": "SI", "urgente": false,
+      "debeMencionar": [["fiebre"], ["sangre", "pus"], ["no come", "decaid", "triste"], ["hinch", "dura", "morad", "caliente"]]
+    },
+    {
+      "id": "V02", "categoria": "veterinario",
+      "pregunta": "La leche sale con sangre de un cuarto. ¿Espero hasta mañana?",
+      "veterinario": "SI", "urgente": true,
+      "debeMencionar": [["no esper", "no deje", "cuanto antes", "hoy", "pronto", "de inmediato"], ["sangre", "grave", "seri", "senal"]]
+    },
+    {
+      "id": "V03", "categoria": "veterinario",
+      "pregunta": "El veterinario vive lejos, en Pasto, y cobra caro. ¿Puedo esperar unos días a ver si se le pasa?",
+      "contexto": {"riskLevel": "RED", "cause": "BOTH", "symptomScore": 7, "probability": 0.88, "symptoms": ["Ubre hinchada", "Fiebre", "Grumos o sangre en la leche"]},
+      "veterinario": "SI", "urgente": true,
+      "debeMencionar": [["esper", "empeor", "riesgo", "grave", "perder", "dano"], ["llam", "consult", "telefono", "umata", "tecnico", "asistencia"]],
+      "contextoEsperado": ["fiebre", "rojo", "hinchad", "grumo", "sangre"]
+    },
+    {
+      "id": "V04", "categoria": "veterinario",
+      "pregunta": "La vaca ya tiene tratamiento del veterinario pero al tercer día sigue igual.",
+      "veterinario": "SI", "urgente": false,
+      "debeMencionar": [["avis", "inform", "cuent", "llam", "vuelv", "comuni"], ["no suspend", "no deje", "complet", "no cambie", "no intente cambiar", "siga", "no lo cambie", "termine"]]
+    },
+    {
+      "id": "V05", "categoria": "veterinario",
+      "pregunta": "¿Necesito veterinario si en la prueba de la paleta solo salió un poquito de gel en un cuarto?",
+      "veterinario": "OPCIONAL", "urgente": false,
+      "debeMencionar": [["subclinic", "leve", "temprana", "inicio", "comienzo"], ["repit", "vigil", "observ", "otra vez", "de nuevo"], ["higien", "orden", "limpi"]]
+    },
+    {
+      "id": "V06", "categoria": "veterinario",
+      "pregunta": "Tengo tres vacas con grumos en la misma semana. ¿Qué está pasando?",
+      "veterinario": "SI", "urgente": false,
+      "debeMencionar": [["orden", "higien", "equipo", "mano", "trapo", "maquina"], ["contag", "pasa", "varias", "hato", "todas", "otras vacas"]]
+    },
+    {
+      "id": "V07", "categoria": "veterinario",
+      "pregunta": "Cuando llame al veterinario, ¿qué datos le cuento?",
+      "veterinario": "SI", "urgente": false,
+      "debeMencionar": [["temperatura", "fiebre"], ["cuarto", "teta"], ["leche", "grumo", "sangre"], ["desde cuando", "cuando empez", "dias", "comio", "come"]]
+    }
+  ]
+}
