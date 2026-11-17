@@ -430,10 +430,13 @@ imágenes de ruido y corre el pipeline completo (entrenamiento, ajuste fino y ex
 sin descargar pesos. **Solo comprueba que el código funciona**: sus números no significan nada y no
 se guardan en `reports/`.
 
-## Clasificador de leche normal o anormal (evaluación, no se usa en la app)
+## Clasificador de leche normal o anormal (solo pantalla experimental del APK de demostración)
 
 Clasifica cada pozo de la paleta de prueba como leche **normal** o **anormal** (con sangre, con grumos
-o aguada). **No está integrado en la app** y el `.tflite` no se versiona.
+o aguada). **No está en la app normal.** Desde el 2026-11-16 solo entra en el APK de demostración
+(`DEMO_MODE=true`), en la pantalla "Leche (experimental)", con el aviso fijo "Experimental. No es
+diagnóstico. Solo validado con un conjunto de datos; con fotos nuevas puede fallar." (ver
+"Pantalla experimental en el APK de demostración" más abajo).
 
 **Dataset.** abdurrehman4198, *Mastitis dataset* v3, Roboflow Universe, 2026
 (https://universe.roboflow.com/abdurrehman4198-gmail-com/mastitis-dataset), licencia
@@ -534,7 +537,40 @@ muy comprimida por mensajería daría falsas alarmas. La tabla completa está en
 - La sesión PXL fuera (113 pozos, 24 anormales) es pequeña y comparte paleta y lugar con el resto.
 
 Validarlo de verdad exige fotos de otras fincas, paletas, celulares y luces, con diagnóstico
-confirmado. Hasta entonces no debe integrarse en la app.
+confirmado. Hasta entonces no debe entrar en la app normal; solo se muestra en el APK de
+demostración como experimento.
+
+### Pantalla experimental en el APK de demostración
+
+- `models/milk_cnn.tflite` es el modelo final exportado por `train_milk_cnn.py` (el mismo
+  `milk_mobilenet_v2_float16.tflite`, 877 080 bytes; SHA-256 en `models/milk_cnn_config.json`).
+- `src/export_milk_vectors.py` toma 5 pozos del dataset (normal de teléfono, normal de video, sangre,
+  grumos y aguada de teléfono) y guarda en `tests/fixtures/milk/` la foto original (CC BY 4.0), el
+  recorte de 160 px de Python y, en `models/milk_cnn_vectors.json`, la caja y la probabilidad del
+  TFLite. Agrega dos imágenes sintéticas (una que reduce y otra que amplía) para comparar sin JPEG.
+- La app recorta, rellena en negro y redimensiona con una copia en Dart del bilineal de Pillow
+  (pesos enteros de 22 bits). Resultado (`mobile/test/model/milk_model_test.dart`): los 2 recortes
+  sintéticos y los 5 de fotos reales son **idénticos píxel a píxel** a los de Python, y la
+  probabilidad coincide con la de Python (diferencia < 1e-6).
+- Estos 5 pozos estuvieron en el entrenamiento del modelo final: comprueban el preprocesamiento,
+  **no** la exactitud.
+
+**El encuadre pesa mucho.** En la app la persona encuadra el pozo a mano (no hay caja anotada). Con
+los mismos 5 pozos, en Python:
+
+| Recorte | Normal PXL | Normal video | Sangre | Grumos | Aguada |
+|---|---|---|---|---|---|
+| Caja + 10 % (como en el entrenamiento) | 0,001 | 0,023 | 1,000 | 0,945 | 0,986 |
+| Igual, tras recomprimir la foto en JPEG 75 | 0,001 | 0,022 | 1,000 | 0,945 | 0,986 |
+| Caja + 15 % | 0,004 | 0,011 | 1,000 | **0,350** | **0,515** |
+| Caja 10 % más chica | 0,001 | 0,035 | 1,000 | 0,966 | 0,996 |
+| Caja corrida 10 % | 0,000 | 0,026 | 1,000 | 0,973 | 0,941 |
+| Foto entera | 0,010 | 0,005 | 1,000 | **0,013** | **0,000** |
+
+Con un poco más de borde, los pozos con grumos o aguados bajan hacia "normal"; con la foto entera,
+salen normales. Por eso la pantalla tiene un círculo guía del tamaño del pozo en el entrenamiento
+(1/1,2 del recuadro). En el emulador, con el pozo de grumos encuadrado a mano dio 53 % y 59 % de
+probabilidad, frente al 94,5 % de la caja anotada; el pozo normal dio 0 %.
 
 La prueba de concepto anterior (`src/milk_public_poc.py`, `reports/milk_poc_public.json`: 5 × 1, solo
 pHash, sin control de contexto) queda como antecedente; esta evaluación la reemplaza.
@@ -544,6 +580,9 @@ pHash, sin control de contexto) queda como antecedente; esta evaluación la reem
 Se versionan `models/mastitis_lstm.tflite`, `models/model_config.json` y `models/test_vectors.json`.
 La app debe reproducir los 8 casos de `test_vectors.json` (normalización y probabilidad) con
 tolerancia 1e-4.
+
+Para la pantalla experimental del APK de demostración: `models/milk_cnn.tflite`,
+`models/milk_cnn_config.json`, `models/milk_cnn_vectors.json` y `tests/fixtures/milk/` (ver arriba).
 
 También `models/udder_cnn.tflite`, `models/udder_cnn_config.json` y `models/udder_cnn_vectors.json`
 (CNN de la ubre, apagada en la app). La app debe dar lo mismo que el TFLite de Python (1e-4) sobre
