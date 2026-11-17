@@ -66,7 +66,8 @@ def test_synthetic_crops_are_reproducible(case):
     photo = Image.fromarray(synthetic_photo(*VECTORS["synthetic"]["size"]))
     left, top, right, bottom = case["box"]
     crop = udder_crop(photo, (left, top, right - left, bottom - top), size=IMAGE_SIZE, margin=0.0)
-    assert np.array_equal(crop, np.asarray(Image.open(FIXTURES / case["pythonCrop"]).convert("RGB")))
+    saved = np.asarray(Image.open(FIXTURES / case["pythonCrop"]).convert("RGB"))
+    assert np.array_equal(crop, saved)
 
 
 def test_tflite_probabilities_match_the_vectors():

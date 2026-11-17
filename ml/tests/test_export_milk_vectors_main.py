@@ -61,7 +61,8 @@ def test_main_writes_config_and_vectors(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(emv, "FIXTURES_DIR", tmp_path / "fixtures")
     coco = fake_coco(tmp_path / "coco")
     monkeypatch.setattr(sys, "argv", ["export_milk_vectors.py", "--coco", str(coco), "--model", str(MODEL)])
-    assert emv.main() == 0
+    status = emv.main()
+    assert status == 0
     config = json.loads((tmp_path / "config.json").read_text(encoding="utf-8"))
     assert config["disclaimer"] == emv.DISCLAIMER
     assert config["onlyDemoBuild"] is True
