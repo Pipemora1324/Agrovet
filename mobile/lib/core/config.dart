@@ -20,6 +20,11 @@ class AppConfig {
   /// funcionan. El APK que se publique para uso real se compila sin esta bandera.
   static const demoBuild = bool.fromEnvironment('DEMO_MODE');
 
+  /// Pantalla "Leche (experimental)": solo en la sesión de demostración de un APK compilado con
+  /// DEMO_MODE, porque el modelo se validó con un único conjunto de datos público. El modelo de leche
+  /// solo se empaqueta con esa bandera (android/app/build.gradle.kts).
+  static const milkExperimentEnabled = demoBuild;
+
   /// Tipo de compilación, igual que kReleaseMode y kDebugMode de Flutter (que se definen así), sin
   /// depender de ellos.
   static const isReleaseBuild = bool.fromEnvironment('dart.vm.product');

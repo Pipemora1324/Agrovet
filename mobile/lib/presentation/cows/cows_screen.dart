@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/config.dart';
 import '../../core/formatters.dart';
 import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
+import '../../domain/session.dart';
+import '../milk/milk_check_screen.dart';
 import '../records/daily_record_screen.dart';
 import '../sync/sync_cubit.dart';
 import '../widgets/app_scaffold.dart';
@@ -20,20 +23,26 @@ import 'cow_form_screen.dart';
 import 'cows_cubit.dart';
 
 class CowsScreen extends StatelessWidget {
-  const CowsScreen({super.key});
+  const CowsScreen({super.key, this.milkExperiment = AppConfig.milkExperimentEnabled});
+
+  /// Muestra la entrada a "Leche (experimental)" en la sesión de demostración.
+  final bool milkExperiment;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) => CowsCubit(context.read<CowRepository>()),
-    child: const _CowsView(),
+    child: _CowsView(milkExperiment: milkExperiment),
   );
 }
 
 class _CowsView extends StatelessWidget {
-  const _CowsView();
+  const _CowsView({required this.milkExperiment});
+
+  final bool milkExperiment;
 
   @override
   Widget build(BuildContext context) {
+    final showMilk = milkExperiment && (context.read<Session?>()?.isDemo ?? false);
     return AppScaffold(
       title: 'Mis vacas',
       floatingActionButton: FloatingActionButton.extended(
@@ -72,6 +81,10 @@ class _CowsView extends StatelessWidget {
                         FadeIn(index: 1, child: _RiskSummary(cows: state.cows)),
                         const SizedBox(height: 12),
                         const FadeIn(index: 2, child: _SyncStatus()),
+                        if (showMilk) ...[
+                          const SizedBox(height: 12),
+                          const FadeIn(index: 2, child: _MilkExperimentCard()),
+                        ],
                         const SizedBox(height: 16),
                         for (var r = 0; r < rows.length; r++)
                           Padding(
@@ -109,6 +122,27 @@ class _CowsView extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Entrada a la pantalla experimental de leche (solo demostración).
+class _MilkExperimentCard extends StatelessWidget {
+  const _MilkExperimentCard();
+
+  @override
+  Widget build(BuildContext context) => Card(
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: const Icon(Icons.science_outlined, size: AppSizes.icon, color: AppColors.primary),
+          title: const Text('Leche (experimental)'),
+          subtitle: const Text('Foto de un pozo de la paleta. No es diagnóstico.'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute<void>(builder: (_) => const MilkCheckScreen()),
+          ),
+        ),
+      );
 }
 
 class _Greeting extends StatelessWidget {
