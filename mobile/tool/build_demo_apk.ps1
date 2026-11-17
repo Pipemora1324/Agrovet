@@ -51,7 +51,7 @@ function Build-Apk([string[]]$defines, [string]$name) {
     Copy-Item (Join-Path $mobile 'build\app\outputs\flutter-apk\app-arm64-v8a-release.apk') $target -Force
     $size = (Get-Item $target).Length
     $hash = (Get-FileHash $target -Algorithm SHA256).Hash.ToLower()
-    Write-Host ("{0}: {1:N0} bytes ({2:N1} MB), SHA-256 {3}" -f $name, $size, ($size / 1MB), $hash)
+    Write-Output ("{0}: {1:N0} bytes ({2:N1} MB), SHA-256 {3}" -f $name, $size, ($size / 1MB), $hash)
     if ($size -gt $limit) { throw "$name pasa del límite de 15 MB" }
 }
 
