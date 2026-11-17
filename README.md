@@ -123,6 +123,8 @@ verificación) llegan a Mailpit en `http://localhost:8025`.
 
 **Servidor propio.** `docs/DEPLOY.md` explica cómo levantar el backend en una VPS con
 `docker-compose.prod.yml` (perfil `prod`, HTTPS con Caddy y `/actuator/health` para el chequeo).
+`docs/DEPLOY_RENDER.md` es el plan (no aplicado) de un servidor de demostración en el plan gratuito
+de Render, con sus límites: sin correo saliente, arranque en frío lento y base que vence a los 30 días.
 
 **Aplicación (mobile/)**: requiere Flutter y un dispositivo o emulador Android (API 24+).
 
