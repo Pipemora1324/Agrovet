@@ -49,7 +49,7 @@ Límites:
 
 | Archivo | Para qué |
 |---|---|
-| [`render.yaml`](../render.yaml) | Blueprint: crea la base `agrovet-db` y el servicio `agrovet-api` (Docker, plan gratuito, región Virginia), con todas las variables. Sin secretos. |
+| [`render.yaml`](../render.yaml) | Blueprint: crea la base `agrovet-db` y el servicio `agrovet-api` (Docker, plan gratuito, región Virginia), con todas las variables. Sin secretos. Sin `rootDir`, así `dockerfilePath: ./backend/Dockerfile` y `dockerContext: ./backend` se cuentan desde la raíz del repositorio (con `rootDir: backend`, Render las cuenta desde `backend` y falla buscando `backend/backend`). |
 | `backend/Dockerfile` | Sin cambios: compila con el JDK 21 y corre con el JRE 21, con un usuario sin privilegios. |
 | `DatabaseUrlEnvironmentPostProcessor` (backend) | Si no hay `DB_URL` pero sí `DATABASE_URL` (formato de Render, `postgresql://usuario:clave@host:puerto/base`), arma la dirección JDBC y toma de ahí el usuario y la clave. Así Render enlaza la base sola. Con `DB_URL` definida (docker-compose, VPS) no cambia nada. |
 | [`backend/deploy/render/seed_demo.ps1`](../backend/deploy/render/seed_demo.ps1) + `seed_demo.sql` | Crea el usuario de demostración (verificado) y sus 6 vacas sintéticas. |
