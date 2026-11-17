@@ -3,10 +3,10 @@ name: mobile
 on:
   push:
     branches: [main, develop]
-    paths: ["mobile/**", "ml/models/**", "scripts/ci/**", ".github/workflows/mobile.yml"]
+    paths: ["mobile/**", "ml/models/**", "ml/tests/fixtures/milk/**", "scripts/ci/**", ".github/workflows/mobile.yml"]
   pull_request:
     branches: [main, develop]
-    paths: ["mobile/**", "ml/models/**", "scripts/ci/**", ".github/workflows/mobile.yml"]
+    paths: ["mobile/**", "ml/models/**", "ml/tests/fixtures/milk/**", "scripts/ci/**", ".github/workflows/mobile.yml"]
 
 permissions:
   contents: read
@@ -80,6 +80,35 @@ jobs:
             fi
           done
           exit $status
+
+      # El APK normal no lleva los modelos experimentales (solo se empaquetan con sus banderas)
+      - name: APK normal sin modelos experimentales
+        if: hashFiles('mobile/pubspec.yaml') != ''
+        run: |
+          apk=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          if unzip -l "$apk" | grep -E "milk_cnn|udder_cnn\.tflite"; then
+            echo "::error::El APK normal no debe incluir el modelo de leche ni el de la ubre"
+            exit 1
+          fi
+
+      # APK de demostración (DEMO_MODE + UDDER_TRIAGE): el que se reparte para mostrar la app sin
+      # servidor. Lleva los dos modelos experimentales y debe seguir bajo el mismo límite.
+      - name: APK de demostración (arm64)
+        if: hashFiles('mobile/pubspec.yaml') != ''
+        run: |
+          flutter build apk --release --split-per-abi --target-platform android-arm64 \
+            --dart-define=DEMO_MODE=true --dart-define=UDDER_TRIAGE=true
+          apk=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          for asset in milk_cnn.tflite milk_cnn_config.json udder_cnn.tflite; do
+            unzip -l "$apk" | grep -q "assets/model/$asset" || { echo "::error::Falta $asset en el APK de demostración"; exit 1; }
+          done
+          size=$(stat -c %s "$apk")
+          mb=$(awk "BEGIN { printf \"%.1f\", $size / 1048576 }")
+          echo "| demo arm64 (DEMO_MODE + UDDER_TRIAGE) | $mb |" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$size" -gt $((15 * 1024 * 1024)) ]; then
+            echo "::error::El APK de demostración pesa $mb MB y el límite es 15 MB"
+            exit 1
+          fi
 
       - name: Sin código aún
         if: hashFiles('mobile/pubspec.yaml') == ''
