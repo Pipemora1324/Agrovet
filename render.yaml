@@ -1,0 +1,58 @@
+# Blueprint de Render: servidor de DEMOSTRACIÓN en el plan gratuito (ver docs/DEPLOY_RENDER.md).
+# No es el servidor definitivo (ese es docs/DEPLOY.md). Ningún secreto va en este archivo:
+#   - DATABASE_URL la enlaza Render desde la base (dirección interna).
+#   - JWT_SECRET la genera Render al crear el servicio (256 bits al azar, base64).
+#   - GEMINI_API_KEY la pide Render al crear el Blueprint (sync: false).
+databases:
+  - name: agrovet-db
+    plan: free
+    # La misma región que la API: se conectan por la red interna
+    region: virginia
+    postgresMajorVersion: "15"
+    databaseName: agrovet
+    user: agrovet
+
+services:
+  - type: web
+    name: agrovet-api
+    runtime: docker
+    plan: free
+    region: virginia
+    # Rutas contadas desde la raíz del repositorio
+    rootDir: backend
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    # Se despliega a mano (Manual Deploy), nunca con cada commit
+    autoDeployTrigger: "off"
+    healthCheckPath: /actuator/health/readiness
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      # Spring escucha en 8080; Render enruta a este puerto
+      - key: PORT
+        value: "8080"
+      # Probado con --memory=512m --cpus=0.1: arranque 147 s (197 s sin esto) y 218 MiB
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k
+      # Sin disco persistente: las fotos se pierden cuando el servicio se duerme
+      - key: PHOTO_STORAGE_DIR
+        value: /app/data/photos
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agrovet-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      # El plan gratuito bloquea el SMTP (25, 465, 587). Estos valores NO son credenciales: solo
+      # dejan arrancar el perfil prod. El envío falla en segundo plano y las cuentas nuevas se
+      # verifican a mano (backend/deploy/render/verify_account.ps1).
+      - key: MAIL_HOST
+        value: localhost
+      - key: MAIL_USERNAME
+        value: sin-correo@agrovet.invalid
+      - key: MAIL_PASSWORD
+        value: no-aplica
+      - key: MAIL_FROM
+        value: AgroVet <sin-correo@agrovet.invalid>
+      - key: GEMINI_API_KEY
+        sync: false
