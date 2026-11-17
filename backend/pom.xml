@@ -13,7 +13,7 @@
 
     <groupId>co.edu.ucc</groupId>
     <artifactId>agrovet-backend</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <name>agrovet-backend</name>
     <description>API de AgroVet: usuarios, vacas, registros diarios y sincronización</description>
 
