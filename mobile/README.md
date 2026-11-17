@@ -48,6 +48,12 @@ cuenta o ingresar no funcionan todavía. El APK para uso real se compila **sin**
 - El asistente necesita el servidor: sin él lo dice ("El asistente necesita conexión al servidor") y
   muestra los consejos fijos, en vez de intentar la consulta.
 
+**"Acerca del modelo"** (Perfil, en cualquier compilación, y una tarjeta en la lista de vacas de la
+demostración) explica el LSTM (ventana de 14 días, variables, entrenado con datos sintéticos, F1 0,49
+y AUC 0,89 en la prueba sintética frente a las líneas base) y las dos CNN experimentales, con el aviso
+"No es diagnóstico, no validado con datos reales." Los textos están en `lib/domain/model_facts.dart`;
+`test/domain/model_facts_test.dart` falla si alguna cifra no aparece tal cual en `ml/README.md`.
+
 Las vacas, registros y fotos que se agregan en la demostración quedan en la base cifrada del
 celular: siguen ahí al cerrar la app y volver a "Entrar a la demostración" (prueba en
 `test/presentation/session_scope_test.dart` y en el emulador). Se pierden solo si se desinstala la app

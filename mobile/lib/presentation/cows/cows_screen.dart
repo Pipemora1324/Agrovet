@@ -11,6 +11,7 @@ import '../../core/theme.dart';
 import '../../domain/entities.dart';
 import '../../domain/repositories.dart';
 import '../../domain/session.dart';
+import '../about/about_model_screen.dart';
 import '../milk/milk_check_screen.dart';
 import '../records/daily_record_screen.dart';
 import '../sync/sync_cubit.dart';
@@ -42,7 +43,8 @@ class _CowsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showMilk = milkExperiment && (context.read<Session?>()?.isDemo ?? false);
+    final isDemo = context.read<Session?>()?.isDemo ?? false;
+    final showMilk = milkExperiment && isDemo;
     return AppScaffold(
       title: 'Mis vacas',
       floatingActionButton: FloatingActionButton.extended(
@@ -84,6 +86,10 @@ class _CowsView extends StatelessWidget {
                         if (showMilk) ...[
                           const SizedBox(height: 12),
                           const FadeIn(index: 2, child: _MilkExperimentCard()),
+                        ],
+                        if (isDemo) ...[
+                          const SizedBox(height: 12),
+                          const FadeIn(index: 2, child: _AboutModelCard()),
                         ],
                         const SizedBox(height: 16),
                         for (var r = 0; r < rows.length; r++)
@@ -140,6 +146,27 @@ class _MilkExperimentCard extends StatelessWidget {
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute<void>(builder: (_) => const MilkCheckScreen()),
+          ),
+        ),
+      );
+}
+
+/// Entrada a "Acerca del modelo" en la demostración (también está en Perfil).
+class _AboutModelCard extends StatelessWidget {
+  const _AboutModelCard();
+
+  @override
+  Widget build(BuildContext context) => Card(
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: const Icon(Icons.info_outline, size: AppSizes.icon, color: AppColors.primary),
+          title: const Text(AboutModelScreen.title),
+          subtitle: const Text('Cómo se calcula el semáforo. No es diagnóstico.'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute<void>(builder: (_) => const AboutModelScreen()),
           ),
         ),
       );

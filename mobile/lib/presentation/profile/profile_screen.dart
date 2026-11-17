@@ -8,6 +8,7 @@ import '../../data/local/local_data_wiper.dart';
 import '../../data/remote/profile_api.dart';
 import '../../domain/privacy_notice.dart';
 import '../../domain/session.dart';
+import '../about/about_model_screen.dart';
 import '../auth/auth_cubit.dart';
 import '../auth/password_field.dart';
 import '../widgets/app_scaffold.dart';
@@ -245,6 +246,15 @@ class _ProfileViewState extends State<_ProfileView> {
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => Navigator.push(
                             context, MaterialPageRoute<void>(builder: (_) => const PrivacyNoticeScreen())),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.info_outline),
+                        title: const Text(AboutModelScreen.title),
+                        subtitle: const Text('Cómo se calcula el semáforo y sus límites'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.push(
+                            context, MaterialPageRoute<void>(builder: (_) => const AboutModelScreen())),
                       ),
                     ],
                   ),

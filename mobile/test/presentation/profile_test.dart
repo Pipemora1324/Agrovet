@@ -204,6 +204,20 @@ void main() {
       expect(find.text('Eliminar mi cuenta'), findsOneWidget);
     });
 
+    testWidgets('desde el perfil se abre "Acerca del modelo"', (tester) async {
+      when(() => profileApi.fetch()).thenThrow(const ApiException('Sin conexión'));
+      await auth.updateSession(const Session(
+          userId: 'u1', name: 'Ana', email: 'ana@correo.co', accessToken: 'a1', refreshToken: 'r1'));
+      await tester.pumpWidget(app(const ProfileScreen()));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Acerca del modelo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Acerca del modelo'));
+      await tester.pumpAndSettle();
+      expect(find.text('No es diagnóstico, no validado con datos reales.'), findsWidgets);
+      expect(find.text('Semáforo de riesgo (LSTM)'), findsOneWidget);
+    });
+
     testWidgets('eliminar la cuenta pide la contraseña antes de borrar', (tester) async {
       when(() => profileApi.fetch()).thenAnswer((_) async => _session);
       when(() => profileApi.deleteAccount('clave-segura-1')).thenAnswer((_) async {});
