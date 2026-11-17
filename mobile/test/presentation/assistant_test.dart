@@ -14,6 +14,7 @@ import 'package:agrovet/domain/entities.dart';
 import 'package:agrovet/domain/repositories.dart';
 import 'package:agrovet/presentation/assistant/assistant_cubit.dart';
 import 'package:agrovet/presentation/assistant/assistant_screen.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -97,7 +98,8 @@ void main() {
 
   var tick = 0;
 
-  AssistantCubit cubit({bool online = true, bool server = true}) => AssistantCubit(
+  AssistantCubit cubit({bool online = true, bool server = true, Future<bool> Function()? isOnline}) =>
+      AssistantCubit(
         cowId: 'c1',
         api: api,
         messages: repo,
@@ -107,6 +109,7 @@ void main() {
         connectivity: network.stream,
         initiallyOnline: online,
         serverAvailable: server,
+        isOnline: isOnline,
         // Cada mensaje un segundo después del anterior, para que el orden sea claro
         clock: () => now.add(Duration(seconds: tick++)),
       );
@@ -162,13 +165,82 @@ void main() {
     answer('ok');
     final chat = cubit(online: false);
     expect(await chat.send('Hola'), isFalse);
-    expect(chat.state.error, contains('Sin internet'));
+    expect(chat.state.error, AssistantCubit.offlineMessage);
+    expect(chat.state.showTips, isTrue);
     verifyNever(() => api.ask(question: any(named: 'question')));
     expect(await repo.watchMessages('c1').first, isEmpty);
 
     network.add(true);
     await Future<void>.delayed(Duration.zero);
     expect(await chat.send('Hola'), isTrue);
+    expect(chat.state.showTips, isFalse);
+    await chat.close();
+  });
+
+  void failWith(Object error) => when(() => api.ask(
+        question: any(named: 'question'),
+        context: any(named: 'context'),
+        history: any(named: 'history'),
+        photoJpeg: any(named: 'photoJpeg'),
+      )).thenThrow(error);
+
+  test('el aviso de red llegó tarde pero el sistema dice que no hay red: no consulta', () async {
+    answer('ok');
+    // Tablet con el wifi recién apagado: el último aviso todavía decía "con red"
+    final chat = cubit(isOnline: () async => false);
+    expect(await chat.send('¿Qué reviso?'), isFalse);
+    expect(chat.state.error, AssistantCubit.offlineMessage);
+    expect(chat.state.showTips, isTrue);
+    verifyNever(() => api.ask(question: any(named: 'question')));
+    await chat.close();
+  });
+
+  test('se va la señal mientras pregunta: dice "Sin conexión" y muestra los consejos fijos', () async {
+    var online = true;
+    when(() => api.ask(
+          question: any(named: 'question'),
+          context: any(named: 'context'),
+          history: any(named: 'history'),
+          photoJpeg: any(named: 'photoJpeg'),
+        )).thenAnswer((_) async {
+      online = false;
+      throw ApiClient.describe(DioException(
+          requestOptions: RequestOptions(path: '/api/assistant/chat'), type: DioExceptionType.connectionError));
+    });
+    final chat = cubit(isOnline: () async => online);
+    expect(await chat.send('¿Qué reviso?'), isTrue);
+    expect(chat.state.error, AssistantCubit.offlineMessage);
+    expect(chat.state.error, isNot(contains('servidor tuvo un problema')));
+    expect(chat.state.showTips, isTrue);
+    expect(chat.state.sending, isFalse);
+    await chat.close();
+  });
+
+  test('con red pero el servidor no contesta (dormido o caído): lo distingue de la falta de internet', () async {
+    for (final error in [
+      ApiClient.timedOut,
+      ApiClient.describe(DioException(
+          requestOptions: RequestOptions(path: '/x'), type: DioExceptionType.connectionError)),
+      ApiClient.describe(DioException(
+        requestOptions: RequestOptions(path: '/x'),
+        response: Response(requestOptions: RequestOptions(path: '/x'), statusCode: 502, data: '<html>'),
+      )),
+    ]) {
+      failWith(error);
+      final chat = cubit(isOnline: () async => true);
+      await chat.send('¿Qué reviso?');
+      expect(chat.state.error, AssistantCubit.unreachableMessage);
+      expect(chat.state.showTips, isTrue);
+      await chat.close();
+    }
+  });
+
+  test('si el servidor contesta con un motivo, se muestra ese motivo sin los consejos', () async {
+    failWith(const ApiException('Hizo muchas preguntas seguidas. Espere un momento.', statusCode: 429));
+    final chat = cubit(isOnline: () async => true);
+    await chat.send('¿Qué reviso?');
+    expect(chat.state.error, 'Hizo muchas preguntas seguidas. Espere un momento.');
+    expect(chat.state.showTips, isFalse);
     await chat.close();
   });
 
@@ -261,6 +333,23 @@ void main() {
       expect(find.text('Higiene del ordeño'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
+    });
+
+    testWidgets('con el aviso de red atrasado, al enviar sin red muestra el mensaje y los consejos',
+        (tester) async {
+      // El último aviso decía "con red", pero el sistema ya no tiene red
+      final status = OnlineStatus(network.stream, initial: true, check: () async => false);
+      addTearDown(status.dispose);
+      await tester.pumpWidget(app(status));
+      await tester.pumpAndSettle();
+      expect(find.text('Higiene del ordeño'), findsNothing);
+
+      await tester.enterText(find.byType(TextField), '¿Qué reviso?');
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pumpAndSettle();
+      expect(find.text(AssistantCubit.offlineMessage), findsOneWidget);
+      expect(find.text('Higiene del ordeño'), findsOneWidget);
+      expect(find.textContaining('servidor tuvo un problema'), findsNothing);
     });
   });
 }

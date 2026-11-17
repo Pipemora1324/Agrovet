@@ -20,7 +20,11 @@ class DailyRecordState extends Equatable {
     this.saving = false,
     this.saved = false,
     this.milking = true,
+    this.saveError,
   });
+
+  /// Por qué no se pudo guardar (el botón deja de cargar y se muestra este aviso).
+  final String? saveError;
 
   final DateTime date;
   final bool loading;
@@ -64,6 +68,7 @@ class DailyRecordState extends Equatable {
     RecordBaselines? baselines,
     bool? saving,
     bool? saved,
+    String? saveError,
   }) =>
       DailyRecordState(
         date: date,
@@ -75,10 +80,12 @@ class DailyRecordState extends Equatable {
         saving: saving ?? this.saving,
         saved: saved ?? this.saved,
         milking: milking,
+        saveError: saveError,
       );
 
   @override
-  List<Object?> get props => [date, loading, existing, step, answers, baselines, saving, saved, milking];
+  List<Object?> get props =>
+      [date, loading, existing, step, answers, baselines, saving, saved, milking, saveError];
 }
 
 /// Registro de hoy como asistente por preguntas: una pregunta por pantalla, todas opcionales ("No
@@ -146,20 +153,29 @@ class DailyRecordCubit extends Cubit<DailyRecordState> {
     if (state.saving) return;
     emit(state.copyWith(saving: true));
     final estimate = state.estimate;
-    await _repository.saveRecord(DailyRecord(
-      id: state.existing?.id ?? _uuid.v4(),
-      cowId: cowId,
-      recordDate: state.date,
-      temperatureC: estimate.temperature?.value,
-      milkL: estimate.milk?.value,
-      feedKg: estimate.feed?.value,
-      temperatureSource: estimate.temperature?.source,
-      milkSource: estimate.milk?.source,
-      feedSource: estimate.feed?.source,
-      symptoms: state.answers.toSymptoms(),
-      notes: notes == null || notes.trim().isEmpty ? null : notes.trim(),
-      updatedAt: DateTime.now(),
-    ));
+    // Solo la base local cifrada: nunca espera al servidor. Si algo falla, se avisa en vez de
+    // dejar el botón cargando.
+    try {
+      await _saveLocally(estimate, notes);
+    } catch (_) {
+      emit(state.copyWith(saving: false, saveError: localSaveFailedMessage));
+      return;
+    }
     emit(state.copyWith(saving: false, saved: true));
   }
+
+  Future<void> _saveLocally(RecordEstimate estimate, String? notes) => _repository.saveRecord(DailyRecord(
+        id: state.existing?.id ?? _uuid.v4(),
+        cowId: cowId,
+        recordDate: state.date,
+        temperatureC: estimate.temperature?.value,
+        milkL: estimate.milk?.value,
+        feedKg: estimate.feed?.value,
+        temperatureSource: estimate.temperature?.source,
+        milkSource: estimate.milk?.source,
+        feedSource: estimate.feed?.source,
+        symptoms: state.answers.toSymptoms(),
+        notes: notes == null || notes.trim().isEmpty ? null : notes.trim(),
+        updatedAt: DateTime.now(),
+      ));
 }

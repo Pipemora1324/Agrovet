@@ -10,16 +10,25 @@
       servidor (respaldo si Render está dormido, vencido o caído).
     - UDDER_TRIAGE=true: triaje visual experimental de la ubre, como el APK de demostración actual.
   Con -AlsoWithoutServer compila además el APK solo de demostración (sin API_BASE_URL).
+  -BuildName y -BuildNumber cambian la versión solo de este APK (sin tocar pubspec.yaml), para
+  instalarlo encima de uno anterior: Android exige un código de versión mayor. Con --split-per-abi el
+  código del APK arm64 es 2000 + BuildNumber.
   Revisa que cada APK pese a lo sumo 15 MB, el mismo límite del CI.
 
 .EXAMPLE
   .\tool\build_demo_apk.ps1 -ApiBaseUrl https://agrovet-api.onrender.com -AlsoWithoutServer
+
+.EXAMPLE
+  .\tool\build_demo_apk.ps1 -ApiBaseUrl https://agrovet-api.onrender.com -BuildName 0.2.2 -BuildNumber 4
 #>
 param(
     [Parameter(Mandatory = $true)][string]$ApiBaseUrl,
     [switch]$AlsoWithoutServer,
     # Por defecto mobile\build\demo-apk
-    [string]$OutDir
+    [string]$OutDir,
+    # Por defecto, los de pubspec.yaml
+    [string]$BuildName,
+    [int]$BuildNumber
 )
 
 $ErrorActionPreference = 'Stop'
@@ -41,6 +50,8 @@ New-Item -ItemType Directory -Force $OutDir | Out-Null
 function Build-Apk([string[]]$defines, [string]$name) {
     $buildArgs = @('build', 'apk', '--release', '--split-per-abi', '--target-platform', 'android-arm64') +
             ($defines | ForEach-Object { "--dart-define=$_" })
+    if ($BuildName) { $buildArgs += @('--build-name', $BuildName) }
+    if ($BuildNumber -gt 0) { $buildArgs += @('--build-number', "$BuildNumber") }
     Push-Location $mobile
     try {
         & $flutter @buildArgs

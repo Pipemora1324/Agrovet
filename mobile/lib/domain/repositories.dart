@@ -2,6 +2,10 @@ import 'package:equatable/equatable.dart';
 
 import 'entities.dart';
 
+/// Aviso cuando falla un guardado en la base local (por ejemplo, la sesión se cerró con la pantalla
+/// abierta). Guardar nunca depende del servidor.
+const localSaveFailedMessage = 'No se pudo guardar en el celular. Cierre esta pantalla e intente de nuevo.';
+
 /// Vaca con su último resultado del semáforo, para la lista principal.
 class CowSummary extends Equatable {
   const CowSummary({required this.cow, this.lastRisk, this.lastRecordDate});

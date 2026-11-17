@@ -20,9 +20,13 @@ class AssistantState extends Equatable {
     this.sending = false,
     this.photo,
     this.error,
+    this.showTips = false,
   });
 
   final bool online;
+
+  /// La última pregunta no llegó (sin conexión o servidor caído): se muestran los consejos fijos.
+  final bool showTips;
 
   /// false en el APK de demostración sin dirección del servidor: el asistente no existe sin él.
   final bool serverAvailable;
@@ -35,17 +39,24 @@ class AssistantState extends Equatable {
   final Uint8List? photo;
   final String? error;
 
-  AssistantState copyWith({bool? online, bool? sending, Uint8List? Function()? photo, String? error}) =>
+  AssistantState copyWith({
+    bool? online,
+    bool? sending,
+    Uint8List? Function()? photo,
+    String? error,
+    bool? showTips,
+  }) =>
       AssistantState(
         online: online ?? this.online,
         serverAvailable: serverAvailable,
         sending: sending ?? this.sending,
         photo: photo == null ? this.photo : photo(),
         error: error,
+        showTips: showTips ?? this.showTips,
       );
 
   @override
-  List<Object?> get props => [online, serverAvailable, sending, photo, error];
+  List<Object?> get props => [online, serverAvailable, sending, photo, error, showTips];
 }
 
 /// Conversación con el asistente sobre una vaca. Los mensajes se guardan en la base local; la lista
@@ -61,6 +72,7 @@ class AssistantCubit extends Cubit<AssistantState> {
     required Stream<bool> connectivity,
     bool initiallyOnline = true,
     bool serverAvailable = true,
+    this._isOnline,
     DateTime Function()? clock,
     Uuid? uuid,
   })  : _now = clock ?? DateTime.now,
@@ -79,8 +91,18 @@ class AssistantCubit extends Cubit<AssistantState> {
   final Uuid _uuid;
   late final StreamSubscription<bool> _connection;
 
+  /// Pregunta al sistema si hay red justo antes de enviar (el aviso de cambios puede llegar tarde).
+  final Future<bool> Function()? _isOnline;
+
   static const noServerMessage = 'El asistente necesita conexión al servidor. Esta versión de demostración '
       'no tiene servidor, así que no puede responder. Abajo hay consejos básicos.';
+
+  static const offlineMessage =
+      'Sin conexión: el asistente necesita internet. Mientras tanto, estos son los consejos fijos.';
+
+  static const unreachableMessage = 'No pudimos comunicarnos con el servidor del asistente (puede ser la '
+      'señal o que el servidor esté despertando). Intente de nuevo en un minuto. Mientras tanto, estos son '
+      'los consejos fijos.';
 
   /// Mensajes anteriores que se envían para dar continuidad.
   static const historyTurns = 6;
@@ -111,8 +133,9 @@ class AssistantCubit extends Cubit<AssistantState> {
       emit(state.copyWith(error: noServerMessage));
       return false;
     }
-    if (!state.online) {
-      emit(state.copyWith(error: 'Sin internet no se puede consultar al asistente. Vea los consejos de abajo.'));
+    final isOnline = _isOnline;
+    if (!state.online || (isOnline != null && !await isOnline())) {
+      emit(state.copyWith(error: offlineMessage, showTips: true));
       return false;
     }
     final photo = state.photo;
@@ -130,9 +153,21 @@ class AssistantCubit extends Cubit<AssistantState> {
       final answer = await api.ask(question: text, context: await _context(), history: history, photoJpeg: photo);
       await messages.saveMessage(
           AssistantMessage(id: _uuid.v4(), cowId: cowId, fromUser: false, text: answer, createdAt: _now()));
-      emit(state.copyWith(sending: false));
+      emit(state.copyWith(sending: false, showTips: false));
     } on ApiException catch (e) {
-      emit(state.copyWith(sending: false, error: e.message, photo: () => photo));
+      if (e.unreachable) {
+        // La pregunta no llegó: puede ser que se fue la señal mientras se enviaba
+        final offline = isOnline != null && !await isOnline();
+        emit(state.copyWith(
+          sending: false,
+          error: offline ? offlineMessage : unreachableMessage,
+          photo: () => photo,
+          showTips: true,
+        ));
+      } else {
+        // El servidor respondió con un motivo (límite de preguntas, asistente no configurado…)
+        emit(state.copyWith(sending: false, error: e.message, photo: () => photo));
+      }
     }
     return true;
   }

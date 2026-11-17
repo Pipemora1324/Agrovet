@@ -43,6 +43,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    // Sin el teclado abierto se ve el aviso de error que aparece debajo del formulario
+    FocusScope.of(context).unfocus();
     final auth = context.read<AuthCubit>();
     if (_registering) {
       auth.register(

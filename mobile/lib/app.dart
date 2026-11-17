@@ -17,10 +17,13 @@ import 'presentation/session_scope.dart';
 import 'presentation/widgets/loading_view.dart';
 
 class AgroVetApp extends StatefulWidget {
-  const AgroVetApp({super.key, required this.store, required this.apiClient, this.predictor});
+  const AgroVetApp({super.key, required this.store, required this.apiClient, this.predictor, this.isOnline});
 
   final SecureStore store;
   final ApiClient apiClient;
+
+  /// Si el sistema dice que hay internet; el ingreso sin conexión avisa sin llamar al servidor.
+  final Future<bool> Function()? isOnline;
 
   /// Permite inyectar un modelo falso en las pruebas de interfaz.
   final Future<RiskPredictor>? predictor;
@@ -30,7 +33,8 @@ class AgroVetApp extends StatefulWidget {
 }
 
 class _AgroVetAppState extends State<AgroVetApp> {
-  late final AuthCubit _auth = AuthCubit(store: widget.store, api: AuthApi(widget.apiClient))..restore();
+  late final AuthCubit _auth =
+      AuthCubit(store: widget.store, api: AuthApi(widget.apiClient), isOnline: widget.isOnline)..restore();
 
   /// El modelo se carga una sola vez y se comparte entre sesiones.
   late final Future<RiskPredictor> _predictor = widget.predictor ?? RiskModel.load();

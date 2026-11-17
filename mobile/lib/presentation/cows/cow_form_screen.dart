@@ -58,15 +58,22 @@ class _CowFormScreenState extends State<CowFormScreen> {
       _saving = true;
       _error = null;
     });
-    final error = await CowEditor(context.read<CowRepository>()).save(
-      existing: widget.cow,
-      tag: _tag.text,
-      name: _name.text,
-      breed: _breed.text,
-      birthDate: _birthDate,
-      calvings: int.tryParse(_calvings.text.trim()),
-      status: _status,
-    );
+    // Se guarda solo en la base local cifrada (nunca espera al servidor). Si aun así algo falla,
+    // se avisa en vez de dejar el botón cargando.
+    String? error;
+    try {
+      error = await CowEditor(context.read<CowRepository>()).save(
+        existing: widget.cow,
+        tag: _tag.text,
+        name: _name.text,
+        breed: _breed.text,
+        birthDate: _birthDate,
+        calvings: int.tryParse(_calvings.text.trim()),
+        status: _status,
+      );
+    } catch (_) {
+      error = CowEditor.saveFailed;
+    }
     if (!mounted) return;
     if (error != null) {
       setState(() {

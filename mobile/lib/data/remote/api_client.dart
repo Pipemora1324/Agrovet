@@ -7,10 +7,14 @@ import '../security/secure_store.dart';
 
 /// Error de la API con un mensaje listo para mostrar al ganadero.
 class ApiException implements Exception {
-  const ApiException(this.message, {this.statusCode, this.code, this.retryAfter});
+  const ApiException(this.message, {this.statusCode, this.code, this.retryAfter, this.unreachable = false});
 
   final String message;
   final int? statusCode;
+
+  /// La API de AgroVet no llegó a contestar: sin red, tiempo agotado o un 502/503/504 del proxy
+  /// (servidor apagado, despertando o reiniciando).
+  final bool unreachable;
 
   /// Código de error del servidor (por ejemplo, EMAIL_NOT_VERIFIED).
   final String? code;
@@ -115,28 +119,57 @@ class ApiClient {
     }();
   }
 
+  /// Sin internet en el celular (lo dice el sistema antes de intentar la llamada).
+  static const noInternet = ApiException(
+    'Sin conexión a internet. Sus datos siguen guardados en el celular.',
+    unreachable: true,
+  );
+
+  /// El servidor no respondió a tiempo (por ejemplo, el plan gratuito lo duerme y tarda en despertar).
+  static const timedOut = ApiException(
+    'El servidor tardó demasiado en responder. Si estuvo inactivo puede tardar cerca de un minuto en '
+    'despertar: intente de nuevo. Sus datos siguen guardados en el celular.',
+    unreachable: true,
+  );
+
   /// Traduce un error de red o del servidor a un mensaje en español.
   static ApiException describe(Object error) {
     if (error is ApiException) return error;
+    if (error is TimeoutException) return timedOut;
     if (error is! DioException) return const ApiException('Ocurrió un error inesperado.');
     final response = error.response;
     if (response == null) {
+      if (_isTimeout(error.type)) return timedOut;
       // Sin respuesta puede faltar la señal o estar caído el servidor; la app no sabe cuál de los dos
       return const ApiException(
         'No pudimos comunicarnos con el servidor de AgroVet. Puede ser la señal o que el servidor no '
         'esté disponible. Intente de nuevo en unos minutos; sus datos siguen guardados en el celular.',
+        unreachable: true,
       );
     }
     final data = response.data;
     final code = data is Map && data['code'] is String ? data['code'] as String : null;
     final retrySeconds = int.tryParse(response.headers.value('retry-after') ?? '');
     final retryAfter = retrySeconds == null ? null : Duration(seconds: retrySeconds);
-    ApiException build(String message) =>
-        ApiException(message, statusCode: response.statusCode, code: code, retryAfter: retryAfter);
+    ApiException build(String message, {bool unreachable = false}) => ApiException(message,
+        statusCode: response.statusCode, code: code, retryAfter: retryAfter, unreachable: unreachable);
     if (data is Map && data['errors'] is Map && (data['errors'] as Map).isNotEmpty) {
       return build((data['errors'] as Map).values.first.toString());
     }
     if (data is Map && data['detail'] is String) return build(data['detail'] as String);
+    final status = response.statusCode ?? 0;
+    if (status == 502 || status == 503 || status == 504) {
+      // Respuesta del proxy (sin cuerpo de la API): el servidor está apagado, despertando o reiniciando
+      return build(
+          'El servidor no está disponible en este momento. Intente de nuevo en un minuto; '
+          'sus datos siguen guardados en el celular.',
+          unreachable: true);
+    }
     return build('El servidor tuvo un problema y no pudo atender la solicitud. Intente más tarde.');
   }
+
+  static bool _isTimeout(DioExceptionType type) =>
+      type == DioExceptionType.connectionTimeout ||
+      type == DioExceptionType.receiveTimeout ||
+      type == DioExceptionType.sendTimeout;
 }

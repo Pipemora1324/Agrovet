@@ -2,8 +2,10 @@ import 'package:agrovet/data/local/app_database.dart';
 import 'package:agrovet/data/local/local_repository.dart';
 import 'package:agrovet/domain/entities.dart';
 import 'package:agrovet/domain/record_estimates.dart';
+import 'package:agrovet/domain/repositories.dart';
 import 'package:agrovet/domain/risk_evaluator.dart';
 import 'package:agrovet/domain/symptom_score.dart';
+import 'package:agrovet/presentation/cows/cows_cubit.dart';
 import 'package:agrovet/presentation/records/daily_record_cubit.dart';
 import 'package:agrovet/presentation/risk/risk_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -267,5 +269,36 @@ void main() {
     expect(assessment.score, 6);
     expect(assessment.level, RiskLevel.red);
     await cubit.close();
+  });
+
+  group('guardar sin conexión', () {
+    // El repositorio solo toca la base local cifrada: sin servidor, guardar no espera nada de la red
+    test('una vaca nueva de una cuenta real queda guardada y pendiente de sincronizar', () async {
+      final error = await CowEditor(repo).save(tag: 'OFF-01', status: ProductionStatus.lactating);
+      expect(error, isNull);
+      final row = await (db.select(db.cows)..where((c) => c.tag.equals('OFF-01'))).getSingle();
+      expect(row.syncPending, isTrue);
+      expect(row.isDemo, isFalse);
+    });
+
+    test('el registro del día queda guardado y pendiente de sincronizar', () async {
+      final cubit = await answerAll(FeedAnswer.normal, MilkAnswer.same, BodyAnswer.normal, UdderAnswer.normal);
+      await cubit.save();
+      expect(cubit.state.saved, isTrue);
+      expect(cubit.state.saving, isFalse);
+      expect((await db.select(db.dailyRecords).getSingle()).syncPending, isTrue);
+      await cubit.close();
+    });
+
+    test('si la base local falla (sesión cerrada con la pantalla abierta), avisa y deja de cargar', () async {
+      final cubit = await answerAll(FeedAnswer.normal, MilkAnswer.same, BodyAnswer.normal, UdderAnswer.normal);
+      await db.close();
+      await cubit.save();
+      expect(cubit.state.saving, isFalse);
+      expect(cubit.state.saved, isFalse);
+      expect(cubit.state.saveError, localSaveFailedMessage);
+      await cubit.close();
+      db = memoryDatabase(); // para el tearDown
+    });
   });
 }
