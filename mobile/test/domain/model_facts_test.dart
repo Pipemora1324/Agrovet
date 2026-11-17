@@ -17,9 +17,15 @@ void main() {
     final number = RegExp(r'(?<![\w,])\d+(?:,\d+)?(?![\w])');
     final numbers = {for (final text in allText) ...number.allMatches(text).map((m) => m.group(0)!)};
     expect(numbers, isNotEmpty);
+    bool inReadme(String n) => RegExp(r'(?<![\d,])' + RegExp.escape(n) + r'(?![\d])').hasMatch(readme);
+    // La comprobación distingue: 0,49 está, 0,4 solo como parte de otras cifras no cuenta, y una
+    // cifra inventada no está
+    expect(inReadme('0,49'), isTrue);
+    expect(inReadme('0,4'), isFalse);
+    expect(inReadme('0,777'), isFalse);
     final missing = [
       for (final n in numbers)
-        if (!RegExp('(?<![\d,])${RegExp.escape(n)}(?![\d])').hasMatch(readme)) n,
+        if (!inReadme(n)) n,
     ];
     expect(missing, isEmpty, reason: 'Cifras que no están en ml/README.md: $missing');
   });

@@ -65,9 +65,10 @@ class AboutModelScreen extends StatelessWidget {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Expanded(child: Text(fact.label, style: theme.textTheme.bodyLarge)),
+                                    Expanded(flex: 3, child: Text(fact.label, style: theme.textTheme.bodyLarge)),
                                     const SizedBox(width: 12),
-                                    Flexible(
+                                    Expanded(
+                                      flex: 2,
                                       child: Text(
                                         fact.value,
                                         textAlign: TextAlign.end,

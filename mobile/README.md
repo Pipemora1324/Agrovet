@@ -59,7 +59,7 @@ celular: siguen ahí al cerrar la app y volver a "Entrar a la demostración" (pr
 `test/presentation/session_scope_test.dart` y en el emulador). Se pierden solo si se desinstala la app
 o se borran sus datos.
 
-APK de demostración arm64 con las dos banderas: 15 422 529 bytes (14,71 MiB) de un límite de 15 MiB;
+APK de demostración arm64 con las dos banderas: 15 429 781 bytes (14,71 MiB) de un límite de 15 MiB;
 el CI lo compila y falla si pasa del límite o si le falta un modelo.
 
 Para ingresar con una cuenta real, el backend debe estar corriendo (`backend/`, `docker compose up`).
