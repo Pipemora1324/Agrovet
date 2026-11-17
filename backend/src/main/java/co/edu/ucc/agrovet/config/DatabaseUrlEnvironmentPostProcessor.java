@@ -65,18 +65,23 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
 
         Map<String, Object> properties = new HashMap<>();
         properties.put("spring.datasource.url", jdbcUrl);
-        String userInfo = uri.getRawUserInfo();
-        if (userInfo != null) {
-            int colon = userInfo.indexOf(':');
-            String user = colon >= 0 ? userInfo.substring(0, colon) : userInfo;
-            if (!hasUsername && !user.isEmpty()) {
-                properties.put("spring.datasource.username", decode(user));
-            }
-            if (!hasPassword && colon >= 0) {
-                properties.put("spring.datasource.password", decode(userInfo.substring(colon + 1)));
-            }
+        if (uri.getRawUserInfo() != null) {
+            addCredentials(properties, uri.getRawUserInfo(), hasUsername, hasPassword);
         }
         return properties;
+    }
+
+    /** Usuario y clave de "usuario:clave", solo los que no vengan ya en DB_USERNAME y DB_PASSWORD. */
+    private static void addCredentials(Map<String, Object> properties, String userInfo, boolean hasUsername,
+            boolean hasPassword) {
+        int colon = userInfo.indexOf(':');
+        String user = colon >= 0 ? userInfo.substring(0, colon) : userInfo;
+        if (!hasUsername && !user.isEmpty()) {
+            properties.put("spring.datasource.username", decode(user));
+        }
+        if (!hasPassword && colon >= 0) {
+            properties.put("spring.datasource.password", decode(userInfo.substring(colon + 1)));
+        }
     }
 
     private static String decode(String value) {
