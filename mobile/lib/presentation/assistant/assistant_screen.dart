@@ -42,6 +42,7 @@ class AssistantScreen extends StatelessWidget {
         connectivity: status.changes,
         initiallyOnline: status.online,
         serverAvailable: serverAvailable,
+        isOnline: status.checkNow,
       ),
       child: _AssistantView(cow: cow),
     );
@@ -177,7 +178,7 @@ class _AssistantViewState extends State<_AssistantView> {
                               const SizedBox(height: 8),
                               NoticeBox.error(state.error!),
                             ],
-                            if (!state.canAsk) ...[
+                            if (!state.canAsk || state.showTips) ...[
                               const SizedBox(height: 12),
                               const _OfflineTips(),
                             ],
