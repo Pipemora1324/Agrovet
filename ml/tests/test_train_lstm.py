@@ -18,7 +18,10 @@ def test_split_has_no_cow_leakage_and_is_stratified():
 
 def test_split_is_reproducible():
     df = generate(DatasetParams(n_cows=100))
-    assert split_cows(df) == split_cows(df)
+    # Dos llamadas independientes deben dar la misma partición (semilla fija)
+    first = split_cows(df)
+    second = split_cows(df)
+    assert first == second
 
 
 def test_model_architecture():
