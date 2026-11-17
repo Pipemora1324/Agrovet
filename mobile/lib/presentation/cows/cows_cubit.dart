@@ -39,6 +39,8 @@ class CowEditor {
   final CowRepository _repository;
   final Uuid _uuid;
 
+  static const saveFailed = localSaveFailedMessage;
+
   Future<String?> save({
     Cow? existing,
     required String tag,

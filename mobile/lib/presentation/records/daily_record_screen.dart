@@ -13,6 +13,7 @@ import '../widgets/app_scaffold.dart';
 import '../widgets/big_button.dart';
 import '../widgets/fade_in.dart';
 import '../widgets/motion.dart';
+import '../widgets/notice_box.dart';
 import 'daily_record_cubit.dart';
 
 /// Registro del día como asistente por preguntas: una pregunta por pantalla, todas opcionales.
@@ -529,6 +530,10 @@ class _SummaryState extends State<_Summary> {
             ],
           ),
         ),
+        if (state.saveError != null) ...[
+          const SizedBox(height: 12),
+          NoticeBox.error(state.saveError!),
+        ],
         const SizedBox(height: 16),
         BigButton(icon: Icons.save, label: 'Guardar registro', busy: state.saving, onPressed: _save),
       ],
