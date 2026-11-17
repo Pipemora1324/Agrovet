@@ -83,7 +83,7 @@ public class CowService {
     public HistoryResponse history(UUID ownerId, UUID cowId, LocalDate from, LocalDate to) {
         Cow cow = findOwned(ownerId, cowId);
         LocalDate end = to != null ? to : LocalDate.now(clock);
-        LocalDate start = from != null ? from : end.minusDays(DEFAULT_HISTORY_DAYS - 1);
+        LocalDate start = from != null ? from : end.minusDays(DEFAULT_HISTORY_DAYS - 1L);
         if (start.isAfter(end)) {
             throw new BadRequestException("La fecha inicial no puede ser posterior a la final.");
         }

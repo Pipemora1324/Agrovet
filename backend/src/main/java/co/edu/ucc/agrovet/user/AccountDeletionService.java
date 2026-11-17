@@ -25,10 +25,15 @@ public class AccountDeletionService {
 
     private static final Logger log = LoggerFactory.getLogger(AccountDeletionService.class);
 
-    private static final String OWNED_COWS = "SELECT id FROM cows WHERE owner_id = ?";
-
-    /** Tablas que cuelgan de las vacas, de la más dependiente a la menos. */
-    private static final String[] COW_CHILDREN = { "alerts", "inferences", "daily_records", "cow_photos" };
+    /**
+     * Borrado de lo que cuelga de las vacas, de lo más dependiente a lo menos. Cada sentencia está
+     * escrita completa (sin armar el SQL con concatenación); el id va como parámetro.
+     */
+    private static final List<String> DELETE_COW_CHILDREN = List.of(
+            "DELETE FROM alerts WHERE cow_id IN (SELECT id FROM cows WHERE owner_id = ?)",
+            "DELETE FROM inferences WHERE cow_id IN (SELECT id FROM cows WHERE owner_id = ?)",
+            "DELETE FROM daily_records WHERE cow_id IN (SELECT id FROM cows WHERE owner_id = ?)",
+            "DELETE FROM cow_photos WHERE cow_id IN (SELECT id FROM cows WHERE owner_id = ?)");
 
     private final JdbcTemplate jdbc;
     private final CowPhotoRepository photos;
@@ -44,9 +49,8 @@ public class AccountDeletionService {
     public void deleteEverything(UUID userId) {
         List<UUID> photoIds = photos.findIdsByOwner(userId);
         int rows = 0;
-        for (String table : COW_CHILDREN) {
-            // El nombre de la tabla es una constante del código; el id va como parámetro
-            rows += jdbc.update("DELETE FROM " + table + " WHERE cow_id IN (" + OWNED_COWS + ")", userId);
+        for (String sql : DELETE_COW_CHILDREN) {
+            rows += jdbc.update(sql, userId);
         }
         rows += jdbc.update("DELETE FROM cows WHERE owner_id = ?", userId);
         rows += jdbc.update("DELETE FROM refresh_tokens WHERE user_id = ?", userId);
