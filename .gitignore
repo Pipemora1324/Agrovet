@@ -62,6 +62,8 @@ mobile/**/android/app/profile/
 mobile/**/android/app/release/
 *.apk
 *.aab
+# Carpeta local con los APK de demostración y su LEEME (se reparten a mano, nunca van al repositorio)
+/apk/
 
 # --- Generales ---
 build/
