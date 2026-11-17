@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'app.dart';
 import 'core/config.dart';
 import 'data/remote/api_client.dart';
+import 'data/remote/online_status.dart';
 import 'data/security/secure_store.dart';
 import 'data/sync/background_sync.dart';
 
@@ -29,5 +30,9 @@ Future<void> main() async {
   }
 
   final store = SecureStore();
-  runApp(AgroVetApp(store: store, apiClient: ApiClient(baseUrl: AppConfig.apiBaseUrl, store: store)));
+  runApp(AgroVetApp(
+    store: store,
+    apiClient: ApiClient(baseUrl: AppConfig.apiBaseUrl, store: store),
+    isOnline: deviceHasNetwork,
+  ));
 }

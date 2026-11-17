@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:agrovet/core/theme.dart';
 import 'package:agrovet/data/remote/api_client.dart';
 import 'package:agrovet/data/remote/auth_api.dart';
@@ -167,6 +169,67 @@ void main() {
       await reset.reset('000000', 'nueva-clave-22');
       expect(reset.state.step, PasswordResetStep.code);
       expect(reset.state.message, contains('no es válido'));
+      verifyNever(() => api.login(any(), any()));
+    });
+  });
+
+  group('sin conexión', () {
+    test('ingresar sin red avisa enseguida, no llama al servidor y ofrece la demostración', () async {
+      final auth = AuthCubit(store: store, api: api, allowDemo: true, isOnline: () async => false);
+      await auth.login('ana@correo.co', 'clave-segura-1');
+
+      final state = auth.state as Unauthenticated;
+      expect(state.busy, isFalse);
+      expect(state.message, startsWith('Sin conexión a internet'));
+      expect(state.message, contains('demostración'));
+      verifyNever(() => api.login(any(), any()));
+    });
+
+    test('sin la demostración en la compilación, no la menciona', () async {
+      final auth = AuthCubit(store: store, api: api, allowDemo: false, isOnline: () async => false);
+      await auth.login('ana@correo.co', 'clave-segura-1');
+      expect((auth.state as Unauthenticated).message, isNot(contains('demostración')));
+    });
+
+    test('si el servidor nunca contesta, el botón deja de cargar al vencer el tiempo máximo', () async {
+      // Una llamada que no termina nunca (red que no responde): sin el tiempo máximo quedaba cargando
+      when(() => api.login(any(), any())).thenAnswer((_) => Completer<Session>().future);
+      final auth = AuthCubit(
+        store: store,
+        api: api,
+        allowDemo: false,
+        isOnline: () async => true,
+        requestDeadline: const Duration(milliseconds: 50),
+      );
+      await auth.login('ana@correo.co', 'clave-segura-1');
+
+      final state = auth.state as Unauthenticated;
+      expect(state.busy, isFalse);
+      expect(state.message, ApiClient.timedOut.message);
+    });
+
+    test('registrarse y reenviar el código sin red también avisan sin llamar al servidor', () async {
+      final auth = AuthCubit(store: store, api: api, allowDemo: false, isOnline: () async => false);
+      await auth.register('Ana', 'ana@correo.co', 'clave-segura-1', acceptedPrivacy: true);
+      expect((auth.state as Unauthenticated).message, ApiClient.noInternet.message);
+      verifyNever(() => api.register(any(), any(), any(), acceptedPrivacy: any(named: 'acceptedPrivacy')));
+    });
+
+    testWidgets('en la pantalla, el aviso aparece en pocos segundos y el botón vuelve a "Ingresar"',
+        (tester) async {
+      final auth = AuthCubit(store: store, api: api, allowDemo: true, isOnline: () async => false)
+        ..emit(const Unauthenticated());
+      await tester.pumpWidget(_app(auth, const LoginScreen()));
+      await tester.enterText(find.widgetWithText(TextFormField, 'Correo'), 'ana@correo.co');
+      await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave-segura-1');
+      await tester.ensureVisible(find.text('Ingresar'));
+      await tester.tap(find.text('Ingresar'));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.textContaining('Sin conexión a internet'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('Ingresar'), findsOneWidget);
       verifyNever(() => api.login(any(), any()));
     });
   });

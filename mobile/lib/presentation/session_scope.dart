@@ -99,6 +99,8 @@ class _SessionScopeState extends State<SessionScope> {
     final online = OnlineStatus(
       (widget.connectivity ?? _online()).asBroadcastStream(),
       initial: widget.connectivity != null || await _isOnlineNow(),
+      // En pruebas la conexión la da el flujo falso; en el celular se pregunta al sistema
+      check: widget.connectivity == null ? _isOnlineNow : null,
     );
     final sync = session.isDemo
         ? SyncCubit.disabled()
@@ -156,10 +158,7 @@ class _SessionScopeState extends State<SessionScope> {
   Future<void> _closeDatabase() =>
       _closing ??= _db?.close() ?? Future<void>.value();
 
-  static Future<bool> _isOnlineNow() async =>
-      (await Connectivity().checkConnectivity()).any(
-        (r) => r != ConnectivityResult.none,
-      );
+  static Future<bool> _isOnlineNow() => deviceHasNetwork();
 
   static Stream<bool> _online() => Connectivity().onConnectivityChanged.map(
     (results) => results.any((r) => r != ConnectivityResult.none),

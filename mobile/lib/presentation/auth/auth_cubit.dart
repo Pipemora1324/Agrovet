@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -83,12 +85,22 @@ class AuthCubit extends Cubit<AuthState> {
     required this.api,
     this.allowDemo = AppConfig.demoAvailable,
     DateTime Function()? clock,
+    this._isOnline,
+    this.requestDeadline = defaultRequestDeadline,
   })  : _now = clock ?? DateTime.now,
         super(const AuthChecking());
 
   final SecureStore store;
   final AuthApi api;
   final DateTime Function() _now;
+
+  /// Pregunta al sistema si hay internet. Sin ella (pruebas) se asume que sí.
+  final Future<bool> Function()? _isOnline;
+
+  /// Tiempo máximo de cada llamada al servidor desde estas pantallas, sumando reintentos y la
+  /// renovación del token: pasado ese tiempo se avisa y el botón vuelve a estar disponible.
+  final Duration requestDeadline;
+  static const defaultRequestDeadline = Duration(seconds: 45);
 
   /// La entrada con datos de demostración solo existe en compilaciones debug.
   final bool allowDemo;
@@ -102,11 +114,33 @@ class AuthCubit extends Cubit<AuthState> {
     emit(session == null ? const Unauthenticated() : Authenticated(session));
   }
 
+  /// Mensaje del ingreso sin internet; menciona la demostración solo si esta compilación la tiene.
+  String get offlineLoginMessage => allowDemo
+      ? 'Sin conexión a internet. Para ingresar con su cuenta necesita internet; mientras tanto puede '
+          'usar la demostración.'
+      : 'Sin conexión a internet. Para ingresar con su cuenta necesita internet.';
+
+  /// Corre una llamada al servidor: sin internet falla enseguida y nunca espera más de
+  /// [requestDeadline].
+  Future<T> _call<T>(Future<T> Function() request) async {
+    final isOnline = _isOnline;
+    if (isOnline != null && !await isOnline()) throw ApiClient.noInternet;
+    try {
+      return await request().timeout(requestDeadline);
+    } on TimeoutException {
+      throw ApiClient.timedOut;
+    }
+  }
+
   Future<void> login(String email, String password) async {
     emit(const Unauthenticated(busy: true));
     try {
-      await _open(await api.login(email, password));
+      await _open(await _call(() => api.login(email, password)));
     } on ApiException catch (e) {
+      if (identical(e, ApiClient.noInternet)) {
+        emit(Unauthenticated(message: offlineLoginMessage));
+        return;
+      }
       if (e.isEmailNotVerified) {
         // El servidor envía un código si no había uno vigente; se puede pedir otro de inmediato
         emit(AwaitingVerification(email: email.trim(), resendAvailableAt: _now(), info: e.message));
@@ -119,7 +153,7 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> register(String name, String email, String password, {required bool acceptedPrivacy}) async {
     emit(const Unauthenticated(busy: true));
     try {
-      await api.register(name, email, password, acceptedPrivacy: acceptedPrivacy);
+      await _call(() => api.register(name, email, password, acceptedPrivacy: acceptedPrivacy));
       // La pantalla ya dice a qué correo se envió: no hace falta otro aviso
       emit(AwaitingVerification(email: email.trim(), resendAvailableAt: _now().add(resendCooldown)));
     } on ApiException catch (e) {
@@ -132,7 +166,7 @@ class AuthCubit extends Cubit<AuthState> {
     if (current is! AwaitingVerification || current.busy) return;
     emit(current.copyWith(busy: true));
     try {
-      await _open(await api.verifyEmail(current.email, code));
+      await _open(await _call(() => api.verifyEmail(current.email, code)));
     } on ApiException catch (e) {
       emit(current.copyWith(busy: false, message: e.message));
     }
@@ -144,7 +178,7 @@ class AuthCubit extends Cubit<AuthState> {
     if (_now().isBefore(current.resendAvailableAt)) return;
     emit(current.copyWith(busy: true));
     try {
-      await api.resendCode(current.email);
+      await _call(() => api.resendCode(current.email));
       emit(current.copyWith(
         busy: false,
         resendAvailableAt: _now().add(resendCooldown),
