@@ -18,8 +18,8 @@ services:
     runtime: docker
     plan: free
     region: virginia
-    # Rutas contadas desde la raíz del repositorio
-    rootDir: backend
+    # Sin rootDir: con él, Render cuenta estas rutas desde esa carpeta (backend/backend no existe).
+    # Así se cuentan desde la raíz del repositorio.
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     # Se despliega a mano (Manual Deploy), nunca con cada commit
