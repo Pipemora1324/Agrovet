@@ -1,0 +1,127 @@
+{
+  "description": "Fotos del dataset de leche (CC BY 4.0) con la caja del pozo, el recorte de 160 px de Python y la probabilidad del TFLite. La app debe dar el mismo recorte (diferencia media por píxel pequeña) y la misma decisión. Estos pozos estuvieron en el entrenamiento del modelo final: sirven para comparar el preprocesamiento, NO miden la exactitud.",
+  "threshold": 0.5,
+  "cases": [
+    {
+      "photo": "case_1.jpg",
+      "pythonCrop": "case_1_crop160.png",
+      "datasetName": "PXL_20260526_032650588-MP.jpg",
+      "source": "PXL",
+      "grade": "Normal Milk",
+      "label": 0,
+      "imageSize": [
+        481,
+        640
+      ],
+      "box": [
+        245,
+        253,
+        423,
+        388
+      ],
+      "tflite": 0.0006313
+    },
+    {
+      "photo": "case_2.jpg",
+      "pythonCrop": "case_2_crop160.png",
+      "datasetName": "frame_0000.jpg",
+      "source": "video",
+      "grade": "Normal Milk",
+      "label": 0,
+      "imageSize": [
+        360,
+        640
+      ],
+      "box": [
+        163,
+        178,
+        360,
+        379
+      ],
+      "tflite": 0.0228379
+    },
+    {
+      "photo": "case_3.jpg",
+      "pythonCrop": "case_3_crop160.png",
+      "datasetName": "frame_00018_active_motion.jpg",
+      "source": "video",
+      "grade": "Blood tinged Milk",
+      "label": 1,
+      "imageSize": [
+        640,
+        360
+      ],
+      "box": [
+        164,
+        0,
+        532,
+        346
+      ],
+      "tflite": 0.9999964
+    },
+    {
+      "photo": "case_4.jpg",
+      "pythonCrop": "case_4_crop160.png",
+      "datasetName": "PXL_20260526_035841026.jpg",
+      "source": "PXL",
+      "grade": "Curd like Milk",
+      "label": 1,
+      "imageSize": [
+        481,
+        640
+      ],
+      "box": [
+        184,
+        336,
+        481,
+        640
+      ],
+      "tflite": 0.9450587
+    },
+    {
+      "photo": "case_5.jpg",
+      "pythonCrop": "case_5_crop160.png",
+      "datasetName": "PXL_20260526_034801787-MP.jpg",
+      "source": "PXL",
+      "grade": "Watery Milk",
+      "label": 1,
+      "imageSize": [
+        481,
+        640
+      ],
+      "box": [
+        23,
+        208,
+        250,
+        416
+      ],
+      "tflite": 0.9860425
+    }
+  ],
+  "synthetic": {
+    "size": [
+      257,
+      181
+    ],
+    "cases": [
+      {
+        "box": [
+          13,
+          7,
+          250,
+          170
+        ],
+        "pythonCrop": "synthetic_1_crop160.png"
+      },
+      {
+        "box": [
+          20,
+          30,
+          120,
+          90
+        ],
+        "pythonCrop": "synthetic_2_crop160.png"
+      }
+    ]
+  }
+}
