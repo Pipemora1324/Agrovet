@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -37,6 +38,8 @@ class CowIntegrationTest extends IntegrationTest {
     JdbcTemplate jdbc;
     @Autowired
     RecordingEmailSender mail;
+    @Autowired
+    Clock clock;
 
     private TestUser ana;
     private TestUser beto;
@@ -181,6 +184,26 @@ class CowIntegrationTest extends IntegrationTest {
         mvc.perform(get("/api/cows/" + cow + "/history").header("Authorization", ana.bearer())
                         .param("from", "no-es-fecha"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void historyWithoutDatesCoversTheLastSixtyDays() throws Exception {
+        UUID cow = createCow(ana, "A-002");
+        // El mismo reloj del servidor (UTC): con la hora local, cerca de medianoche el "hoy" cambia
+        LocalDate today = LocalDate.now(clock);
+        // El día 59 hacia atrás entra (60 días contando hoy); el 60 queda fuera
+        for (int daysAgo : new int[] { 0, CowService.DEFAULT_HISTORY_DAYS - 1, CowService.DEFAULT_HISTORY_DAYS }) {
+            jdbc.update("INSERT INTO daily_records (id, cow_id, record_date, temperature_c, milk_l, feed_kg, "
+                            + "abnormal_milk, created_at, updated_at) "
+                            + "VALUES (?, ?, ?, 38.6, 12.5, 10.0, false, now(), now())",
+                    UUID.randomUUID(), cow, today.minusDays(daysAgo));
+        }
+
+        mvc.perform(get("/api/cows/" + cow + "/history").header("Authorization", ana.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.from").value(today.minusDays(CowService.DEFAULT_HISTORY_DAYS - 1L).toString()))
+                .andExpect(jsonPath("$.to").value(today.toString()))
+                .andExpect(jsonPath("$.records", hasSize(2)));
     }
 
     @Test
