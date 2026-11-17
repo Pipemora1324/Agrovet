@@ -5,6 +5,6 @@
 \getenv email ACCOUNT_EMAIL
 
 UPDATE users SET email_verified = TRUE, updated_at = now()
-WHERE email = lower(:'email') AND email_verified = FALSE;
+WHERE email = lower(:'email') AND NOT email_verified;
 
 SELECT email, email_verified FROM users WHERE email = lower(:'email');
