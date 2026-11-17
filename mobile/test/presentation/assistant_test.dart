@@ -97,7 +97,7 @@ void main() {
 
   var tick = 0;
 
-  AssistantCubit cubit({bool online = true}) => AssistantCubit(
+  AssistantCubit cubit({bool online = true, bool server = true}) => AssistantCubit(
         cowId: 'c1',
         api: api,
         messages: repo,
@@ -106,6 +106,7 @@ void main() {
         capture: _Capture(),
         connectivity: network.stream,
         initiallyOnline: online,
+        serverAvailable: server,
         // Cada mensaje un segundo después del anterior, para que el orden sea claro
         clock: () => now.add(Duration(seconds: tick++)),
       );
@@ -171,6 +172,24 @@ void main() {
     await chat.close();
   });
 
+  test('sin servidor (APK de demostración) no se queda esperando: lo dice y no consulta', () async {
+    answer('ok');
+    final chat = cubit(server: false);
+    expect(chat.state.canAsk, isFalse);
+    expect(await chat.send('¿Qué reviso?'), isFalse);
+    expect(chat.state.sending, isFalse);
+    expect(chat.state.error, contains('necesita conexión al servidor'));
+    verifyNever(() => api.ask(question: any(named: 'question')));
+    expect(await repo.watchMessages('c1').first, isEmpty);
+
+    // Aunque vuelva la red, sin servidor sigue sin poder preguntar
+    network.add(true);
+    await Future<void>.delayed(Duration.zero);
+    expect(chat.state.canAsk, isFalse);
+    expect(chat.state.serverAvailable, isFalse);
+    await chat.close();
+  });
+
   test('la foto sale sin ubicación y, si falla el envío, no se pierde', () async {
     when(() => api.ask(
           question: any(named: 'question'),
@@ -190,7 +209,7 @@ void main() {
   });
 
   group('pantalla', () {
-    Widget app(OnlineStatus status) => MultiRepositoryProvider(
+    Widget app(OnlineStatus status, {bool server = true}) => MultiRepositoryProvider(
           providers: [
             RepositoryProvider<ApiClient>.value(value: ApiClient(baseUrl: 'http://localhost:1', store: SecureStore())),
             RepositoryProvider<AssistantRepository>.value(value: _EmptyChat()),
@@ -205,6 +224,7 @@ void main() {
             supportedLocales: const [Locale('es')],
             localizationsDelegates: GlobalMaterialLocalizations.delegates,
             home: AssistantScreen(
+              serverAvailable: server,
               cow: Cow(id: 'c1', tag: 'V-01', name: 'Lucero', productionStatus: ProductionStatus.lactating, updatedAt: now),
             ),
           ),
@@ -227,6 +247,20 @@ void main() {
       expect(find.textContaining('Sin internet'), findsNothing);
       expect(find.text(AssistantTips.notice), findsOneWidget);
       expect(tester.widget<TextField>(find.byType(TextField)).enabled, isTrue);
+    });
+
+    testWidgets('sin servidor muestra el mensaje en vez de cargar y deja los consejos', (tester) async {
+      final status = OnlineStatus(network.stream, initial: true);
+      addTearDown(status.dispose);
+      await tester.pumpWidget(app(status, server: false));
+      await tester.pumpAndSettle();
+
+      expect(find.text(AssistantTips.notice), findsOneWidget);
+      expect(find.textContaining('necesita conexión al servidor'), findsOneWidget);
+      expect(find.textContaining('Sin internet'), findsNothing);
+      expect(find.text('Higiene del ordeño'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
     });
   });
 }

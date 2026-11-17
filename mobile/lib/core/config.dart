@@ -29,7 +29,7 @@ class AppConfig {
   static const demoAvailable = isDebugBuild || demoBuild;
 
   /// Compilación de demostración sin dirección del servidor: funciona solo la demostración.
-  static bool get withoutServer => demoBuild && apiBaseUrl.isEmpty;
+  static const withoutServer = demoBuild && apiBaseUrl == '';
 
   /// Equipos de desarrollo a los que se permite HTTP en debug.
   static const developmentHosts = {'10.0.2.2', 'localhost', '127.0.0.1'};
