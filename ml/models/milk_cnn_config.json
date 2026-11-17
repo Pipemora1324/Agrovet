@@ -1,0 +1,20 @@
+{
+  "modelFile": "milk_cnn.tflite",
+  "sha256": "a0e70be69f121bc29a444800747371dcd34c48b1ba54a0ed13ec697519b4efec",
+  "architecture": "MobileNetV2 alpha 0.35, TFLite float16",
+  "inputSize": 160,
+  "inputRange": "RGB 0-255 en float32; el modelo reescala a [-1, 1]",
+  "crop": "un pozo: caja + 10 % por lado, centrada en un cuadrado con relleno negro (0, 0, 0), redimensionada a 160 x 160 con el bilineal de Pillow",
+  "cropMargin": 0.1,
+  "threshold": 0.5,
+  "output": "probabilidad de leche de aspecto anormal (sangre, grumos o aguada)",
+  "enabledByDefault": false,
+  "onlyDemoBuild": true,
+  "disclaimer": "Experimental. No es diagnóstico. Solo validado con un conjunto de datos; con fotos nuevas puede fallar.",
+  "source": {
+    "name": "Mastitis dataset v3 (Roboflow Universe, usuario abdurrehman4198)",
+    "url": "https://universe.roboflow.com/abdurrehman4198-gmail-com/mastitis-dataset",
+    "license": "CC BY 4.0",
+    "labels": "del autor del dataset, sin laboratorio"
+  }
+}

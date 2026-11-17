@@ -1,7 +1,9 @@
 """Evaluación de un clasificador de pozo de leche normal o anormal (sangre, grumos o aguada).
 
-NO se integra en la app. Datos y modelos por fold quedan FUERA del repositorio (--work-dir); aquí
-solo quedan el informe (reports/milk_cnn.json) y las figuras (informes/). Ver ml/README.md.
+NO se integra en la app normal: el modelo final solo entra, como experimento, en el APK de
+demostración (models/milk_cnn.tflite, ver src/export_milk_vectors.py). Datos y modelos por fold quedan
+FUERA del repositorio (--work-dir); aquí solo quedan el informe (reports/milk_cnn.json) y las figuras
+(informes/). Ver ml/README.md.
 
     python src/train_milk_cnn.py --coco "C:/.../Data/roboflow_leche/Mastitis dataset.v3i.coco" \
                                  --work-dir "C:/.../Data/agrovet_work/milk_cnn"

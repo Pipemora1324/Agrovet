@@ -112,6 +112,8 @@ void main() {
       WidgetTester tester,
       Size size, {
       SyncCubit? syncCubit,
+      bool demo = true,
+      bool milkExperiment = false,
     }) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
@@ -120,11 +122,11 @@ void main() {
         MultiRepositoryProvider(
           providers: [
             RepositoryProvider<Session>.value(
-              value: const Session(
+              value: Session(
                 userId: 'demo',
                 name: 'Demo',
                 email: 'd@x.co',
-                isDemo: true,
+                isDemo: demo,
               ),
             ),
             RepositoryProvider<CowRepository>.value(value: repo),
@@ -137,7 +139,7 @@ void main() {
                 value: syncCubit ?? SyncCubit.disabled(),
               ),
             ],
-            child: app(const CowsScreen()),
+            child: app(CowsScreen(milkExperiment: milkExperiment)),
           ),
         ),
       );
@@ -181,6 +183,31 @@ void main() {
       expect(find.text('Pendientes: 3'), findsNothing);
       expect(find.text('No hay conexión con el servidor.'), findsNothing);
       await cubit.close();
+    });
+
+    testWidgets('la entrada a Leche (experimental) solo aparece en la demostración del APK de demo', (tester) async {
+      // Sin DEMO_MODE (como en estas pruebas y en el APK normal) no aparece
+      await pumpCows(tester, const Size(400, 800));
+      expect(find.text('Leche (experimental)'), findsNothing);
+
+      await pumpCows(tester, const Size(400, 800), milkExperiment: true, demo: false);
+      expect(find.text('Leche (experimental)'), findsNothing);
+
+      await pumpCows(tester, const Size(400, 800), milkExperiment: true);
+      expect(find.text('Leche (experimental)'), findsOneWidget);
+      expect(find.textContaining('Foto de un pozo de la paleta. No es diagnóstico'), findsOneWidget);
+    });
+
+    testWidgets('la demostración muestra la entrada a "Acerca del modelo"; una cuenta real no', (tester) async {
+      await pumpCows(tester, const Size(400, 800), demo: false);
+      expect(find.text('Acerca del modelo'), findsNothing);
+      await pumpCows(tester, const Size(400, 800));
+      expect(find.text('Acerca del modelo'), findsOneWidget);
+      await tester.ensureVisible(find.text('Acerca del modelo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Acerca del modelo'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('about-disclaimer')), findsOneWidget);
     });
 
     testWidgets('en tableta muestra las vacas en dos columnas', (tester) async {

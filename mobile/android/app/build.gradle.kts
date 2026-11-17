@@ -7,14 +7,18 @@ plugins {
 }
 
 // Flutter pasa los --dart-define a Gradle como una lista separada por comas, cada uno en base64.
-// La CNN de la ubre solo se empaqueta si la app se compila con --dart-define=UDDER_TRIAGE=true:
-// apagada no se usa y sus ~0,85 MB dejarían el APK al borde del límite de 15 MB.
-val udderTriageEnabled = (project.findProperty("dart-defines") as String?)
+val dartDefines = (project.findProperty("dart-defines") as String?)
     ?.split(",")
     ?.filter { it.isNotBlank() }
     ?.map { String(Base64.getDecoder().decode(it)) }
-    ?.contains("UDDER_TRIAGE=true")
-    ?: false
+    ?: emptyList()
+
+// La CNN de la ubre solo se empaqueta si la app se compila con --dart-define=UDDER_TRIAGE=true:
+// apagada no se usa y sus ~0,85 MB dejarían el APK al borde del límite de 15 MB.
+val udderTriageEnabled = dartDefines.contains("UDDER_TRIAGE=true")
+
+// El clasificador experimental de leche (~0,85 MB) solo va en el APK de demostración (DEMO_MODE=true).
+val demoBuild = dartDefines.contains("DEMO_MODE=true")
 
 android {
     namespace = "co.edu.ucc.agrovet"
@@ -74,10 +78,9 @@ flutter {
     source = "../.."
 }
 
-// El plugin de Flutter copia los assets con tareas copyFlutterAssets<Variante>; con el triaje apagado
-// se deja fuera el modelo de la ubre.
-if (!udderTriageEnabled) {
-    tasks.withType<Copy>().matching { it.name.startsWith("copyFlutterAssets") }.configureEach {
-        exclude("**/udder_cnn.tflite")
-    }
+// El plugin de Flutter copia los assets con tareas copyFlutterAssets<Variante>: con el triaje apagado
+// se deja fuera el modelo de la ubre, y fuera de la demostración, el de leche.
+tasks.withType<Copy>().matching { it.name.startsWith("copyFlutterAssets") }.configureEach {
+    if (!udderTriageEnabled) exclude("**/udder_cnn.tflite")
+    if (!demoBuild) exclude("**/milk_cnn.tflite", "**/milk_cnn_config.json")
 }

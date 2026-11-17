@@ -29,11 +29,38 @@ En release la demostración solo existe si se compila con `--dart-define=DEMO_MO
 defecto). Así se arma el APK de demostración mientras el backend no está publicado:
 
 ```bash
-flutter build apk --release --split-per-abi --target-platform android-arm64 --dart-define=DEMO_MODE=true
+flutter build apk --release --split-per-abi --target-platform android-arm64   --dart-define=DEMO_MODE=true --dart-define=UDDER_TRIAGE=true
 ```
 
 Sin `API_BASE_URL` ese APK arranca igual, funciona sin internet y muestra en el ingreso que crear una
-cuenta o ingresar no funcionan todavía. El APK para uso real se compila **sin** `DEMO_MODE`.
+cuenta o ingresar no funcionan todavía. El APK para uso real se compila **sin** `DEMO_MODE` ni
+`UDDER_TRIAGE`. Lo que solo trae el APK de demostración (nada de esto es un diagnóstico):
+
+- **"Leche (experimental)"**, en la lista de vacas de la demostración: foto de la paleta de ordeño
+  (cámara o galería), encuadre de un pozo con un círculo guía (acercar con dos dedos o con los botones,
+  mover con un dedo) y lectura normal/anormal con la probabilidad. Aviso fijo: "Experimental. No es
+  diagnóstico. Solo validado con un conjunto de datos; con fotos nuevas puede fallar." El modelo
+  (`assets/model/milk_cnn.tflite`, 0,85 MB) solo se empaqueta con `DEMO_MODE=true`. La app prepara el
+  pozo igual que `ml/` (recorte idéntico píxel a píxel, ver `ml/README.md`), pero el resultado depende
+  mucho de cómo se encuadre.
+- **Lectura de la foto de la ubre** (`UDDER_TRIAGE=true`), en Vacas > ficha > Fotos > foto, con el aviso
+  "Resultado orientativo, no es diagnóstico". Las fotos se toman con la cámara o se eligen de la galería.
+- El asistente necesita el servidor: sin él lo dice ("El asistente necesita conexión al servidor") y
+  muestra los consejos fijos, en vez de intentar la consulta.
+
+**"Acerca del modelo"** (Perfil, en cualquier compilación, y una tarjeta en la lista de vacas de la
+demostración) explica el LSTM (ventana de 14 días, variables, entrenado con datos sintéticos, F1 0,49
+y AUC 0,89 en la prueba sintética frente a las líneas base) y las dos CNN experimentales, con el aviso
+"No es diagnóstico, no validado con datos reales." Los textos están en `lib/domain/model_facts.dart`;
+`test/domain/model_facts_test.dart` falla si alguna cifra no aparece tal cual en `ml/README.md`.
+
+Las vacas, registros y fotos que se agregan en la demostración quedan en la base cifrada del
+celular: siguen ahí al cerrar la app y volver a "Entrar a la demostración" (prueba en
+`test/presentation/session_scope_test.dart` y en el emulador). Se pierden solo si se desinstala la app
+o se borran sus datos.
+
+APK de demostración arm64 con las dos banderas: 15 429 781 bytes (14,71 MiB) de un límite de 15 MiB;
+el CI lo compila y falla si pasa del límite o si le falta un modelo.
 
 Para ingresar con una cuenta real, el backend debe estar corriendo (`backend/`, `docker compose up`).
 Desde el emulador el equipo es `10.0.2.2`. Para un servidor publicado:
@@ -80,8 +107,8 @@ flutter run -d <dispositivo> --dart-define=API_BASE_URL=http://localhost:8080
 - En la ficha de la foto, la sección plegada **"Para investigación (opcional)"** guarda la
   confirmación del veterinario, el diagnóstico y el interruptor "Permitir usar esta foto para
   investigación", apagado por defecto (ver `ml/README.md`).
-- La foto queda como registro visual; la app no la analiza. La CNN de la ubre (`assets/model/udder_cnn.tflite`, entrenada con un dataset público) viene
-  **apagada**. Solo se enciende compilando con `--dart-define=UDDER_TRIAGE=true`, y entonces la ficha
+- La foto queda como registro visual; en el APK normal la app no la analiza. La CNN de la ubre
+  (`assets/model/udder_cnn.tflite`, entrenada con un dataset público) viene **apagada**. Solo se enciende compilando con `--dart-define=UDDER_TRIAGE=true`, y entonces la ficha
   de la foto muestra una lectura con el aviso "Resultado orientativo, no es diagnóstico". No se
   recomienda encenderla (ver `ml/README.md`). Apagada, `android/app/build.gradle.kts` deja el
   `.tflite` fuera del APK (x86_64: 13,98 MiB apagada, 14,82 MiB encendida; el límite es 15 MiB).
@@ -143,7 +170,8 @@ Antes un solo APK arm64 pesaba 39,1 MB. Para bajarlo:
   `flutter_litert` incluye pero la app no usa (solo usa el intérprete en CPU);
 - las bibliotecas nativas van comprimidas dentro del APK.
 
-El CI falla si algún APK pasa de 15 MB.
+El CI falla si algún APK pasa de 15 MB y comprueba que el APK normal no lleve los modelos
+experimentales (leche y ubre).
 
 En release solo se permite HTTPS: el permiso para HTTP sin cifrar existe únicamente en debug y
 solo hacia `10.0.2.2`, `localhost` y `127.0.0.1`.

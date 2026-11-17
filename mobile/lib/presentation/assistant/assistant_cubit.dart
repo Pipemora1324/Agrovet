@@ -14,9 +14,21 @@ import '../../domain/repositories.dart';
 import '../../domain/symptom_score.dart';
 
 class AssistantState extends Equatable {
-  const AssistantState({this.online = true, this.sending = false, this.photo, this.error});
+  const AssistantState({
+    this.online = true,
+    this.serverAvailable = true,
+    this.sending = false,
+    this.photo,
+    this.error,
+  });
 
   final bool online;
+
+  /// false en el APK de demostración sin dirección del servidor: el asistente no existe sin él.
+  final bool serverAvailable;
+
+  /// Se puede preguntar: hay internet y hay servidor.
+  bool get canAsk => online && serverAvailable;
   final bool sending;
 
   /// Foto lista para enviar con la próxima pregunta (ya sin metadatos).
@@ -26,13 +38,14 @@ class AssistantState extends Equatable {
   AssistantState copyWith({bool? online, bool? sending, Uint8List? Function()? photo, String? error}) =>
       AssistantState(
         online: online ?? this.online,
+        serverAvailable: serverAvailable,
         sending: sending ?? this.sending,
         photo: photo == null ? this.photo : photo(),
         error: error,
       );
 
   @override
-  List<Object?> get props => [online, sending, photo, error];
+  List<Object?> get props => [online, serverAvailable, sending, photo, error];
 }
 
 /// Conversación con el asistente sobre una vaca. Los mensajes se guardan en la base local; la lista
@@ -47,11 +60,12 @@ class AssistantCubit extends Cubit<AssistantState> {
     required this.capture,
     required Stream<bool> connectivity,
     bool initiallyOnline = true,
+    bool serverAvailable = true,
     DateTime Function()? clock,
     Uuid? uuid,
   })  : _now = clock ?? DateTime.now,
         _uuid = uuid ?? const Uuid(),
-        super(AssistantState(online: initiallyOnline)) {
+        super(AssistantState(online: initiallyOnline, serverAvailable: serverAvailable)) {
     _connection = connectivity.listen((online) => emit(state.copyWith(online: online)));
   }
 
@@ -64,6 +78,9 @@ class AssistantCubit extends Cubit<AssistantState> {
   final DateTime Function() _now;
   final Uuid _uuid;
   late final StreamSubscription<bool> _connection;
+
+  static const noServerMessage = 'El asistente necesita conexión al servidor. Esta versión de demostración '
+      'no tiene servidor, así que no puede responder. Abajo hay consejos básicos.';
 
   /// Mensajes anteriores que se envían para dar continuidad.
   static const historyTurns = 6;
@@ -90,6 +107,10 @@ class AssistantCubit extends Cubit<AssistantState> {
   Future<bool> send(String question) async {
     final text = question.trim();
     if (text.isEmpty || state.sending) return false;
+    if (!state.serverAvailable) {
+      emit(state.copyWith(error: noServerMessage));
+      return false;
+    }
     if (!state.online) {
       emit(state.copyWith(error: 'Sin internet no se puede consultar al asistente. Vea los consejos de abajo.'));
       return false;

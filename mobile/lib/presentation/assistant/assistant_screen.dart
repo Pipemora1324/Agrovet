@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/config.dart';
 import '../../core/formatters.dart';
 import '../../core/responsive.dart';
 import '../../core/theme.dart';
@@ -20,9 +21,12 @@ import 'assistant_cubit.dart';
 /// Chat con el asistente sobre una vaca. Aviso fijo: orienta, no diagnostica. Sin internet muestra
 /// un banner y consejos fijos.
 class AssistantScreen extends StatelessWidget {
-  const AssistantScreen({super.key, required this.cow});
+  const AssistantScreen({super.key, required this.cow, this.serverAvailable = !AppConfig.withoutServer});
 
   final Cow cow;
+
+  /// false en el APK de demostración compilado sin servidor.
+  final bool serverAvailable;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +41,7 @@ class AssistantScreen extends StatelessWidget {
         capture: context.read<PhotoCapture>(),
         connectivity: status.changes,
         initiallyOnline: status.online,
+        serverAvailable: serverAvailable,
       ),
       child: _AssistantView(cow: cow),
     );
@@ -117,8 +122,9 @@ class _AssistantViewState extends State<_AssistantView> {
             ),
           ),
           BlocBuilder<AssistantCubit, AssistantState>(
-            buildWhen: (previous, current) => previous.online != current.online,
-            builder: (context, state) => state.online
+            buildWhen: (previous, current) =>
+                previous.online != current.online || previous.serverAvailable != current.serverAvailable,
+            builder: (context, state) => state.canAsk
                 ? const SizedBox.shrink()
                 : Container(
                     width: double.infinity,
@@ -126,10 +132,13 @@ class _AssistantViewState extends State<_AssistantView> {
                     color: AppColors.demoBanner,
                     child: Row(
                       children: [
-                        const Icon(Icons.wifi_off, color: AppColors.onDemoBanner),
+                        Icon(state.serverAvailable ? Icons.wifi_off : Icons.cloud_off, color: AppColors.onDemoBanner),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text('Sin internet: el asistente no está disponible. Abajo hay consejos básicos.',
+                          child: Text(
+                              state.serverAvailable
+                                  ? 'Sin internet: el asistente no está disponible. Abajo hay consejos básicos.'
+                                  : AssistantCubit.noServerMessage,
                               style: theme.textTheme.banner.copyWith(color: AppColors.onDemoBanner)),
                         ),
                       ],
@@ -156,7 +165,7 @@ class _AssistantViewState extends State<_AssistantView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            if (messages.isEmpty && state.online)
+                            if (messages.isEmpty && state.canAsk)
                               Text(
                                 'Pregunte sobre esta vaca: qué revisar, cómo cuidar el ordeño o cuándo llamar al '
                                 'veterinario. Puede adjuntar una foto de la ubre.',
@@ -168,7 +177,7 @@ class _AssistantViewState extends State<_AssistantView> {
                               const SizedBox(height: 8),
                               NoticeBox.error(state.error!),
                             ],
-                            if (!state.online) ...[
+                            if (!state.canAsk) ...[
                               const SizedBox(height: 12),
                               const _OfflineTips(),
                             ],
@@ -216,12 +225,12 @@ class _AssistantViewState extends State<_AssistantView> {
                             tooltip: 'Adjuntar foto',
                             iconSize: 32,
                             icon: const Icon(Icons.add_a_photo),
-                            onPressed: state.online && !state.sending ? _attach : null,
+                            onPressed: state.canAsk && !state.sending ? _attach : null,
                           ),
                           Expanded(
                             child: TextField(
                               controller: _question,
-                              enabled: state.online,
+                              enabled: state.canAsk,
                               minLines: 1,
                               maxLines: 4,
                               maxLength: 1000,
@@ -234,7 +243,7 @@ class _AssistantViewState extends State<_AssistantView> {
                             tooltip: 'Enviar',
                             iconSize: 32,
                             icon: const Icon(Icons.send),
-                            onPressed: state.online && !state.sending ? _send : null,
+                            onPressed: state.canAsk && !state.sending ? _send : null,
                           ),
                         ],
                       ),
