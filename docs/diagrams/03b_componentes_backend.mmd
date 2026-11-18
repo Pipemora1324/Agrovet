@@ -4,11 +4,12 @@ flowchart TB
 
   subgraph C["controller"]
     direction LR
-    AC["AuthController<br/>/api/auth"]
+    AC["AuthController<br/>/api/auth (incluye /me)"]
     CC["CowController<br/>/api/cows"]
     SC["SyncController<br/>/api/sync"]
     PC["PhotoController<br/>/api/cows/{cowId}/photos/{photoId}/image"]
     ASC["AssistantController<br/>/api/assistant/chat"]
+    EH["ApiExceptionHandler · AuthExceptionHandler<br/>errores como ProblemDetail"]
   end
 
   subgraph S["service"]
@@ -17,7 +18,7 @@ flowchart TB
     CS["CowService"]
     SS["SyncService"]
     PS["PhotoService<br/>PhotoProcessor · PhotoStorage"]
-    ASS["AssistantService<br/>AssistantRateLimiter<br/>LlmClient → GeminiClient"]
+    ASS["AssistantService<br/>AssistantPrompt · AssistantRateLimiter<br/>LlmClient → GeminiClient"]
     DEL["AccountDeletionService"]
     AM["AccountMailer<br/>EmailSender → SmtpEmailSender"]
   end
@@ -34,6 +35,16 @@ flowchart TB
     CPR["CowPhotoRepository"]
   end
 
+  subgraph CFG["configuración (al arrancar)"]
+    direction LR
+    DBURL["DatabaseUrlEnvironmentPostProcessor<br/>DATABASE_URL (postgresql://, Render) → spring.datasource.*<br/>si no hay DB_URL · META-INF/spring.factories"]
+    SECC["SecurityConfig · JwtProperties<br/>CorsProperties"]
+    MAILC["MailServerConfig · MailSettings<br/>usuario y clave → SMTP STARTTLS; vacío → Mailpit"]
+    ASSC["AssistantConfig · AssistantProperties<br/>sin GEMINI_API_KEY → 503"]
+    PROPS["PhotoProperties · LoginRateLimitProperties<br/>EmailCodeProperties"]
+    OAC["OpenApiConfig<br/>Swagger (apagado en prod)"]
+  end
+
   AC --> AS
   CC --> CS
   SC --> SS
@@ -48,5 +59,10 @@ flowchart TB
   DEL --> CPR
   R --> PG[("PostgreSQL 15")]
   DEL -- "JdbcTemplate" --> PG
+  DBURL -. "conexión" .-> PG
+  SECC -. "filtros JWT y CORS" .-> C
+  MAILC -.-> AM
+  ASSC -.-> ASS
+  PROPS -.-> S
   AM --> SMTP(["SMTP: Gmail o Mailpit"])
   ASS --> GEM(["API de Gemini"])
