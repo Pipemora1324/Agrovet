@@ -1,4 +1,5 @@
-%% Despliegue: local actual (docker-compose.yml) y objetivo (docker-compose.prod.yml + Caddy)
+%% Despliegue: local actual (docker-compose.yml), demostración en Render (render.yaml)
+%% y objetivo en una VPS (docker-compose.prod.yml + Caddy, aún no desplegado)
 flowchart LR
   subgraph Local["Local actual"]
     direction TB
@@ -19,6 +20,23 @@ flowchart LR
 
   EXT["Servicios externos<br/>Gmail SMTP 587 con STARTTLS<br/>API de Gemini"]
   BE1 -. "correo si MAIL_* tiene valor<br/>Gemini con GEMINI_API_KEY" .-> EXT
+
+  subgraph Render["Demostración en Render (render.yaml, plan gratuito)"]
+    direction TB
+    RAPI["agrovet-api · servicio web Docker<br/>backend/Dockerfile · 512 MB · región Virginia<br/>SPRING_PROFILES_ACTIVE=prod · JAVA_TOOL_OPTIONS ajustado<br/>health: /actuator/health/readiness<br/>se duerme sin uso (≈ 90 s en despertar)"]
+    RDB[("agrovet-db · PostgreSQL 15 (plan gratuito)<br/>vence a los 30 días")]
+    REPH[("Disco efímero<br/>fotos en PHOTO_STORAGE_DIR:<br/>se pierden al dormir o redesplegar")]
+    NOMAIL["Sin SMTP real: el plan gratuito lo bloquea<br/>cuentas nuevas se verifican a mano<br/>(verify_account.ps1)<br/>GEMINI_API_KEY se pide al crear el Blueprint"]
+    RAPI -- "DATABASE_URL interna (fromDatabase)<br/>→ DatabaseUrlEnvironmentPostProcessor" --> RDB
+    RAPI --- REPH
+    RAPI -.- NOMAIL
+  end
+
+  DEMO["APK de demostración<br/>API_BASE_URL: https://&lt;servicio&gt;.onrender.com<br/>DEMO_MODE=true (también entra sin servidor)<br/>build_demo_apk.ps1"]
+  DEMO -- HTTPS --> RAPI
+  RAPI -- "Gemini" --> EXT
+  SEEDS["seed_demo.ps1 (desde el PC)<br/>usuario de demostración y 6 vacas sintéticas<br/>por la dirección externa de la base"]
+  SEEDS -. "una vez" .-> RDB
 
   subgraph Prod["Objetivo en una VPS (aún no desplegado)"]
     direction TB
