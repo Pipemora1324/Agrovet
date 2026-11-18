@@ -3,14 +3,18 @@ flowchart LR
   subgraph Celular["Celular Android (minSdk 24) · funciona sin conexión"]
     direction TB
     UI["App Flutter<br/>presentation: pantallas + cubits (flutter_bloc)"]
+    ABOUT["Pantalla «Acerca del modelo»<br/>textos de ModelFacts (cifras de ml/README.md)"]
     DOM["domain<br/>RiskEvaluator · SymptomScore · RecordEstimator · Preprocessor"]
     TFL["Modelo LSTM TFLite<br/>assets/model/mastitis_lstm.tflite<br/>(flutter_litert, solo CPU)"]
+    EXP["Modelos TFLite experimentales<br/>udder_cnn.tflite: triaje de la ubre, solo con UDDER_TRIAGE=true<br/>milk_cnn.tflite: leche, solo con DEMO_MODE=true<br/>(fuera del APK normal)"]
     DB[("Base local Drift + SQLCipher<br/>una base cifrada por usuario")]
     SEC["flutter_secure_storage<br/>tokens y clave de la base"]
     FOT["PhotoStore<br/>fotos sin metadatos, almacenamiento privado"]
     WM["WorkManager<br/>sincronización cada 15 min con red"]
     UI --> DOM
+    UI --> ABOUT
     DOM --> TFL
+    UI -. "ficha de la foto · pantalla de leche" .-> EXP
     UI --> DB
     UI --> SEC
     UI --> FOT
@@ -24,9 +28,11 @@ flowchart LR
     SVC["Servicios<br/>AuthService · CowService · SyncService · PhotoService · AssistantService"]
     MAIL["AccountMailer<br/>SMTP real (STARTTLS) o Mailpit"]
     VOL[("Volumen de fotos<br/>PHOTO_STORAGE_DIR")]
+    CONF["Conexión a la base<br/>DB_URL (JDBC) o DATABASE_URL (postgresql://, Render)<br/>DatabaseUrlEnvironmentPostProcessor"]
     API --> SECB --> SVC
     SVC --> MAIL
     SVC --> VOL
+    CONF -.-> SVC
   end
 
   PG[("PostgreSQL 15<br/>esquema Flyway V1–V13")]
