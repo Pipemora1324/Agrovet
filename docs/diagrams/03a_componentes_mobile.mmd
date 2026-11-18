@@ -4,15 +4,20 @@ flowchart LR
   subgraph P["presentation"]
     direction TB
     AUTH["LoginScreen · VerifyEmailScreen<br/>AuthCubit"]
+    PWD["ForgotPasswordScreen<br/>PasswordResetCubit"]
     HOME["HomeShell<br/>Vacas · Asistente · Perfil"]
-    COWS["CowsScreen · CowDetailScreen<br/>CowsCubit"]
+    COWS["CowsScreen · CowFormScreen · CowDetailScreen<br/>CowsCubit · CowEditor"]
     REC["DailyRecordScreen<br/>DailyRecordCubit"]
     RISK["RiskScreen<br/>RiskCubit"]
     HIST["HistoryScreen<br/>HistoryCubit"]
-    PHO["CowPhotosScreen<br/>PhotosCubit"]
+    PHO["CowPhotosScreen · PhotoViewScreen<br/>PhotosCubit"]
+    UDC["UdderTriageCard<br/>(solo con UDDER_TRIAGE=true)"]
+    MILK["MilkCheckScreen · MilkCropScreen<br/>Leche (experimental): solo en la<br/>demostración de un APK con DEMO_MODE"]
     ASIS["AssistantScreen<br/>AssistantCubit"]
-    PROF["ProfileScreen<br/>ProfileCubit"]
-    SYNCUI["SyncCubit<br/>(última sincronización en el inicio)"]
+    PROF["ProfileScreen · ChangePasswordScreen<br/>PrivacyNoticeScreen · ProfileCubit"]
+    ABOUT["AboutModelScreen<br/>(Perfil y tarjeta en la demostración)"]
+    SYNCUI["SyncCubit<br/>(«Última sincronización» en Mis vacas;<br/>sincroniza sola, sin botón)"]
+    SCOPE["SessionScope<br/>abre la base del usuario y entrega los repositorios"]
   end
 
   subgraph D["domain"]
@@ -22,17 +27,25 @@ flowchart LR
     EST["RecordEstimator<br/>RecordEquivalences"]
     EVAL["RiskEvaluator<br/>+ Preprocessor"]
     SYM["SymptomScore"]
+    FACTS["ModelFacts<br/>(cifras exigidas en ml/README.md)"]
+    UDT["udder_triage<br/>UdderModelConfig · UdderTriageResult"]
+    MCK["milk_check<br/>MilkModelConfig · CropBox · MilkCheckResult"]
   end
 
   subgraph DA["data"]
     direction TB
     LREP["LocalRepository"]
     ADB[("AppDatabase<br/>Drift + SQLCipher<br/>esquema v8")]
-    MODEL["RiskModel (TFLite)"]
+    MODEL["RiskModel (TFLite LSTM)"]
+    UDM["UdderModel (TFLite)"]
+    MLM["MilkModel (TFLite)"]
+    SEED["DemoSeed<br/>6 vacas sintéticas, base aparte, nunca se sincroniza"]
     SYNC["SyncService<br/>lotes de 200<br/>reintentos 2/4/8 s"]
+    RESTORE["RestoreService<br/>trae vacas e historial si la base local está vacía<br/>(no trae fotos)"]
     BG["BackgroundSync<br/>WorkManager"]
-    APIC["ApiClient (dio)<br/>AuthApi · ProfileApi<br/>AssistantApi · SyncApi"]
-    STORE["SecureStore · PhotoStore"]
+    ONL["OnlineStatus<br/>connectivity_plus + consulta al momento"]
+    APIC["ApiClient (dio)<br/>AuthApi · ProfileApi<br/>AssistantApi · SyncApi · RestoreApi"]
+    STORE["SecureStore · PhotoStore<br/>PhotoCapture · LocalDataWiper"]
   end
 
   COWS & REC & RISK & HIST & PHO & ASIS --> REPI
@@ -40,13 +53,29 @@ flowchart LR
   RISK --> EVAL
   EVAL --> SYM
   EVAL --> PRED
+  ABOUT --> FACTS
+  UDC --> UDT
+  MILK --> MCK
+  UDM == "usa" ==> UDT
+  MLM == "usa" ==> MCK
+  UDC --> UDM
+  MILK --> MLM
   LREP == "implementa" ==> REPI
   MODEL == "implementa" ==> PRED
   LREP --> ADB
+  SCOPE --> LREP
+  SCOPE -- "sesión de demostración" --> SEED
+  SCOPE --> ONL
+  SCOPE -- "al haber red" --> RESTORE
+  SEED --> LREP
+  RESTORE --> ADB
+  RESTORE --> APIC
   SYNCUI --> SYNC
+  SYNCUI --> ONL
+  ASIS --> ONL
   BG --> SYNC
   SYNC --> ADB
   SYNC --> APIC
-  AUTH & PROF & ASIS --> APIC
-  AUTH & PHO --> STORE
+  AUTH & PWD & PROF & ASIS --> APIC
+  AUTH & PHO & PROF --> STORE
   APIC -- "HTTPS" --> SRV(["Backend AgroVet"])
