@@ -55,6 +55,7 @@ Es un **Scrum adaptado a un equipo de una persona**, con flujo **Kanban** en el 
 | [backlog.md](backlog.md) | Estructura épica → HU → requisito → tarea, etiquetas, conteos por épica, tipo y prioridad |
 | [sprints.md](sprints.md) | Los 5 sprints con fechas, objetivo, resultado real, revisión y retrospectiva; velocidad |
 | [velocidad.png](velocidad.png) | Puntos e issues por sprint, generados desde los issues |
+| [datos_tesis.md](datos_tesis.md) | Ficha de datos verificados para la tesis (2026-11-18): estado de ramas, pruebas, cobertura, mutación, SonarCloud, CI, APK, Render, requisitos y lo que todavía no se puede afirmar |
 | [pruebas/README.md](pruebas/README.md) | Corridas del CI de v0.1.0 (backend 104, mobile 188, ml 80) y cómo reproducirlas |
 | [pruebas/trazabilidad.md](pruebas/trazabilidad.md) | Requisito → HU → issue → commit → prueba → resultado |
 | [pruebas/emulador.md](pruebas/emulador.md) | 13 pruebas reales en teléfono y tableta, 10 problemas corregidos, capturas |
